@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"E:\\\\Arun\\\\Workspace\\\\github\\\\Speckit context and AI-driven code evolution\\\\transcripts\")",
+      "Bash(mkdir -p \"E:\\\\Arun\\\\Workspace\\\\github\\\\Speckit context and AI-driven code evolution\\\\artifacts\")"
+    ]
+  }
+}

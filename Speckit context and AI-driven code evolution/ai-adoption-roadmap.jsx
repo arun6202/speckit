@@ -1,0 +1,540 @@
+import { useState } from "react";
+
+const phases = [
+  {
+    id: 0,
+    code: "P0",
+    label: "Diagram Literacy",
+    duration: "Weeks 1–2",
+    color: "#7C3AED",
+    accent: "#A78BFA",
+    icon: "◈",
+    tagline: "Make the invisible visible",
+    description:
+      "Replace whiteboard chaos and Confluence spaghetti with living, version-controlled diagrams. This is the zero-cost, zero-risk entry ramp — no new tools required beyond a text editor.",
+    tools: ["Mermaid", "C4-PlantUML", "VS Code + Mermaid Preview", "GitHub/GitLab native render"],
+    deliverables: [
+      { icon: "⬡", text: "C4 Context diagram for every bounded context" },
+      { icon: "⬡", text: "C4 Container + Component for critical paths" },
+      { icon: "⬡", text: "Class diagrams from existing domain models" },
+      { icon: "⬡", text: "Sequence diagrams for Oracle → Parquet → ES flow" },
+    ],
+    aiRole: "Prompt Claude with existing code → generate Mermaid. Zero new infrastructure.",
+    risk: "Low",
+    effort: "Low",
+    mermaid: `graph TD
+  A[Existing Code] -->|Claude prompt| B[Mermaid Source]
+  B --> C[C4 Context]
+  B --> D[Class Diagram]
+  B --> E[Sequence Diagram]
+  C & D & E --> F[Git-versioned docs]`,
+  },
+  {
+    id: 1,
+    code: "P1",
+    label: "Markdown-First Docs",
+    duration: "Weeks 3–5",
+    color: "#0891B2",
+    accent: "#67E8F9",
+    icon: "⟡",
+    tagline: "Docs as code, not afterthought",
+    description:
+      "Migrate all living documentation to Markdown. Introduce Pandoc as the universal document compiler. ADRs, RFCs, runbooks — all become text artifacts that Claude can read, update, and reason about.",
+    tools: ["Pandoc", "Markdown + YAML frontmatter", "ADR tooling (adr-tools)", "MkDocs / Docusaurus"],
+    deliverables: [
+      { icon: "⬡", text: "ADR template + first 10 retrospective decisions" },
+      { icon: "⬡", text: "Pandoc pipeline: MD → PDF / DOCX / HTML" },
+      { icon: "⬡", text: "Runbook corpus in Markdown (every ops procedure)" },
+      { icon: "⬡", text: "RFC template for architecture proposals" },
+    ],
+    aiRole: "Claude drafts ADRs from meeting notes. Pandoc renders them to enterprise Word/PDF formats.",
+    risk: "Low",
+    effort: "Medium",
+    mermaid: `graph LR
+  MD[Markdown Source] --> Pandoc
+  Pandoc --> PDF
+  Pandoc --> DOCX
+  Pandoc --> HTML
+  Claude --> MD`,
+  },
+  {
+    id: 2,
+    code: "P2",
+    label: "Code → Skills",
+    duration: "Weeks 6–10",
+    color: "#059669",
+    accent: "#6EE7B7",
+    icon: "⬟",
+    tagline: "Your codebase becomes a skill library",
+    description:
+      "Extract proven patterns from your existing ETL pipeline into reusable Claude Code skills and CLAUDE.md context files. Codify the tribal knowledge that lives in senior engineers' heads.",
+    tools: ["Claude Code", "CLAUDE.md + CONTEXT.md", "SpecKit", ".claude/commands/", "Git hooks"],
+    deliverables: [
+      { icon: "⬡", text: "CLAUDE.md: project identity, F# laws, forbidden patterns" },
+      { icon: "⬡", text: "Skill: Oracle schema extraction pattern" },
+      { icon: "⬡", text: "Skill: Parquet cursor algebra template" },
+      { icon: "⬡", text: "Skill: ES index mapping from F# DU definitions" },
+      { icon: "⬡", text: "SpecKit spec corpus for ETL domain" },
+    ],
+    aiRole: "Claude Code sessions guided by CLAUDE.md. Junior devs get senior-level guardrails automatically.",
+    risk: "Medium",
+    effort: "High",
+    mermaid: `graph TD
+  Existing[Existing ETL Code] --> Analysis[Claude Code Analysis]
+  Analysis --> Skills[Skill Library]
+  Skills --> CLAUDE[CLAUDE.md]
+  CLAUDE --> NewDev[New Dev Sessions]
+  NewDev --> Validated[Type-safe F# Output]`,
+  },
+  {
+    id: 3,
+    code: "P3",
+    label: "Workflow Automation",
+    duration: "Weeks 11–16",
+    color: "#D97706",
+    accent: "#FCD34D",
+    icon: "◉",
+    tagline: "Skills compose into agents",
+    description:
+      "Chain skills into multi-step agent workflows. Planner/Runner boundary established. Opus for architecture decisions; Sonnet for execution. The team stops writing boilerplate and starts specifying intent.",
+    tools: ["Claude API (Opus + Sonnet)", "Agent SDK", "MCP servers", "Kafka + DuckDB inbox", "FsCodec"],
+    deliverables: [
+      { icon: "⬡", text: "Planner agent: spec → task decomposition (Opus)" },
+      { icon: "⬡", text: "Runner agent: task → F# code + tests (Sonnet)" },
+      { icon: "⬡", text: "Review agent: property-based test coverage gate" },
+      { icon: "⬡", text: "Kafka pipeline skeleton auto-generated from schema" },
+      { icon: "⬡", text: "DuckDB idempotency inbox pattern as reusable skill" },
+    ],
+    aiRole: "Multi-agent: Opus holds invariants, Sonnet executes, Claude Code runs the loop.",
+    risk: "High",
+    effort: "High",
+    mermaid: `graph LR
+  Spec[SpecKit Spec] --> Opus[Opus Planner]
+  Opus --> Tasks[Task Decomposition]
+  Tasks --> Sonnet[Sonnet Runner]
+  Sonnet --> Code[F# Code + Tests]
+  Code --> Gate[PBT Gate]
+  Gate -->|pass| PR[Pull Request]`,
+  },
+  {
+    id: 4,
+    code: "P4",
+    label: "Enterprise Integration",
+    duration: "Weeks 17–24",
+    color: "#BE185D",
+    accent: "#F9A8D4",
+    icon: "✦",
+    tagline: "AI-native by default",
+    description:
+      "SpecKit governs all new work. Brownfield tables onboard via lineage-aware Type Providers. The pipeline self-documents. AI adoption is no longer a project — it's the team's operating mode.",
+    tools: ["SpecKit + Claude integration", "F# Type Providers (OracleSchema, ES, Lineage)", "Pandoc doc pipeline", "CI/CD skill validation", "Anthropic API governance"],
+    deliverables: [
+      { icon: "⬡", text: "All 50 tables covered by SpecKit specs" },
+      { icon: "⬡", text: "OracleSchemaProvider ↔ ESProvider lineage at compile time" },
+      { icon: "⬡", text: "Pandoc: auto-generate data dictionaries from Type Providers" },
+      { icon: "⬡", text: "CI gate: Claude Code skill compliance check on every PR" },
+      { icon: "⬡", text: "Monthly Opus architecture review: invariants audit" },
+    ],
+    aiRole: "AI is ambient. SpecKit specs drive Sonnet. Opus holds the architectural contract.",
+    risk: "Medium",
+    effort: "Medium",
+    mermaid: `graph TD
+  TP[Type Providers] --> Lineage[Compile-time Lineage]
+  SpecKit --> Sonnet[Sonnet Execution]
+  Lineage & Sonnet --> PR[PR]
+  PR --> CI[CI: Skill Compliance]
+  CI --> Deploy[Production]
+  Opus --> SpecKit`,
+  },
+];
+
+const riskColor = { Low: "#6EE7B7", Medium: "#FCD34D", High: "#FCA5A5" };
+const effortBar = { Low: 1, Medium: 2, High: 3 };
+
+export default function Roadmap() {
+  const [active, setActive] = useState(0);
+  const phase = phases[active];
+
+  return (
+    <div style={{
+      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+      background: "#0A0A0F",
+      color: "#E2E8F0",
+      minHeight: "100vh",
+      padding: "0",
+      overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        borderBottom: "1px solid #1E293B",
+        padding: "20px 32px",
+        background: "linear-gradient(135deg, #0F172A 0%, #0A0A0F 100%)",
+        display: "flex",
+        alignItems: "center",
+        gap: 20,
+      }}>
+        <div style={{
+          fontSize: 11,
+          color: "#64748B",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+        }}>Brownfield AI Adoption</div>
+        <div style={{ flex: 1, height: 1, background: "#1E293B" }} />
+        <div style={{ fontSize: 11, color: "#475569" }}>5-person team · 24 weeks · Oracle→ES ETL context</div>
+      </div>
+
+      {/* Phase Timeline */}
+      <div style={{
+        display: "flex",
+        gap: 0,
+        borderBottom: "1px solid #1E293B",
+        overflowX: "auto",
+      }}>
+        {phases.map((p, i) => (
+          <button
+            key={p.id}
+            onClick={() => setActive(i)}
+            style={{
+              flex: 1,
+              minWidth: 120,
+              padding: "16px 12px",
+              background: active === i
+                ? `linear-gradient(180deg, ${p.color}22 0%, transparent 100%)`
+                : "transparent",
+              border: "none",
+              borderBottom: active === i ? `2px solid ${p.color}` : "2px solid transparent",
+              borderRight: "1px solid #1E293B",
+              cursor: "pointer",
+              transition: "all 0.2s",
+              textAlign: "left",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{
+                fontSize: 16,
+                color: active === i ? p.color : "#475569",
+              }}>{p.icon}</span>
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: active === i ? p.accent : "#475569",
+                letterSpacing: "0.15em",
+              }}>{p.code}</span>
+            </div>
+            <div style={{
+              fontSize: 11,
+              color: active === i ? "#E2E8F0" : "#64748B",
+              fontWeight: active === i ? 600 : 400,
+              lineHeight: 1.3,
+            }}>{p.label}</div>
+            <div style={{ fontSize: 9, color: "#475569", marginTop: 3 }}>{p.duration}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Main Content */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", height: "calc(100vh - 120px)" }}>
+
+        {/* Left: Phase Detail */}
+        <div style={{
+          padding: "28px 32px",
+          overflowY: "auto",
+          borderRight: "1px solid #1E293B",
+        }}>
+          {/* Phase Header */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 24 }}>
+            <div style={{
+              fontSize: 40,
+              color: phase.color,
+              lineHeight: 1,
+              filter: `drop-shadow(0 0 12px ${phase.color}66)`,
+            }}>{phase.icon}</div>
+            <div>
+              <div style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: "#F8FAFC",
+                letterSpacing: "-0.03em",
+              }}>{phase.label}</div>
+              <div style={{
+                fontSize: 12,
+                color: phase.accent,
+                marginTop: 2,
+                letterSpacing: "0.05em",
+              }}>{phase.tagline}</div>
+              <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>{phase.duration}</div>
+            </div>
+          </div>
+
+          {/* Description */}
+          <p style={{
+            fontSize: 13,
+            lineHeight: 1.7,
+            color: "#94A3B8",
+            marginBottom: 24,
+            borderLeft: `2px solid ${phase.color}44`,
+            paddingLeft: 16,
+          }}>{phase.description}</p>
+
+          {/* Badges */}
+          <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+            {[
+              { label: "Risk", value: phase.risk, color: riskColor[phase.risk] },
+              { label: "Effort", value: phase.effort, color: riskColor[phase.effort] },
+            ].map(b => (
+              <div key={b.label} style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "4px 10px",
+                background: "#0F172A",
+                border: `1px solid ${b.color}44`,
+                borderRadius: 4,
+              }}>
+                <span style={{ fontSize: 10, color: "#64748B" }}>{b.label}</span>
+                <div style={{ display: "flex", gap: 3 }}>
+                  {[1,2,3].map(n => (
+                    <div key={n} style={{
+                      width: 8, height: 8, borderRadius: 1,
+                      background: n <= effortBar[b.value] ? b.color : "#1E293B",
+                    }} />
+                  ))}
+                </div>
+                <span style={{ fontSize: 10, color: b.color, fontWeight: 600 }}>{b.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Deliverables */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{
+              fontSize: 10,
+              letterSpacing: "0.2em",
+              color: "#475569",
+              textTransform: "uppercase",
+              marginBottom: 12,
+            }}>Deliverables</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {phase.deliverables.map((d, i) => (
+                <div key={i} style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  padding: "10px 14px",
+                  background: "#0F172A",
+                  border: "1px solid #1E293B",
+                  borderRadius: 6,
+                  fontSize: 12,
+                  color: "#CBD5E1",
+                  lineHeight: 1.4,
+                  transition: "border-color 0.2s",
+                }}>
+                  <span style={{ color: phase.accent, fontSize: 10, marginTop: 1, flexShrink: 0 }}>▸</span>
+                  {d.text}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Role */}
+          <div style={{
+            padding: "14px 16px",
+            background: `linear-gradient(135deg, ${phase.color}11 0%, #0F172A 100%)`,
+            border: `1px solid ${phase.color}33`,
+            borderRadius: 8,
+            marginBottom: 20,
+          }}>
+            <div style={{ fontSize: 9, letterSpacing: "0.2em", color: phase.accent, marginBottom: 6, textTransform: "uppercase" }}>
+              ✦ AI Role in this phase
+            </div>
+            <div style={{ fontSize: 12, color: "#CBD5E1", lineHeight: 1.5 }}>{phase.aiRole}</div>
+          </div>
+
+          {/* Tools */}
+          <div>
+            <div style={{
+              fontSize: 10,
+              letterSpacing: "0.2em",
+              color: "#475569",
+              textTransform: "uppercase",
+              marginBottom: 10,
+            }}>Tools</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {phase.tools.map((t, i) => (
+                <span key={i} style={{
+                  padding: "3px 10px",
+                  background: "#0F172A",
+                  border: `1px solid ${phase.color}44`,
+                  borderRadius: 3,
+                  fontSize: 11,
+                  color: phase.accent,
+                  fontFamily: "monospace",
+                }}>{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Visual Map */}
+        <div style={{
+          padding: "24px 20px",
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+        }}>
+          {/* Full Timeline */}
+          <div>
+            <div style={{
+              fontSize: 10,
+              letterSpacing: "0.2em",
+              color: "#475569",
+              textTransform: "uppercase",
+              marginBottom: 14,
+            }}>Adoption Arc</div>
+            <div style={{ position: "relative" }}>
+              {/* Connector line */}
+              <div style={{
+                position: "absolute",
+                left: 15,
+                top: 20,
+                bottom: 20,
+                width: 1,
+                background: "linear-gradient(180deg, #7C3AED, #0891B2, #059669, #D97706, #BE185D)",
+                opacity: 0.4,
+              }} />
+              {phases.map((p, i) => (
+                <div
+                  key={p.id}
+                  onClick={() => setActive(i)}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 12,
+                    marginBottom: 16,
+                    cursor: "pointer",
+                    opacity: active === i ? 1 : 0.5,
+                    transition: "opacity 0.2s",
+                  }}
+                >
+                  <div style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    background: active === i ? p.color : "#0F172A",
+                    border: `2px solid ${p.color}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 11,
+                    flexShrink: 0,
+                    boxShadow: active === i ? `0 0 12px ${p.color}66` : "none",
+                  }}>{p.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: active === i ? "#F8FAFC" : "#64748B" }}>{p.label}</div>
+                    <div style={{ fontSize: 10, color: "#475569" }}>{p.duration}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mermaid-style diagram (ASCII representation) */}
+          <div>
+            <div style={{
+              fontSize: 10,
+              letterSpacing: "0.2em",
+              color: "#475569",
+              textTransform: "uppercase",
+              marginBottom: 10,
+            }}>Phase Data Flow</div>
+            <div style={{
+              background: "#050508",
+              border: `1px solid ${phase.color}33`,
+              borderRadius: 8,
+              padding: 16,
+              fontSize: 10,
+              fontFamily: "monospace",
+              color: "#64748B",
+              lineHeight: 1.8,
+              whiteSpace: "pre-wrap",
+            }}>
+              {phase.mermaid.replace(/\[([^\]]+)\]/g, (_, txt) =>
+                `[\x1b[0m${txt}\x1b[0m]`
+              ).split('\n').map((line, i) => {
+                const colored = line
+                  .replace(/\[([^\]]+)\]/g, `[<span style="color:${phase.accent}">$1</span>]`)
+                  .replace(/-->/g, `<span style="color:${phase.color}">──▶</span>`)
+                  .replace(/\|([^|]+)\|/g, `<span style="color:#64748B">|$1|</span>`)
+                  .replace(/&/g, `<span style="color:#475569">&amp;</span>`);
+                return (
+                  <div key={i} dangerouslySetInnerHTML={{ __html: colored }} />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Maturity gauge */}
+          <div>
+            <div style={{
+              fontSize: 10,
+              letterSpacing: "0.2em",
+              color: "#475569",
+              textTransform: "uppercase",
+              marginBottom: 10,
+            }}>AI Maturity by Phase</div>
+            {phases.map((p, i) => {
+              const pct = [12, 30, 52, 75, 100][i];
+              return (
+                <div key={p.id} style={{ marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                    <span style={{ fontSize: 9, color: active === i ? p.accent : "#475569" }}>{p.code}</span>
+                    <span style={{ fontSize: 9, color: "#475569" }}>{pct}%</span>
+                  </div>
+                  <div style={{ height: 4, background: "#0F172A", borderRadius: 2 }}>
+                    <div style={{
+                      height: "100%",
+                      width: `${pct}%`,
+                      background: `linear-gradient(90deg, ${p.color}, ${p.accent})`,
+                      borderRadius: 2,
+                      opacity: active === i ? 1 : 0.35,
+                      transition: "opacity 0.2s",
+                    }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Brownfield realities */}
+          <div style={{
+            padding: "12px 14px",
+            background: "#0F172A",
+            border: "1px solid #1E293B",
+            borderRadius: 8,
+          }}>
+            <div style={{
+              fontSize: 9, letterSpacing: "0.2em", color: "#475569",
+              textTransform: "uppercase", marginBottom: 10,
+            }}>Brownfield Laws</div>
+            {[
+              "Never greenfield-rewrite. Wrap and extend.",
+              "Each phase must deliver standalone value.",
+              "Existing tests are the truth source.",
+              "Skills encode tribal knowledge, not new patterns.",
+              "Ops never sees the AI layer.",
+            ].map((law, i) => (
+              <div key={i} style={{
+                fontSize: 10, color: "#64748B", marginBottom: 6,
+                paddingLeft: 12, borderLeft: "1px solid #1E293B",
+                lineHeight: 1.5,
+              }}>
+                <span style={{ color: "#475569" }}>{i + 1}.</span> {law}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
