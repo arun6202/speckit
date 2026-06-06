@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windsurf Credit X-Ray · Claude</title>
+<style>
+  :root{
+    --bg:#0a0b0e; --panel:#101319; --panel2:#0c0e13;
+    --line:#1c2027; --line2:#272c36; --line3:#343b47;
+    --fg:#e9ecf1; --dim:#7c838e; --dim2:#525965;
+    --signal:#c8f751; --signal-dim:#7d9a2f;
+    --in:#6fd6ff; --in-dim:#2d6f8c;
+    --think:#b388ff; --think-dim:#5d469a;
+    --out:#ffb24d; --out-dim:#9a6a26;
+    --danger:#ff6363;
+    --mono:"Cascadia Code","JetBrains Mono","SFMono-Regular","SF Mono","Consolas","Roboto Mono","DejaVu Sans Mono",monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{background:var(--bg); color:var(--fg); font-family:var(--mono); font-size:14px; line-height:1.5;
+    -webkit-font-smoothing:antialiased; position:relative; min-height:100%; padding-bottom:40px}
+  body::before{content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px; opacity:.16;
+    -webkit-mask-image:radial-gradient(ellipse 120% 90% at 50% 0%,#000 28%,transparent 100%);
+    mask-image:radial-gradient(ellipse 120% 90% at 50% 0%,#000 28%,transparent 100%)}
+  body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:radial-gradient(ellipse 80% 55% at 50% -10%,rgba(200,247,81,.06),transparent 60%)}
+  .app{position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 18px}
+
+  header{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    padding:22px 2px 14px; border-bottom:1px solid var(--line2)}
+  .brand h1{font-size:clamp(15px,2.4vw,19px); font-weight:600; letter-spacing:.04em; text-transform:uppercase}
+  .caret{display:inline-block; width:9px; height:1.05em; background:var(--signal); transform:translateY(2px);
+    animation:blink 1.1s steps(1) infinite; box-shadow:0 0 10px rgba(200,247,81,.6)}
+  @keyframes blink{50%{opacity:0}}
+  .sub{font-size:11px; color:var(--dim2); margin-top:5px; letter-spacing:.02em}
+  .status{display:flex; align-items:center; gap:8px; font-size:11px; color:var(--dim); letter-spacing:.07em}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(200,247,81,.45)}70%{box-shadow:0 0 0 7px rgba(200,247,81,0)}100%{box-shadow:0 0 0 0 rgba(200,247,81,0)}}
+
+  .label{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim)}
+  .label .mk{color:var(--signal-dim); margin-right:6px}
+
+  .inzone{margin-top:18px; animation:rise .5s both}
+  textarea{width:100%; min-height:140px; resize:vertical; background:var(--panel2); color:var(--fg);
+    caret-color:var(--signal); border:1px solid var(--line2); border-radius:10px; padding:15px;
+    font-family:var(--mono); font-size:13.5px; line-height:1.6; outline:none;
+    transition:border-color .15s,box-shadow .15s; margin-top:8px;
+    background-image:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px); background-size:100% 25.6px}
+  textarea::placeholder{color:var(--dim2)}
+  textarea:focus{border-color:var(--signal-dim); box-shadow:0 0 0 3px rgba(200,247,81,.09)}
+  .intools{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:9px}
+  .counts{display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--dim)}
+  .counts b{color:var(--fg); font-variant-numeric:tabular-nums}
+  button.clear{appearance:none; cursor:pointer; font-family:var(--mono); background:transparent; color:var(--fg);
+    border:1px solid var(--line2); border-radius:7px; padding:7px 16px; font-size:11px; letter-spacing:.16em;
+    text-transform:uppercase; transition:all .14s}
+  button.clear:hover{background:var(--danger); border-color:var(--danger); color:#160405}
+
+  .selrow{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; animation:rise .5s .04s both}
+  @media(max-width:620px){.selrow{grid-template-columns:1fr}}
+  .selwrap{position:relative}
+  .selwrap::after{content:"▾"; position:absolute; right:14px; top:50%; transform:translateY(20%); color:var(--signal-dim); pointer-events:none; font-size:12px}
+  select{appearance:none; -webkit-appearance:none; width:100%; cursor:pointer; background:var(--panel); color:var(--fg);
+    border:1px solid var(--line2); border-radius:9px; padding:13px 36px 13px 14px; font-family:var(--mono);
+    font-size:13.5px; outline:none; transition:border-color .14s,box-shadow .14s}
+  select:focus{border-color:var(--signal-dim); box-shadow:0 0 0 3px rgba(200,247,81,.08)}
+  select option,select optgroup{background:#0d0f13; color:var(--fg)}
+  .modelnote{font-size:10.5px; color:var(--dim2); margin-top:7px; line-height:1.5}
+  .modelnote b{color:var(--dim)}
+
+  .hero{margin-top:16px; background:linear-gradient(180deg,#0f1216,#0b0d12); border:1px solid var(--line2);
+    border-radius:13px; padding:20px 20px 18px; animation:rise .5s .06s both}
+  .hero .cap{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px}
+  .band{display:grid; grid-template-columns:1fr auto 1fr; align-items:end; gap:16px; margin-top:14px}
+  @media(max-width:560px){.band{grid-template-columns:1fr}}
+  .bnum{font-variant-numeric:tabular-nums; line-height:1.05}
+  .bnum .t{font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--dim); margin-bottom:6px}
+  .bnum.low,.bnum.high{color:var(--dim)}
+  .bnum.low .n,.bnum.high .n{font-size:clamp(18px,3.4vw,24px); font-weight:500}
+  .bnum .u{font-size:.5em; color:var(--dim); margin-left:3px; letter-spacing:.04em}
+  .bnum.exp{text-align:center}
+  .bnum.exp .t{color:var(--signal-dim)}
+  .bnum.exp .n{font-size:clamp(32px,6.6vw,54px); font-weight:600; color:var(--signal); text-shadow:0 0 28px rgba(200,247,81,.28); transition:transform .18s}
+  .bnum.exp .n.flash{animation:flash .35s ease}
+  .bnum.exp .u{color:var(--signal-dim)}
+  @keyframes flash{0%{transform:scale(1.04)}100%{transform:scale(1)}}
+  .bnum.high{text-align:right}
+  .herofoot{margin-top:10px; font-size:11px; color:var(--dim); text-align:center}
+  .herofoot b{color:var(--out)}
+  .rangebar{grid-column:1 / -1; margin-top:14px}
+  .rangetrack{height:6px; border-radius:6px; position:relative; background:linear-gradient(90deg,var(--in-dim),var(--out-dim))}
+  .rangetrack .mk{position:absolute; top:-4px; width:3px; height:14px; background:var(--signal); border-radius:3px;
+    box-shadow:0 0 10px rgba(200,247,81,.7); transition:left .25s ease}
+  .rangefoot{display:flex; justify-content:space-between; font-size:10.5px; color:var(--dim2); margin-top:6px}
+
+  .agent{margin-top:14px; background:var(--panel); border:1px solid var(--signal-dim); border-radius:11px;
+    padding:15px 15px 16px; animation:rise .5s .08s both; position:relative; overflow:hidden}
+  .agent::before{content:""; position:absolute; inset:0; background:radial-gradient(ellipse 60% 100% at 0% 0%,rgba(200,247,81,.05),transparent 60%); pointer-events:none}
+  .agentgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); gap:14px; align-items:end}
+  .agentgrid .fld{display:flex; flex-direction:column; gap:6px}
+  .agentgrid .fld .nm{font-size:11px; color:var(--dim)}
+  .agentgrid .fld input{width:100%}
+  .agentsum{font-size:11.5px; color:var(--dim); margin-top:13px; padding-top:11px; border-top:1px dashed var(--line2)}
+  .agentsum b{color:var(--signal)}
+
+  .grid{display:grid; grid-template-columns:1.25fr 1fr; gap:14px; margin-top:14px}
+  @media(max-width:780px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:11px; padding:15px 15px 16px; animation:rise .5s both}
+  .ph{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-bottom:13px; display:flex; align-items:center; gap:7px}
+  .ph .mk{color:var(--signal-dim)}
+
+  .xr{display:grid; grid-template-columns:1fr auto auto; gap:6px 14px; align-items:center}
+  .xr .hd{font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim2); padding-bottom:4px}
+  .xr .hd.r{text-align:right}
+  .xr .comp{display:flex; align-items:center; gap:9px; font-size:12.5px; padding:7px 0}
+  .xr .swatch{width:9px; height:9px; border-radius:2px; flex:0 0 auto}
+  .xr .tk,.xr .ct{text-align:right; font-variant-numeric:tabular-nums; font-size:12.5px}
+  .xr .tk{color:var(--dim)}
+  .xr .muted{opacity:.4}
+  .xr .totalrow{border-top:1px solid var(--line2); margin-top:4px; padding-top:4px}
+  .xr .totalrow .comp{font-weight:600; color:var(--fg)}
+  .xr .totalrow .ct{color:var(--signal); font-weight:600}
+  .sw-in{background:var(--in)} .sw-th{background:var(--think)} .sw-out{background:var(--out)} .sw-tot{background:var(--signal)}
+
+  .stack{height:13px; border-radius:5px; overflow:hidden; display:flex; border:1px solid var(--line2); background:var(--panel2)}
+  .stack > span{display:block; height:100%; transition:flex-basis .25s ease}
+  .stacklab{display:flex; flex-wrap:wrap; gap:12px; margin-top:9px; font-size:11px; color:var(--dim)}
+  .stacklab .it{display:flex; align-items:center; gap:6px}
+  .stacklab .it b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .swdot{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .stitle{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim2); margin:14px 0 7px}
+
+  .bar{height:9px; border-radius:6px; background:var(--panel2); border:1px solid var(--line2); overflow:hidden; margin:6px 0 2px; position:relative}
+  .bar > i{display:block; height:100%; width:0; background:var(--signal); border-radius:6px; transition:width .25s ease}
+  .bar.over > i{background:var(--danger)}
+  .bar .mark{position:absolute; top:-2px; bottom:-2px; width:1px; background:var(--line3)}
+  .bar .mark::after{content:attr(data-l); position:absolute; top:-15px; left:-9px; font-size:8.5px; color:var(--dim2)}
+  .barlab{display:flex; justify-content:space-between; font-size:11px; color:var(--dim); margin-top:11px}
+  .barlab .pct{font-variant-numeric:tabular-nums; color:var(--fg)}
+  .barlab .pct.over{color:var(--danger)}
+  .warn{font-size:11px; color:var(--danger); margin-top:9px; display:none}
+  .warn.show{display:block}
+
+  .metrics{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line2);
+    border:1px solid var(--line2); border-radius:11px; overflow:hidden; margin-top:14px; animation:rise .5s .1s both}
+  .met{background:var(--panel); padding:14px 14px}
+  .met .k{font-size:9.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--dim)}
+  .met .v{font-size:clamp(18px,3.2vw,24px); font-weight:600; margin-top:7px; font-variant-numeric:tabular-nums; color:var(--signal)}
+  .met .v small{font-size:12px; color:var(--dim); font-weight:400}
+  .met .v.amp{color:var(--out)}
+  @media(max-width:560px){.metrics{grid-template-columns:1fr}}
+
+  .params{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr)); gap:14px; margin-top:14px}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:9px 0; font-size:12.5px}
+  .row .nm{color:var(--dim)}
+  input[type=number]{width:80px; background:var(--panel2); color:var(--fg); border:1px solid var(--line2);
+    border-radius:6px; padding:6px 8px; font-family:var(--mono); font-size:12.5px; text-align:right; outline:none;
+    font-variant-numeric:tabular-nums; transition:border-color .14s,box-shadow .14s}
+  input[type=number]:focus{border-color:var(--signal-dim); box-shadow:0 0 0 3px rgba(200,247,81,.08)}
+  input[type=number]:disabled{opacity:.35; cursor:not-allowed}
+  .tri{display:flex; gap:6px; align-items:center}
+  .tri input{width:60px}
+  .tri .sep{color:var(--dim2)}
+  .unit{color:var(--dim2); font-size:11px; margin-left:5px}
+  .note{font-size:11px; line-height:1.55; color:var(--dim2); margin-top:13px; padding-top:11px; border-top:1px dashed var(--line2)}
+  .note b{color:var(--dim)}
+  .tog{display:flex; align-items:center; gap:9px; cursor:pointer; margin:11px 0 0; font-size:11.5px; color:var(--dim)}
+  .tog input{position:absolute; opacity:0; pointer-events:none}
+  .sw{width:34px; height:18px; border-radius:20px; background:var(--line2); position:relative; flex:0 0 auto; transition:.16s}
+  .sw::after{content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:var(--dim); transition:.16s}
+  .tog input:checked + .sw{background:var(--signal-dim)}
+  .tog input:checked + .sw::after{left:18px; background:var(--signal)}
+
+  .cmp{margin-top:14px; animation:rise .5s .12s both}
+  .cmprow{display:grid; grid-template-columns:200px 1fr auto; gap:12px; align-items:center; padding:7px 0; font-size:12.5px; border-bottom:1px solid var(--line)}
+  .cmprow:last-child{border-bottom:0}
+  .cmprow .nm{color:var(--dim)}
+  .cmprow.sel .nm{color:var(--signal)}
+  .cmpbar{height:7px; border-radius:5px; background:var(--panel2); border:1px solid var(--line2); overflow:hidden}
+  .cmpbar > i{display:block; height:100%; background:var(--signal-dim); border-radius:5px; transition:width .25s}
+  .cmprow.sel .cmpbar > i{background:var(--signal)}
+  .cmprow .pc{text-align:right; font-variant-numeric:tabular-nums; color:var(--fg)}
+  @media(max-width:560px){.cmprow{grid-template-columns:128px 1fr auto}}
+
+  footer{margin-top:24px; padding-top:15px; border-top:1px solid var(--line); font-size:11px; color:var(--dim2); line-height:1.7}
+  footer b{color:var(--dim)} footer .src{color:var(--signal-dim)}
+  @keyframes rise{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <h1>Windsurf Credit X-Ray<span class="caret"></span></h1>
+      <div class="sub" id="hdrSub">input measured · thinking · output · agent loop — bands to calibrate, not a meter</div>
+    </div>
+    <div class="status"><span class="dot"></span><span>CLAUDE ON WINDSURF · CREDITS</span></div>
+  </header>
+
+  <section class="inzone">
+    <span class="label"><span class="mk">//</span>PASTE INPUT &mdash; the context + prompt you'll send to Cascade</span>
+    <textarea id="ta" spellcheck="false" placeholder="Paste your prompt / spec / file / context. The credit X-ray updates live."></textarea>
+    <div class="intools">
+      <div class="counts">
+        <span>chars <b id="cChars">0</b></span>
+        <span>words <b id="cWords">0</b></span>
+        <span>lines <b id="cLines">0</b></span>
+        <span>base tok <b id="cTok" style="color:var(--in)">0</b></span>
+      </div>
+      <button class="clear" id="btnClear">Clear</button>
+    </div>
+  </section>
+
+  <div class="selrow">
+    <div>
+      <span class="label" style="display:block;margin-bottom:7px"><span class="mk">//</span>TASK &mdash; sets output expansion W (low·typ·high)</span>
+      <div class="selwrap">
+        <select id="task">
+          <option data-w="0.05,0.1,0.25">Summarize / extract / classify &nbsp;·&nbsp; 0.05–0.1–0.25</option>
+          <option data-w="0.2,0.4,1.0">Q&amp;A / explain &nbsp;·&nbsp; 0.2–0.4–1.0</option>
+          <option data-w="0.9,1.0,1.2">Translate / reformat &nbsp;·&nbsp; 0.9–1.0–1.2</option>
+          <option data-w="0.9,1.1,1.5">Refactor / edit a file &nbsp;·&nbsp; 0.9–1.1–1.5</option>
+          <option data-w="1,2,4" selected>Generate code from a spec &nbsp;·&nbsp; 1–2–4</option>
+          <option data-w="3,5,10">Expand outline → full doc &nbsp;·&nbsp; 3–5–10</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <span class="label" style="display:block;margin-bottom:7px"><span class="mk">//</span>CLAUDE MODEL &mdash; cr/1M (in/out) · tokenizer density</span>
+      <div class="selwrap">
+        <select id="model">
+          <optgroup label="Opus · 150 / 750 cr · 1M ctx · 128K out">
+            <option data-key="o48t" data-in="150" data-out="750" data-think="1" data-dens="1.25" data-ctx="1000000" data-omax="128000" selected>Opus 4.8 — Thinking &nbsp;·&nbsp; density 1.25</option>
+            <option data-key="o48"  data-in="150" data-out="750" data-think="0" data-dens="1.25" data-ctx="1000000" data-omax="128000">Opus 4.8 &nbsp;·&nbsp; density 1.25</option>
+            <option data-key="o47t" data-in="150" data-out="750" data-think="1" data-dens="1.25" data-ctx="1000000" data-omax="128000">Opus 4.7 — Thinking &nbsp;·&nbsp; density 1.25</option>
+            <option data-key="o47"  data-in="150" data-out="750" data-think="0" data-dens="1.25" data-ctx="1000000" data-omax="128000">Opus 4.7 &nbsp;·&nbsp; density 1.25</option>
+            <option data-key="o46t" data-in="150" data-out="750" data-think="1" data-dens="1.0"  data-ctx="1000000" data-omax="128000">Opus 4.6 — Thinking &nbsp;·&nbsp; density 1.0</option>
+            <option data-key="o46"  data-in="150" data-out="750" data-think="0" data-dens="1.0"  data-ctx="1000000" data-omax="128000">Opus 4.6 &nbsp;·&nbsp; density 1.0</option>
+          </optgroup>
+          <optgroup label="Sonnet · 90 / 450 cr · 1M ctx · 128K out">
+            <option data-key="s48t" data-in="90" data-out="450" data-think="1" data-dens="1.25" data-ctx="1000000" data-omax="128000" data-proj="1">Sonnet 4.8 — Thinking &nbsp;·&nbsp; density 1.25 · proj.</option>
+            <option data-key="s48"  data-in="90" data-out="450" data-think="0" data-dens="1.25" data-ctx="1000000" data-omax="128000" data-proj="1">Sonnet 4.8 &nbsp;·&nbsp; density 1.25 · proj.</option>
+            <option data-key="s47t" data-in="90" data-out="450" data-think="1" data-dens="1.25" data-ctx="1000000" data-omax="128000" data-proj="1">Sonnet 4.7 — Thinking &nbsp;·&nbsp; density 1.25 · proj.</option>
+            <option data-key="s47"  data-in="90" data-out="450" data-think="0" data-dens="1.25" data-ctx="1000000" data-omax="128000" data-proj="1">Sonnet 4.7 &nbsp;·&nbsp; density 1.25 · proj.</option>
+            <option data-key="s46t" data-in="90" data-out="450" data-think="1" data-dens="1.0"  data-ctx="1000000" data-omax="128000">Sonnet 4.6 — Thinking &nbsp;·&nbsp; density 1.0</option>
+            <option data-key="s46"  data-in="90" data-out="450" data-think="0" data-dens="1.0"  data-ctx="1000000" data-omax="128000">Sonnet 4.6 &nbsp;·&nbsp; density 1.0</option>
+          </optgroup>
+          <optgroup label="Haiku · 30 / 150 cr · 200K ctx · 64K out">
+            <option data-key="h45"  data-in="30" data-out="150" data-think="0" data-dens="1.0" data-ctx="200000" data-omax="64000">Haiku 4.5 &nbsp;·&nbsp; density 1.0</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="modelnote" id="modelNote"></div>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="cap">
+      <span class="label"><span class="mk">▘</span><span id="heroLabel">CREDITS PER PROMPT</span> &mdash; ballpark band</span>
+      <span class="label" id="capCtx" style="color:var(--dim2)">&mdash;</span>
+    </div>
+    <div class="band">
+      <div class="bnum low"><div class="t">low</div><div class="n"><span id="bLow">0</span><span class="u">cr</span></div></div>
+      <div class="bnum exp"><div class="t">expected</div><div class="n"><span id="bExp">0</span><span class="u">cr</span></div></div>
+      <div class="bnum high"><div class="t">high</div><div class="n"><span id="bHigh">0</span><span class="u">cr</span></div></div>
+      <div class="rangebar">
+        <div class="rangetrack"><div class="mk" id="rangeMk" style="left:50%"></div></div>
+        <div class="rangefoot"><span id="rfLow">0 cr</span><span style="color:var(--signal-dim)">expected ▲</span><span id="rfHigh">0 cr</span></div>
+      </div>
+    </div>
+    <div class="herofoot" id="heroFoot"></div>
+  </section>
+
+  <section class="agent">
+    <div class="ph"><span class="mk">▘</span>AGENTIC LOOP &mdash; Cascade runs many turns per prompt (the real cost driver)</div>
+    <div class="agentgrid">
+      <div class="fld"><span class="nm">agent turns</span><input type="number" id="turns" value="1" min="1" step="1"></div>
+      <div class="fld"><span class="nm">tool tokens / turn</span><input type="number" id="toolTok" value="1500" min="0" step="250"></div>
+      <div class="fld"><label class="tog" style="margin:0"><input type="checkbox" id="cache"><span class="sw"></span><span>cache re-sent context (−90%)</span></label></div>
+    </div>
+    <div class="agentsum" id="agentSum">A single prompt is one turn. Raise turns to model a Cascade session — prior outputs &amp; tool results re-inflate the context each turn, so credits grow faster than linearly.</div>
+  </section>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span><span id="bdLabel">CREDIT BREAKDOWN</span> &mdash; expected</div>
+      <div class="xr">
+        <div class="hd">component</div><div class="hd r">tokens</div><div class="hd r">credits</div>
+
+        <div class="comp"><span class="swatch sw-in"></span>Input <span style="color:var(--dim2);font-size:10px">+overhead</span></div>
+        <div class="tk" id="xInTok">0</div><div class="ct" id="xInCr">0</div>
+
+        <div class="comp" id="rowThink"><span class="swatch sw-th"></span>Thinking <span style="color:var(--dim2);font-size:10px">@ output rate</span></div>
+        <div class="tk" id="xThTok">0</div><div class="ct" id="xThCr">0</div>
+
+        <div class="comp"><span class="swatch sw-out"></span>Output <span style="color:var(--dim2);font-size:10px">= input × W</span></div>
+        <div class="tk" id="xOutTok">0</div><div class="ct" id="xOutCr">0</div>
+
+        <div class="comp totalrow"><span class="swatch sw-tot"></span>Total</div>
+        <div class="tk totalrow" id="xTotTok">0</div><div class="ct totalrow" id="xTotCr">0</div>
+      </div>
+
+      <div class="stitle">Credit composition</div>
+      <div class="stack" id="crStack">
+        <span class="sw-in" style="flex-basis:33%"></span><span class="sw-th" style="flex-basis:0%"></span><span class="sw-out" style="flex-basis:67%"></span>
+      </div>
+      <div class="stacklab">
+        <span class="it"><span class="swdot sw-in"></span>input <b id="lcIn">0%</b></span>
+        <span class="it"><span class="swdot sw-th"></span>thinking <b id="lcTh">0%</b></span>
+        <span class="it"><span class="swdot sw-out"></span>output <b id="lcOut">0%</b></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span>CONTEXT FOOTPRINT &mdash; peak turn vs <span id="ctxMaxLbl">1M</span></div>
+      <div class="bar" id="ctxBar"><i></i><div class="mark" id="ctxMark" data-l="200K" style="left:20%"></div></div>
+      <div class="barlab"><span id="ctxCaption">in + thinking + output</span><span class="pct" id="ctxPct">0%</span></div>
+      <div class="warn" id="ctxWarn">⚠ peak turn exceeds the context window — must be split</div>
+      <div class="warn" id="genWarn">⚠ thinking + output exceed the one-turn generation cap</div>
+      <div class="note"><b>Per-turn limit.</b> A session never holds all turns at once — only the busiest turn must fit the window. Opus 4.6/4.7/4.8 &amp; Sonnet 4.6 carry <b>1M flat-rate</b> context; Haiku 4.5 is 200K. Generation cap is 128K (64K Haiku).</div>
+      <div class="stitle">Token composition (expected)</div>
+      <div class="stack" id="tokStack">
+        <span class="sw-in" style="flex-basis:100%"></span><span class="sw-th" style="flex-basis:0%"></span><span class="sw-out" style="flex-basis:0%"></span>
+      </div>
+      <div class="stacklab">
+        <span class="it">in <b id="ltIn">0</b></span>
+        <span class="it">think <b id="ltTh">0</b></span>
+        <span class="it">out <b id="ltOut">0</b></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="met"><div class="k">Credits / turn (avg)</div><div class="v" id="mPerTurn">0</div></div>
+    <div class="met"><div class="k">Loop amplification</div><div class="v amp" id="mAmp">1<small>×</small></div></div>
+    <div class="met"><div class="k">Output share of credits</div><div class="v" id="mShare">0<small>%</small></div></div>
+  </div>
+
+  <div class="params">
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span>INPUT ESTIMATE</div>
+      <div class="row"><span class="nm">chars / token</span><span><input type="number" id="cpt" value="3.7" min="1" max="8" step="0.1"></span></div>
+      <div class="row"><span class="nm">word-based check</span><span style="color:var(--in);font-variant-numeric:tabular-nums" id="wordEst">0</span></div>
+      <div class="note">Generic estimate. Tokenizer density (below) corrects it per model.</div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span>TOKENIZER DENSITY · ×</div>
+      <div class="row"><span class="nm">tokens × factor</span><span><input type="number" id="dens" value="1.25" min="0.5" max="2" step="0.05"></span></div>
+      <div class="note"><b>4.7 / 4.8</b> default 1.25 — the 4.7 tokenizer emits up to ~35% more tokens for the same text than 4.6 (same price/token, so more credits). 4.6 / Haiku = 1.0.</div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span>PER-CALL OVERHEAD · tokens</div>
+      <div class="row"><span class="nm">system + tools</span><span><input type="number" id="overhead" value="1500" min="0" step="250"></span></div>
+      <div class="note">Cascade ships a system prompt + tool schemas on <b>every</b> call. Hidden input most estimates miss; in a loop it's paid each turn.</div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span>OUTPUT EXPANSION · W</div>
+      <div class="row"><span class="nm">low · typ · high</span>
+        <span class="tri"><input type="number" id="wLow" value="1" min="0" step="0.05"><span class="sep">·</span><input type="number" id="wTyp" value="2" min="0" step="0.05"><span class="sep">·</span><input type="number" id="wHigh" value="4" min="0" step="0.05"></span>
+      </div>
+      <div class="note">output = input × W (task prefills). Output bills at 5× input → W dominates.</div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span>THINKING BUDGET · tokens</div>
+      <div class="row"><span class="nm">low · typ · high</span>
+        <span class="tri"><input type="number" id="thLow" value="2000" min="0" step="500"><span class="sep">·</span><input type="number" id="thTyp" value="8000" min="0" step="500"><span class="sep">·</span><input type="number" id="thHigh" value="24000" min="0" step="500"></span>
+      </div>
+      <div class="note">Active for <b>Thinking</b> models, billed at the output rate. Per turn, scales with task difficulty.</div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span>CREDIT RATES · cr / 1M tok</div>
+      <div class="row"><span class="nm">input rate</span><span><input type="number" id="rIn" value="150" min="0" step="5"></span></div>
+      <div class="row"><span class="nm">output rate</span><span><input type="number" id="rOut" value="750" min="0" step="5"></span></div>
+      <div class="note">Includes Windsurf's ~20% external-model margin (model prefills these).</div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="mk">▘</span>BUDGET CONTEXT</div>
+      <div class="row"><span class="nm">credit budget</span><span><input type="number" id="budget" value="400" min="1" step="50"></span></div>
+      <div class="row"><span class="nm">this run</span><span style="color:var(--signal);font-variant-numeric:tabular-nums" id="bgPct">0%</span></div>
+      <div class="row"><span class="nm">runs / budget</span><span style="font-variant-numeric:tabular-nums" id="bgN">0</span></div>
+      <div class="row"><span class="nm">runs / 250 pack</span><span style="font-variant-numeric:tabular-nums" id="bgPack">0</span></div>
+      <div class="note">Default 400 (your budget). 500 = legacy Pro pool; add-on packs = 250 cr. New plans meter daily/weekly quota at these rates.</div>
+    </div>
+  </div>
+
+  <div class="panel cmp">
+    <div class="ph"><span class="mk">▘</span>MODEL COMPARISON &mdash; expected credits, same input · task · loop</div>
+    <div id="cmpList"></div>
+    <div class="note">Each model uses its own credit rate + tokenizer density. Note 4.8 &gt; 4.6 despite identical per-token price — denser tokenizer. Bars relative to the priciest.</div>
+  </div>
+
+  <footer>
+    <b>Reading this.</b> Input is the only near-measured quantity. Thinking, output, and especially the <b>loop size</b> are predictions — calibrate against your Windsurf dashboard, then the bands earn trust.<br>
+    <b>Credit model.</b> Windsurf bills external models as credits = tokens × multiplier + ~20% margin, matching its published example (10M-token Sonnet 4.6 ≈ 2,700 cr) at the 250-credit pack: <span class="src">Opus 150 / 750 · Sonnet 90 / 450 · Haiku 30 / 150 cr per 1M in/out.</span> Output = 5× input; thinking bills at the output rate.<br>
+    <b>Loop math.</b> Across N turns, input re-inflates (prior output + tool results accumulate) → input grows ~quadratically; caching bills re-sent context at ~10% (if Windsurf honors API caching — uncertain). Output/thinking are per-turn × N.<br>
+    <b>Caveat.</b> Lineup as of June 2026 — Opus ships 4.6/4.7/4.8; <b>Sonnet 4.7/4.8 are projected</b> (not yet released) and priced at Sonnet's tier rate; Haiku is 4.5. Credit rates are flat within a tier. Windsurf moved to daily/weekly quotas in March 2026; these rates = what overage consumes. SWE models (0 cr) excluded.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id);};
+  var ta=$("ta");
+  var caps={ctx:1000000, omax:128000};
+
+  // comparison set — full lineup (key, label, rin, rout, think, dens)
+  var MODELS=[
+    {key:"o48t", label:"Opus 4.8 Thinking",   rin:150, rout:750, think:true,  dens:1.25},
+    {key:"o48",  label:"Opus 4.8",            rin:150, rout:750, think:false, dens:1.25},
+    {key:"o47t", label:"Opus 4.7 Thinking",   rin:150, rout:750, think:true,  dens:1.25},
+    {key:"o47",  label:"Opus 4.7",            rin:150, rout:750, think:false, dens:1.25},
+    {key:"o46t", label:"Opus 4.6 Thinking",   rin:150, rout:750, think:true,  dens:1.0 },
+    {key:"o46",  label:"Opus 4.6",            rin:150, rout:750, think:false, dens:1.0 },
+    {key:"s48t", label:"Sonnet 4.8 Thinking", rin:90,  rout:450, think:true,  dens:1.25},
+    {key:"s48",  label:"Sonnet 4.8",          rin:90,  rout:450, think:false, dens:1.25},
+    {key:"s47t", label:"Sonnet 4.7 Thinking", rin:90,  rout:450, think:true,  dens:1.25},
+    {key:"s47",  label:"Sonnet 4.7",          rin:90,  rout:450, think:false, dens:1.25},
+    {key:"s46t", label:"Sonnet 4.6 Thinking", rin:90,  rout:450, think:true,  dens:1.0 },
+    {key:"s46",  label:"Sonnet 4.6",          rin:90,  rout:450, think:false, dens:1.0 },
+    {key:"h45",  label:"Haiku 4.5",           rin:30,  rout:150, think:false, dens:1.0 }
+  ];
+
+  function fmtInt(n){ if(!isFinite(n)) n=0; return Math.round(n).toLocaleString("en-US"); }
+  function fmtCr(n){
+    if(!isFinite(n)||n<=0) return "0";
+    if(n<10)  return n.toFixed(2);
+    if(n<100) return n.toFixed(1);
+    return fmtInt(n);
+  }
+  function num(id,fb){ var v=parseFloat($(id).value); return isFinite(v)&&v>=0?v:fb; }
+  function selOpt(){ return $("model").options[$("model").selectedIndex]; }
+
+  function baseInputTokens(){
+    var chars=ta.value.length;
+    var cpt=num("cpt",3.7); if(cpt<0.5) cpt=0.5;
+    return chars>0?chars/cpt:0;
+  }
+
+  // session credits for a model spec and a (W, thinking-tokens) pair
+  function session(baseInput, H, d, rIn, rOut, think, w, thx, N, T, cache){
+    var baseIn=(baseInput + H)*d;        // turn-1 input (model tokens)
+    var outPer=baseInput*w*d;            // per-turn output
+    var thPer=(think?thx:0)*d;           // per-turn thinking
+    var toolAddEff=T*d;
+    var accum=(N*(N-1))/2;
+    var carried=(outPer+toolAddEff)*accum;
+    var inTokActual=baseIn*N + carried;  // total input tokens sent across turns
+    var inCr;
+    if(cache){
+      var resent=(N-1)*baseIn + carried; // everything beyond the first send
+      var billed=baseIn + 0.1*resent;
+      inCr=billed*rIn/1e6;
+    } else {
+      inCr=inTokActual*rIn/1e6;
+    }
+    var outTok=outPer*N, thTok=thPer*N;
+    var outCr=outTok*rOut/1e6, thCr=thTok*rOut/1e6;
+    return {inTok:inTokActual, outTok:outTok, thTok:thTok,
+            inCr:inCr, outCr:outCr, thCr:thCr, cr:inCr+outCr+thCr,
+            outPer:outPer, thPer:thPer, baseIn:baseIn, toolAddEff:toolAddEff};
+  }
+
+  var lastExp=-1;
+  function flash(el){ el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+
+  function compute(){
+    var text=ta.value, chars=text.length;
+    var words,lines;
+    if(chars>2000000){ var nows=text.replace(/\s+/g,"").length; words=Math.round(nows/5); lines=(text.match(/\n/g)||[]).length+(chars?1:0); }
+    else { var m=text.match(/\S+/g); words=m?m.length:0; lines=chars?text.split("\n").length:0; }
+    $("cChars").textContent=fmtInt(chars);
+    $("cWords").textContent=fmtInt(words);
+    $("cLines").textContent=fmtInt(lines);
+    $("wordEst").textContent=fmtInt(words*1.33);
+
+    var baseInput=baseInputTokens();
+    $("cTok").textContent=fmtInt(baseInput);
+
+    var o=selOpt();
+    var think=o.getAttribute("data-think")==="1";
+    var d=num("dens",1);
+    var H=num("overhead",0);
+    var rIn=num("rIn",150), rOut=num("rOut",750);
+    var W=[num("wLow",1),num("wTyp",2),num("wHigh",4)];
+    var th=[num("thLow",0),num("thTyp",0),num("thHigh",0)];
+    var N=Math.max(1,Math.round(num("turns",1)));
+    var T=num("toolTok",0);
+    var cache=$("cache").checked;
+
+    var lo=session(baseInput,H,d,rIn,rOut,think,W[0],th[0],N,T,cache);
+    var ty=session(baseInput,H,d,rIn,rOut,think,W[1],th[1],N,T,cache);
+    var hi=session(baseInput,H,d,rIn,rOut,think,W[2],th[2],N,T,cache);
+    var single=session(baseInput,H,d,rIn,rOut,think,W[1],th[1],1,T,cache);
+
+    var bExp=$("bExp");
+    $("bLow").textContent=fmtCr(lo.cr);
+    bExp.textContent=fmtCr(ty.cr);
+    $("bHigh").textContent=fmtCr(hi.cr);
+    $("rfLow").textContent=fmtCr(lo.cr)+" cr";
+    $("rfHigh").textContent=fmtCr(hi.cr)+" cr";
+    var span=hi.cr-lo.cr;
+    $("rangeMk").style.left=Math.min(100,Math.max(0,span>0?((ty.cr-lo.cr)/span*100):50))+"%";
+    var ek=Math.round(ty.cr*100); if(ek!==lastExp){ flash(bExp); lastExp=ek; }
+
+    var sessionMode=N>1;
+    $("heroLabel").textContent= sessionMode ? "CREDITS PER SESSION" : "CREDITS PER PROMPT";
+    $("bdLabel").textContent= sessionMode ? "SESSION BREAKDOWN" : "CREDIT BREAKDOWN";
+    $("heroFoot").innerHTML = sessionMode
+      ? (N+" turns · ~<b>"+fmtCr(ty.cr/N)+"</b> cr/turn avg · <b>"+(single.cr>0?(ty.cr/single.cr).toFixed(1):"1")+"×</b> a single prompt")
+      : "";
+
+    $("xInTok").textContent=fmtInt(ty.inTok);
+    $("xInCr").textContent=fmtCr(ty.inCr)+(cache&&sessionMode?" *":"");
+    $("xThTok").textContent=fmtInt(ty.thTok);
+    $("xThCr").textContent=fmtCr(ty.thCr);
+    $("xOutTok").textContent=fmtInt(ty.outTok);
+    $("xOutCr").textContent=fmtCr(ty.outCr);
+    var totTok=ty.inTok+ty.thTok+ty.outTok;
+    $("xTotTok").textContent=fmtInt(totTok);
+    $("xTotCr").textContent=fmtCr(ty.cr);
+    $("rowThink").classList.toggle("muted",!think);
+
+    var tc=ty.cr||1;
+    var pIn=ty.inCr/tc*100, pTh=ty.thCr/tc*100, pOut=ty.outCr/tc*100;
+    var cs=$("crStack").children;
+    cs[0].style.flexBasis=pIn+"%"; cs[1].style.flexBasis=pTh+"%"; cs[2].style.flexBasis=pOut+"%";
+    $("lcIn").textContent=Math.round(pIn)+"%";
+    $("lcTh").textContent=Math.round(pTh)+"%";
+    $("lcOut").textContent=Math.round(pOut)+"%";
+
+    var tt=totTok||1;
+    var ts=$("tokStack").children;
+    ts[0].style.flexBasis=(ty.inTok/tt*100)+"%"; ts[1].style.flexBasis=(ty.thTok/tt*100)+"%"; ts[2].style.flexBasis=(ty.outTok/tt*100)+"%";
+    $("ltIn").textContent=fmtInt(ty.inTok);
+    $("ltTh").textContent=fmtInt(ty.thTok);
+    $("ltOut").textContent=fmtInt(ty.outTok);
+
+    var peakIn=ty.baseIn + (N-1)*(ty.outPer + ty.toolAddEff);
+    var peak=peakIn + ty.outPer + ty.thPer;
+    var pct=peak/caps.ctx*100;
+    var bar=$("ctxBar"), fill=bar.querySelector("i");
+    fill.style.width=Math.min(100,pct)+"%";
+    var over=pct>100; bar.classList.toggle("over",over);
+    var pl=$("ctxPct"); pl.classList.toggle("over",over);
+    pl.textContent=(pct<0.1&&pct>0?"<0.1":(pct<10?pct.toFixed(1):Math.round(pct)))+"%";
+    $("ctxWarn").classList.toggle("show",over);
+    $("genWarn").classList.toggle("show",(ty.thPer+ty.outPer)>caps.omax);
+    $("ctxCaption").textContent = sessionMode ? ("peak turn (turn "+N+")") : "in + thinking + output";
+    $("capCtx").textContent = baseInput>0 ? (fmtInt(peak)+" tok peak") : "—";
+
+    $("mPerTurn").textContent = baseInput>0 ? fmtCr(ty.cr/N) : "0";
+    var amp = single.cr>0 ? ty.cr/single.cr : 1;
+    $("mAmp").innerHTML = amp.toFixed(amp<10?1:0)+"<small>×</small>";
+    var genCr=ty.thCr+ty.outCr;
+    $("mShare").innerHTML = (tc>1?Math.round(genCr/tc*100):0)+"<small>%</small>";
+
+    var budget=num("budget",400); if(budget<1) budget=1;
+    var bp=ty.cr>0?ty.cr/budget*100:0;
+    $("bgPct").textContent=(bp<0.1&&bp>0?"<0.1":(bp<10?bp.toFixed(1):Math.round(bp)))+"%";
+    $("bgN").textContent=ty.cr>0?fmtInt(Math.floor(budget/ty.cr)):"—";
+    $("bgPack").textContent=ty.cr>0?fmtInt(Math.floor(250/ty.cr)):"—";
+
+    var selKey=o.getAttribute("data-key");
+    var rows=MODELS.map(function(md){
+      var r=session(baseInput,H,md.dens,md.rin,md.rout,md.think,W[1],th[1],N,T,cache);
+      return {key:md.key,label:md.label,cr:r.cr};
+    });
+    var max=Math.max.apply(null,rows.map(function(r){return r.cr;}).concat([0.000001]));
+    $("cmpList").innerHTML=rows.map(function(r){
+      return '<div class="cmprow'+(r.key===selKey?' sel':'')+'">'
+        +'<span class="nm">'+r.label+'</span>'
+        +'<span class="cmpbar"><i style="width:'+(r.cr/max*100)+'%"></i></span>'
+        +'<span class="pc">'+fmtCr(r.cr)+' cr</span></div>';
+    }).join("");
+  }
+
+  $("task").addEventListener("change",function(){
+    var w=this.options[this.selectedIndex].getAttribute("data-w").split(",");
+    $("wLow").value=w[0]; $("wTyp").value=w[1]; $("wHigh").value=w[2];
+    compute();
+  });
+
+  function applyModel(){
+    var o=selOpt();
+    $("rIn").value=o.getAttribute("data-in");
+    $("rOut").value=o.getAttribute("data-out");
+    $("dens").value=o.getAttribute("data-dens");
+    caps.ctx=parseFloat(o.getAttribute("data-ctx"))||1000000;
+    caps.omax=parseFloat(o.getAttribute("data-omax"))||128000;
+    var ctxLbl = caps.ctx>=1000000 ? (caps.ctx/1000000)+"M" : (caps.ctx/1000)+"K";
+    $("ctxMaxLbl").textContent=ctxLbl;
+    var markPct=Math.min(95,200000/caps.ctx*100);
+    var mark=$("ctxMark");
+    if(caps.ctx>200000){ mark.style.display="block"; mark.style.left=markPct+"%"; }
+    else { mark.style.display="none"; }
+    var think=o.getAttribute("data-think")==="1";
+    ["thLow","thTyp","thHigh"].forEach(function(id){ $(id).disabled=!think; });
+    if(think){
+      if(num("thLow",0)===0&&num("thTyp",0)===0&&num("thHigh",0)===0){
+        $("thLow").value=2000; $("thTyp").value=8000; $("thHigh").value=24000;
+      }
+    } else { $("thLow").value=0; $("thTyp").value=0; $("thHigh").value=0; }
+    var dv=parseFloat(o.getAttribute("data-dens"));
+    var proj=o.getAttribute("data-proj")==="1";
+    $("modelNote").innerHTML = (proj?"<b>Projected</b> — not yet released (June 2026); priced at tier rate. ":"")
+      + (dv>1
+        ? "<b>Denser tokenizer</b> (×"+dv+") — the 4.7+ generation emits more tokens per char than 4.6, so identical text costs more credits."
+        : "Standard tokenizer (×1.0).")
+      + (think? " Thinking billed at the output rate." : " No thinking tokens.");
+    compute();
+  }
+  $("model").addEventListener("change",applyModel);
+
+  function agentSummary(){
+    var N=Math.max(1,Math.round(num("turns",1)));
+    $("agentSum").textContent = N<=1
+      ? "A single prompt is one turn. Raise turns to model a Cascade session — prior outputs & tool results re-inflate the context each turn, so credits grow faster than linearly."
+      : "Modeling a "+N+"-turn Cascade session: context carries forward, so per-turn input climbs. Caching the re-sent prefix is the main lever to keep a long loop affordable.";
+  }
+
+  function clearAll(){ ta.value=""; ta.focus(); compute(); }
+  $("btnClear").addEventListener("click",clearAll);
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape") clearAll(); });
+
+  ta.addEventListener("input",compute);
+  ["cpt","dens","overhead","wLow","wTyp","wHigh","thLow","thTyp","thHigh","rIn","rOut","budget","turns","toolTok"].forEach(function(id){
+    $(id).addEventListener("input",function(){ if(id==="turns") agentSummary(); compute(); });
+  });
+  $("cache").addEventListener("change",compute);
+
+  applyModel();
+  agentSummary();
+})();
+</script>
+</body>
+</html>
