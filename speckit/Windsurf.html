@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windsurf Credit X-Ray — Documentation</title>
+<style>
+:root{
+  --bg:#0b0d11; --panel:#0e1116; --panel2:#0c0e13; --line:#1d2128; --line2:#272c36;
+  --fg:#d9dde4; --dim:#8b929d; --dim2:#5b626d; --signal:#c8f751; --signal-dim:#9bbf3e;
+  --amber:#ffb24d; --cyan:#6fd6ff; --think:#b388ff;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"Cascadia Code","JetBrains Mono","SFMono-Regular","SF Mono","Consolas","Roboto Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
+  font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:48px 48px;opacity:.10;
+  -webkit-mask-image:radial-gradient(ellipse 120% 80% at 50% 0%,#000 25%,transparent 100%);
+  mask-image:radial-gradient(ellipse 120% 80% at 50% 0%,#000 25%,transparent 100%)}
+.wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:54px 22px 90px}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--signal-dim);margin-bottom:6px}
+h1{font-size:clamp(26px,5vw,38px);line-height:1.15;margin:.1em 0 .4em;font-weight:700;letter-spacing:-.01em;
+  padding-bottom:.35em;border-bottom:1px solid var(--line2)}
+h2{font-size:clamp(19px,3.2vw,24px);margin:2.4em 0 .7em;font-weight:650;color:#eef1f5;
+  padding-top:.7em;border-top:1px solid var(--line2);letter-spacing:-.01em}
+h2::before{content:"▘ ";color:var(--signal-dim);font-family:var(--mono)}
+h3{font-size:17px;margin:1.7em 0 .5em;font-weight:650;color:var(--signal)}
+p{margin:.85em 0}
+a{color:var(--signal);text-decoration:none;border-bottom:1px solid rgba(200,247,81,.3)}
+a:hover{border-bottom-color:var(--signal)}
+strong{color:#f1f4f8;font-weight:650}
+em{color:var(--dim)}
+ul,ol{margin:.8em 0;padding-left:1.4em}
+li{margin:.4em 0}
+li::marker{color:var(--signal-dim)}
+hr{border:0;border-top:1px solid var(--line2);margin:2.4em 0}
+blockquote{margin:1.1em 0;padding:.7em 1.1em;border-left:3px solid var(--signal-dim);
+  background:rgba(200,247,81,.04);border-radius:0 8px 8px 0;color:var(--fg)}
+blockquote p{margin:.2em 0;font-family:var(--mono);font-size:14px}
+code{font-family:var(--mono);font-size:.88em;background:#14181f;border:1px solid var(--line2);
+  border-radius:5px;padding:.1em .4em;color:#e7d9ff}
+pre{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:16px 18px;
+  overflow:auto;margin:1.1em 0;line-height:1.55}
+pre code{background:none;border:0;padding:0;font-size:13px;color:#cdd3db}
+table{width:100%;border-collapse:collapse;margin:1.2em 0;font-size:14px;
+  font-family:var(--mono);display:block;overflow-x:auto}
+th,td{border:1px solid var(--line2);padding:8px 11px;text-align:left;vertical-align:top}
+th{background:#12161c;color:var(--signal);font-weight:650;letter-spacing:.02em;white-space:nowrap}
+tr:nth-child(even) td{background:rgba(255,255,255,.012)}
+.doc-foot{margin-top:60px;padding-top:18px;border-top:1px solid var(--line2);
+  font-family:var(--mono);font-size:11px;color:var(--dim2);letter-spacing:.03em}
+::selection{background:rgba(200,247,81,.25)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker">Windsurf Credit X-Ray · Documentation</div>
+<h1>Windsurf Credit X-Ray — Documentation</h1>
+<p><em>A self-contained, offline HTML instrument that estimates the </em><em>Windsurf credit cost of a Claude prompt before you send it</em><em> — broken down across input, thinking, and output, as low/expected/high bands, and extended to multi-turn agent (Cascade) sessions.</em></p>
+<p><strong>File:</strong> <code>windsurf-credit-xray.html</code> · <strong>Status:</strong> lineup and pricing as of June 2026 · <strong>Dependencies:</strong> none (open in any browser)</p>
+<hr />
+<h2>Contents</h2>
+<ol>
+<li>Overview</li>
+<li>Quick start</li>
+<li>The credit model — how tokens become credits</li>
+<li>Supported Claude models</li>
+<li>The token-economics model</li>
+<li>The agentic loop (session cost)</li>
+<li>Parameters reference</li>
+<li>Readouts reference</li>
+<li>Estimation accuracy &amp; calibration</li>
+<li>Assumptions &amp; caveats</li>
+<li>Formula reference</li>
+<li>Technical notes</li>
+<li>Sources</li>
+<li>Version history</li>
+</ol>
+<hr />
+<h2>1. Overview</h2>
+<p>The tool answers one question: <em>if I send this prompt to Windsurf using a given Claude model, roughly how many credits will it cost?</em> It exists because Windsurf meters third-party models (Claude, GPT) by <strong>token consumption</strong>, so the cost of a prompt is invisible until after it runs. Pasting the prompt here gives a defensible estimate up front.</p>
+<p>Everything reduces to tokens. The pasted text is converted to an input-token estimate; output and (optionally) thinking tokens are predicted from that input via adjustable assumptions; each token class is priced at a per-model credit rate; and the result is shown as a band, because output length is never known exactly before generation.</p>
+<p>The design philosophy is honesty about uncertainty: <strong>input is the only quantity that is close to measured. Everything else — output length, thinking budget, and the size of an agent loop — is a prediction you calibrate.</strong> The numbers are a planning instrument, not a billing meter.</p>
+<hr />
+<h2>2. Quick start</h2>
+<ol>
+<li>Open <code>windsurf-credit-xray.html</code> in any browser. Nothing is installed; nothing leaves the page.</li>
+<li>Paste your prompt, spec, file, or context into the large box. The character, word, line, and base-token counts update live.</li>
+<li>Pick a <strong>Task</strong> — this sets the output-expansion band (W).</li>
+<li>Pick a <strong>Claude model</strong> — this sets the credit rate, tokenizer density, context/output caps, and whether thinking tokens are billed.</li>
+<li>Read the <strong>hero band</strong>: low / expected / high credits for that prompt.</li>
+<li>(Optional) For real Cascade work, open the <strong>Agentic Loop</strong> panel and set the number of turns — the estimate becomes a <em>session</em> total.</li>
+<li>Tune any parameter below (chars/token, W, thinking budget, overhead, credit rates, budget) to match your situation.</li>
+</ol>
+<p>Press <strong>Esc</strong> or the <strong>Clear</strong> button to empty the input.</p>
+<hr />
+<h2>3. The credit model — how tokens become credits</h2>
+<p>Windsurf bills external models (Claude, GPT) on a token basis with a margin:</p>
+<blockquote>
+<p><strong>credits = tokens × model-multiplier + ~20% margin</strong></p>
+</blockquote>
+<p>A credit is worth roughly <strong>$0.04</strong>, derived from the add-on pack price of $10 per 250 credits. Combining the margin and the credit price gives a single conversion from API dollars to credits:</p>
+<blockquote>
+<p><strong>credits = API-dollar-cost × 1.20 ÷ $0.04 = API-dollar-cost × 30</strong></p>
+</blockquote>
+<p><strong>Verification against Windsurf's own published example.</strong> A single complex task on Sonnet using 10M tokens (5M input + 5M output) is documented as ≈ 2,700 credits:</p>
+<pre><code>API cost   = 5M × $3/1M (in) + 5M × $15/1M (out) = $15 + $75 = $90
++ 20% margin                                      = $108
+÷ $0.04 per credit                                = 2,700 credits   ✓
+</code></pre>
+<p>This reproduces the published figure exactly, which is why the per-model credit rates below are trustworthy defaults.</p>
+<p><strong>Per-1M-token credit rates</strong> (margin already included):</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>API $/1M (in / out)</th>
+<th>Credit rate (in / out)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Opus</td>
+<td>$5 / $25</td>
+<td><strong>150 / 750</strong> cr</td>
+</tr>
+<tr>
+<td>Sonnet</td>
+<td>$3 / $15</td>
+<td><strong>90 / 450</strong> cr</td>
+</tr>
+<tr>
+<td>Haiku</td>
+<td>$1 / $5</td>
+<td><strong>30 / 150</strong> cr</td>
+</tr>
+</tbody>
+</table>
+<p>Output bills at exactly <strong>5× input</strong> on every current Claude tier, so the output rate is always five times the input rate.</p>
+<p><strong>Important context shift.</strong> Windsurf retired its monthly credit <em>pool</em> on 19 March 2026 and moved to <strong>daily/weekly quotas</strong>. Under the new system these credit rates are what your <em>overage</em> consumes once the quota is exhausted; subscribers from before that date are grandfathered on the old pool. Either way, the token→credit math above is the right unit of account, which is why the tool speaks entirely in credits.</p>
+<hr />
+<h2>4. Supported Claude models</h2>
+<p>The model dropdown is grouped by tier. Within a tier, the credit rate is flat across versions; the meaningful differences are the <strong>tokenizer density</strong> (the 4.7 generation emits more tokens per character) and whether <strong>thinking</strong> tokens are generated.</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Credit rate (in/out)</th>
+<th>Density</th>
+<th>Context</th>
+<th>Max output</th>
+<th>Thinking</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Opus 4.8 / 4.8 Thinking</td>
+<td>150 / 750</td>
+<td>1.25</td>
+<td>1M</td>
+<td>128K</td>
+<td>optional</td>
+<td>released</td>
+</tr>
+<tr>
+<td>Opus 4.7 / 4.7 Thinking</td>
+<td>150 / 750</td>
+<td>1.25</td>
+<td>1M</td>
+<td>128K</td>
+<td>optional</td>
+<td>released</td>
+</tr>
+<tr>
+<td>Opus 4.6 / 4.6 Thinking</td>
+<td>150 / 750</td>
+<td>1.0</td>
+<td>1M</td>
+<td>128K</td>
+<td>optional</td>
+<td>released</td>
+</tr>
+<tr>
+<td>Sonnet 4.8 / 4.8 Thinking</td>
+<td>90 / 450</td>
+<td>1.25</td>
+<td>1M</td>
+<td>128K</td>
+<td>optional</td>
+<td><strong>projected</strong></td>
+</tr>
+<tr>
+<td>Sonnet 4.7 / 4.7 Thinking</td>
+<td>90 / 450</td>
+<td>1.25</td>
+<td>1M</td>
+<td>128K</td>
+<td>optional</td>
+<td><strong>projected</strong></td>
+</tr>
+<tr>
+<td>Sonnet 4.6 / 4.6 Thinking</td>
+<td>90 / 450</td>
+<td>1.0</td>
+<td>1M</td>
+<td>128K</td>
+<td>optional</td>
+<td>released</td>
+</tr>
+<tr>
+<td>Haiku 4.5</td>
+<td>30 / 150</td>
+<td>1.0</td>
+<td>200K</td>
+<td>64K</td>
+<td>no</td>
+<td>released</td>
+</tr>
+</tbody>
+</table>
+<p><strong>On the projected Sonnet entries.</strong> As of June 2026 the Sonnet line tops out at 4.6 and Haiku at 4.5; Opus is the only tier that has shipped 4.7 and 4.8. Sonnet 4.7/4.8 are included because the tool is meant to be forward-usable and credit rates are flat within a tier — they are priced at Sonnet's tier rate and assigned the 4.7-generation density (1.25) on the assumption a future release inherits the newer tokenizer. They are clearly marked <code>proj.</code> in the dropdown and flagged in the model note. Edit any rate or density if reality diverges.</p>
+<p><strong>Thinking variants</strong> share the per-token rate of their base model. The only difference is that they emit reasoning tokens, which bill at the <strong>output</strong> rate. That is why a "Thinking" model can cost a multiple of its plain twin on the same prompt.</p>
+<hr />
+<h2>5. The token-economics model</h2>
+<p>A prompt's cost is the sum of three token classes:</p>
+<ul>
+<li><strong>Input</strong> — what you paste, plus per-call overhead (system prompt + tool schemas). Billed at the input rate.</li>
+<li><strong>Thinking</strong> — reasoning tokens, present only on Thinking models. Billed at the <strong>output</strong> rate.</li>
+<li><strong>Output</strong> — the model's reply. Billed at the output rate.</li>
+</ul>
+<p><strong>Output is modelled as a multiple of input:</strong> <code>output_tokens = input_tokens × W</code>, where <strong>W</strong> is a task-dependent expansion ratio. The Task dropdown prefills a low/typical/high band:</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>W (low · typ · high)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Summarize / extract / classify</td>
+<td>0.05 · 0.1 · 0.25</td>
+</tr>
+<tr>
+<td>Q&amp;A / explain</td>
+<td>0.2 · 0.4 · 1.0</td>
+</tr>
+<tr>
+<td>Translate / reformat</td>
+<td>0.9 · 1.0 · 1.2</td>
+</tr>
+<tr>
+<td>Refactor / edit a file</td>
+<td>0.9 · 1.1 · 1.5</td>
+</tr>
+<tr>
+<td>Generate code from a spec</td>
+<td>1 · 2 · 4</td>
+</tr>
+<tr>
+<td>Expand outline → full doc</td>
+<td>3 · 5 · 10</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why W dominates the bill.</strong> Because the output rate is 5× the input rate, the per-prompt cost simplifies to:</p>
+<pre><code>cost ≈ input_tokens × input_rate × (1 + 5·W)
+</code></pre>
+<p>So W = 0.2 doubles the input-only cost; W = 1 makes it six times; W = 2, eleven times. On any generative task the output term carries most of the credits — which is exactly why a tool that only counted input would mislead.</p>
+<p><strong>Tokenizer density (×).</strong> The generic token estimate (characters ÷ ratio) is tokenizer-agnostic. A per-model <strong>density</strong> factor corrects it: the Opus 4.7 generation introduced a tokenizer that produces up to ~35% more tokens for the same text than 4.6, carried into 4.8. The default is 1.25 for 4.7/4.8 and 1.0 for 4.6 and Haiku. Same price per token, but more tokens — so <strong>Opus 4.8 costs more credits than Opus 4.6 on identical input</strong>, a trap the comparison strip makes visible.</p>
+<p><strong>Per-call overhead.</strong> Cascade ships a system prompt and tool-schema definitions on <em>every</em> call. This is real input that most estimates omit; it is added to the pasted input on each turn (default ≈ 1,500 tokens).</p>
+<hr />
+<h2>6. The agentic loop (session cost)</h2>
+<p>A single Cascade prompt is rarely one model call. The agent reads files, writes code, runs tests, and reasons over several <strong>turns</strong>, and each turn re-sends the accumulated conversation. This is the largest source of real-world cost and the main thing naïve estimates miss.</p>
+<p>The <strong>Agentic Loop</strong> panel models it with two inputs — number of turns <code>N</code> and tool-result tokens added per turn <code>T</code> — plus an optional caching toggle. When <code>N = 1</code> the result equals a single prompt; raising <code>N</code> turns the estimate into a session total.</p>
+<p><strong>The math.</strong> Let <code>baseIn</code> be the turn-1 input (pasted input + overhead, adjusted by density), <code>outPer</code> the per-turn output, <code>thPer</code> the per-turn thinking, and <code>toolAdd</code> the per-turn tool tokens. Across N turns the re-sent context accumulates, so total input carries a quadratic term:</p>
+<pre><code>input_tokens (no cache) = baseIn × N + (outPer + toolAdd) × N(N−1)/2
+output_tokens           = outPer × N
+thinking_tokens         = thPer × N
+</code></pre>
+<p>The <code>N(N−1)/2</code> factor is why a 10-turn session costs far more than 10× a single prompt — often 20–40× once accumulation dominates. The <strong>Loop amplification</strong> metric reports this multiple directly.</p>
+<p><strong>Caching.</strong> In a loop the re-sent prefix (system prompt, tool schemas, earlier context) is largely identical turn to turn. Prompt caching bills that re-sent portion at ~10% of the input rate. With caching on, the tool charges the first send in full and everything re-sent afterward at 10%:</p>
+<pre><code>input_tokens (cache) = baseIn + 0.1 × [ (N−1)·baseIn + (outPer + toolAdd)·N(N−1)/2 ]
+</code></pre>
+<p>This is the single biggest lever for keeping a long agent loop affordable. It is flagged as conditional because it is <strong>uncertain whether Windsurf passes API-level caching through to credit billing</strong> — treat it as a best case.</p>
+<p><strong>Context footprint is per-turn, not cumulative.</strong> A session never holds all turns in the window at once; only the busiest (last) turn must fit. The tool therefore checks the <strong>peak-turn</strong> footprint — <code>peak-turn input + output + thinking</code> — against the model's context window (1M for Opus/Sonnet, 200K for Haiku), and against the one-turn generation cap (128K, or 64K for Haiku).</p>
+<hr />
+<h2>7. Parameters reference</h2>
+<p>Every parameter is editable; the dropdowns prefill sensible defaults.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>What it controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>chars / token</td>
+<td>3.7</td>
+<td>Generic input-token estimate (characters ÷ this). Lower (~3.0) for dense code, higher (~4.0) for prose.</td>
+</tr>
+<tr>
+<td>tokenizer density ×</td>
+<td>model-set</td>
+<td>Per-model correction over the generic estimate. 1.25 for 4.7/4.8, 1.0 otherwise. Scales every token count.</td>
+</tr>
+<tr>
+<td>per-call overhead</td>
+<td>1,500</td>
+<td>System prompt + tool schemas added to input on every call/turn.</td>
+</tr>
+<tr>
+<td>output expansion W (low/typ/high)</td>
+<td>task-set</td>
+<td>output tokens = input × W. The dominant cost lever.</td>
+</tr>
+<tr>
+<td>thinking budget (low/typ/high)</td>
+<td>2,000 / 8,000 / 24,000</td>
+<td>Reasoning tokens per turn on Thinking models; billed at the output rate. Disabled on non-thinking models.</td>
+</tr>
+<tr>
+<td>input credit rate</td>
+<td>model-set</td>
+<td>Credits per 1M input tokens (margin included).</td>
+</tr>
+<tr>
+<td>output credit rate</td>
+<td>model-set</td>
+<td>Credits per 1M output tokens (5× input).</td>
+</tr>
+<tr>
+<td>agent turns (N)</td>
+<td>1</td>
+<td>Number of Cascade turns. 1 = single prompt; &gt;1 = session.</td>
+</tr>
+<tr>
+<td>tool tokens / turn (T)</td>
+<td>1,500</td>
+<td>Tool-result / observation tokens added to context each turn.</td>
+</tr>
+<tr>
+<td>cache re-sent context</td>
+<td>off</td>
+<td>Bills re-sent context at ~10% (conditional on Windsurf honoring caching).</td>
+</tr>
+<tr>
+<td>credit budget</td>
+<td>400</td>
+<td>Reference pool for the budget readouts.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>8. Readouts reference</h2>
+<ul>
+<li><strong>Hero band</strong> — low / expected / high credits for the prompt (or session when N &gt; 1). The marker shows where "expected" sits within the range; the spread comes from W and the thinking band varying.</li>
+<li><strong>Breakdown</strong> — input / thinking / output as tokens and credits, plus a total. With caching in a session, the input credits reflect the discount (marked <code>*</code>).</li>
+<li><strong>Credit composition</strong> — share of credits by class. On generative tasks output dominates.</li>
+<li><strong>Token composition</strong> — share of tokens by class.</li>
+<li><strong>Context footprint</strong> — peak-turn tokens against the model's context window, with a 200K marker and warnings for window or generation-cap overflow.</li>
+<li><strong>Credits / turn (avg)</strong> — session total ÷ N.</li>
+<li><strong>Loop amplification</strong> — session cost ÷ single-prompt cost; the agent-loop multiplier.</li>
+<li><strong>Output share of credits</strong> — fraction of credits spent generating (thinking + output).</li>
+<li><strong>Budget context</strong> — this run as a percent of the budget, how many runs the budget buys, and how many fit a 250-credit add-on pack.</li>
+<li><strong>Model comparison</strong> — expected credits across the full lineup for the same input, task, and loop; bars relative to the priciest. Note 4.8 &gt; 4.6 within a tier, from density alone.</li>
+</ul>
+<hr />
+<h2>9. Estimation accuracy &amp; calibration</h2>
+<p>The input estimate (characters ÷ ratio, then × density) is typically within ~10–20% of a true tokenizer count for mixed content. That is adequate for "know the cost before prompting," and the ratio is exposed so you can calibrate it.</p>
+<p>To turn the bands from plausible into trustworthy, pull a few <strong>real</strong> runs from your Windsurf usage history and back out the actual numbers: the true output:input ratio (set W), a representative thinking budget, and — for Cascade — the real turn count and per-turn tool tokens. After one calibration pass the expected column tracks reality closely.</p>
+<p>The expected value is the column to trust; the low/high endpoints assume W (and thinking) move together, so they intentionally bracket a wide plausible range rather than a statistical confidence interval.</p>
+<hr />
+<h2>10. Assumptions &amp; caveats</h2>
+<ul>
+<li><strong>Ballpark, not a meter.</strong> Input is near-measured; output, thinking, and loop size are predictions. The tool never sees actual generation.</li>
+<li><strong>Credit basis.</strong> Defaults assume a $0.04 credit (the $10 / 250 add-on pack) and Windsurf's ~20% external-model margin. Both are folded into the per-model credit rates and can be edited.</li>
+<li><strong>Quota era.</strong> Windsurf moved from a monthly credit pool to daily/weekly quotas in March 2026; the credit rates here are what overage consumes. Quota percentages in the Windsurf UI are opaque and not modelled directly — the budget panel uses a pool framing for intuition.</li>
+<li><strong>Caching is conditional.</strong> The −90% on re-sent context applies only if Windsurf passes API caching through to credit billing, which is unconfirmed. Treat caching-on as a best case.</li>
+<li><strong>Projected Sonnet.</strong> Sonnet 4.7/4.8 are not released as of June 2026; they are included at Sonnet's tier rate with 4.7-generation density as a forward-looking convenience.</li>
+<li><strong>Loop model is a simplification.</strong> Linear context growth per turn with a quadratic accumulation term captures the right shape; real Cascade behavior varies with tool use, retries (failed operations don't consume quota), and summarization/compaction.</li>
+<li><strong>SWE / proprietary models excluded</strong> by design — they consume 0 credits.</li>
+<li><strong>Tab autocomplete is free</strong> on all Windsurf plans and is not part of this estimate.</li>
+</ul>
+<hr />
+<h2>11. Formula reference</h2>
+<pre><code>base_input      = characters / chars_per_token
+effective input = (base_input + overhead) × density          # turn-1 input, model tokens
+output_per_turn = base_input × W × density
+thinking_per_turn = (thinking ? thinking_budget : 0) × density
+tool_add        = tool_tokens_per_turn × density
+
+# session over N turns
+input_tokens  = effective_input × N + (output_per_turn + tool_add) × N(N−1)/2
+  (cache on)  = effective_input + 0.1 × [ (N−1)·effective_input + (output_per_turn + tool_add)·N(N−1)/2 ]
+output_tokens = output_per_turn × N
+think_tokens  = thinking_per_turn × N
+
+# credits  (rate units: credits per 1,000,000 tokens; output_rate = 5 × input_rate)
+input_credits  = input_tokens  × input_rate  / 1e6
+think_credits  = think_tokens  × output_rate / 1e6
+output_credits = output_tokens × output_rate / 1e6
+total_credits  = input_credits + think_credits + output_credits
+
+# single-prompt shortcut (N = 1, no tools/cache)
+total ≈ effective_input × input_rate/1e6 × (1 + 5·W)   + thinking term
+
+# peak-turn context footprint
+peak = [effective_input + (N−1)(output_per_turn + tool_add)] + output_per_turn + thinking_per_turn
+
+# dollars → credits (basis for the default rates)
+credits = usd_cost × 1.20 / 0.04 = usd_cost × 30
+</code></pre>
+<hr />
+<h2>12. Technical notes</h2>
+<p>The tool is a single HTML file with inline CSS and vanilla JavaScript — <strong>no frameworks, no external requests, no fonts or libraries fetched, no analytics.</strong> It runs fully offline and stores nothing (no cookies, no localStorage); refreshing resets it. Typography uses a monospace system stack (Cascadia Code, JetBrains Mono, SF Mono, Consolas, …) for the engineering-instrument aesthetic, falling back gracefully. It is responsive down to phone width. All computation is client-side and recomputes live on any input change.</p>
+<hr />
+<h2>13. Sources</h2>
+<ul>
+<li><strong>Windsurf pricing &amp; credit mechanics</strong> — Cognition/Windsurf 2026 pricing pages and analyses: token-based external-model billing (<code>credits = tokens × multiplier</code>, ~20% margin), the 10M-token Sonnet ≈ 2,700-credit worked example, $10 / 250-credit add-on packs, and the 19 March 2026 shift from a monthly pool to daily/weekly quotas (Pro $15→$20, new Max tier).</li>
+<li><strong>Anthropic API pricing</strong> (verified May–June 2026) — Sonnet 4.6 $3/$15, Opus 4.6 / 4.7 / 4.8 $5/$25, Haiku 4.5 $1/$5 per 1M input/output tokens; 5× output-to-input ratio across the lineup; 1M context at flat rate on Opus/Sonnet; up-to-90% prompt-cache discount; 50% batch discount.</li>
+<li><strong>Opus 4.7 tokenizer change</strong> — the 4.7 generation introduced a denser tokenizer (up to ~35% more tokens for the same text vs 4.6), unchanged through 4.8.</li>
+<li><strong>Model caps</strong> — 128K max output for Opus/Sonnet, 64K for Haiku 4.5; Haiku context 200K.</li>
+</ul>
+<p>All figures are planning estimates, not billing guarantees; pricing and model availability change.</p>
+<hr />
+<h2>14. Version history</h2>
+<ul>
+<li><strong>v1 — Token → cost meter.</strong> Paste box, token estimate, dollar cost with a legacy credit equivalent.</li>
+<li><strong>v2 — Token-economics X-ray.</strong> Task/model dropdowns; input/thinking/output split as low/expected/high bands; context-window and composition views.</li>
+<li><strong>v3 — Credits.</strong> Dollars removed; pure Windsurf-credit accounting with per-model credit rates and a budget panel.</li>
+<li><strong>v4 (this) — Full lineup + agent loop.</strong> Opus 4.6/4.7/4.8 and Sonnet 4.6 (+ projected 4.7/4.8) thinking &amp; non-thinking, Haiku 4.5; tokenizer density; per-call overhead; agentic-loop session cost with caching and amplification; model-aware context/output caps; credit budget default 400.</li>
+</ul>
+<div class="doc-foot">Generated from documentation.md · self-contained · no external resources</div>
+</div>
+</body>
+</html>
