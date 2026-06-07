@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F# Interactive Learning Guide for C# Developers</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons Round -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <!-- FontAwesome for fallback brand icons (C# logo) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom styling -->
+    <link rel="stylesheet" href="index.css">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        
+        <!-- Google Material App Bar -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <span class="material-icons-round">code</span>
+                </div>
+                <div class="logo-text">
+                    <h1>Get Programming with F#</h1>
+                    <span>C# to F# Mental Shift Playground</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" title="Toggle Theme" class="btn-icon">
+                    <span class="material-icons-round" id="theme-icon">dark_mode</span>
+                </button>
+                <button id="about-btn" title="About transition guide" class="btn-icon">
+                    <span class="material-icons-round">info</span>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Material Workspace -->
+        <main class="app-workspace">
+            
+            <!-- Sidebar Navigation (Pane 1) -->
+            <aside class="sidebar-pane" id="sidebar">
+                <div class="sidebar-header">
+                    <h3>Course Units</h3>
+                </div>
+                <div class="lessons-list" id="lessons-nav">
+                    <div class="loading-placeholder">
+                        <span class="material-icons-round spinner-anim">sync</span>
+                        <span>Loading course index...</span>
+                    </div>
+                </div>
+                
+                <!-- Interactive FSI Signature Decoder -->
+                <div class="sidebar-tool-card" id="sig-decoder-card">
+                    <div class="tool-card-header">
+                        <span><span class="material-icons-round text-cyan inline-icon">translate</span> FSI Type Decoder</span>
+                        <button id="decoder-help-btn" class="btn-icon-sm" title="Decoder Help"><span class="material-icons-round">help_outline</span></button>
+                    </div>
+                    <div class="tool-card-body">
+                        <p class="tool-desc">Paste F# compiler type output to convert it into readable C# classes and functions:</p>
+                        <div class="input-with-button">
+                            <input type="text" id="decoder-input" placeholder="e.g. val add : x:int -> y:int -> int" />
+                            <button id="clear-decoder-btn" class="btn-icon-sm" title="Clear"><span class="material-icons-round">close</span></button>
+                        </div>
+                        <div class="decoder-result" id="decoder-result-box" style="display: none;">
+                            <div class="result-label">C# Notation:</div>
+                            <div class="result-value" id="decoder-value">Func&lt;int, Func&lt;int, int&gt;&gt;</div>
+                            <div class="result-breakdown" id="decoder-breakdown">Decoding signature...</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Lesson Prose Reader (Pane 2) -->
+            <section class="lesson-pane" id="lesson-content-area">
+                <div class="lesson-header-sticky">
+                    <div class="lesson-title-meta">
+                        <span id="lesson-unit-label" class="unit-tag">Unit 2</span>
+                        <h2 id="lesson-title">Welcome Reader</h2>
+                    </div>
+                    <div class="lesson-navigation">
+                        <button id="prev-lesson-btn" class="btn btn-nav" disabled>
+                            <span class="material-icons-round">chevron_left</span> Prev
+                        </button>
+                        <button id="next-lesson-btn" class="btn btn-nav" disabled>
+                            Next <span class="material-icons-round">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="lesson-scroll-body" id="lesson-body-content">
+                    <div class="welcome-screen">
+                        <div class="welcome-icon">
+                            <span class="material-icons-round">menu_book</span>
+                        </div>
+                        <h2>Get Programming with F#</h2>
+                        <p>Welcome to the SOTA interactive textbook companion. Transition from standard C# to functional F# code in a compiler-supported browser guide.</p>
+                        <div class="welcome-features">
+                            <div class="feature-item">
+                                <span class="material-icons-round text-purple">terminal</span>
+                                <div>
+                                    <h4>Local F# Compiler Sandboxing</h4>
+                                    <p>Executes your code blocks locally using <code>dotnet fsi</code>, showing evaluations, values, and types in real time.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="material-icons-round text-cyan">edit_note</span>
+                                <div>
+                                    <h4>Monaco Code Workspace</h4>
+                                    <p>Work directly in a browser environment driven by Monaco (the engine behind VS Code) with standard keymaps.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Code Workspace Editor & Console (Pane 3) -->
+            <section class="editor-pane">
+                <div class="pane-split-vertical">
+                    
+                    <!-- Monaco Code Editor Area -->
+                    <div class="editor-section">
+                        <div class="section-bar">
+                            <!-- Google Material Tabs -->
+                            <div class="editor-tabs">
+                                <button class="tab-btn active" id="tab-fs" title="Edit F# script file">
+                                    <span class="material-icons-round tab-icon">integration_instructions</span>
+                                    <span>Workspace.fsx</span>
+                                </button>
+                                <button class="tab-btn" id="tab-cs" title="View equivalent C# code side-by-side">
+                                    <span class="tab-icon"><i class="fa-brands fa-hashtag text-cyan"></i></span>
+                                    <span>C# Translation</span>
+                                </button>
+                                <button class="tab-btn" id="tab-shift" title="Mental shift paradigm guides">
+                                    <span class="material-icons-round tab-icon text-purple">psychology</span>
+                                    <span>Mental Shift</span>
+                                </button>
+                            </div>
+                            <div class="editor-actions">
+                                <button id="reset-code-btn" class="btn btn-sm btn-secondary" title="Reset workspace to default listing code">
+                                    <span class="material-icons-round">restart_alt</span> Reset
+                                </button>
+                                <button id="run-code-btn" class="btn btn-sm btn-primary" title="Execute F# script (Ctrl + Enter)">
+                                    <span class="material-icons-round">play_arrow</span> Run Code
+                                </button>
+                            </div>
+                        </div>
+                        <div id="monaco-editor-container">
+                            <div class="editor-loading">
+                                <span class="material-icons-round spinner-anim">sync</span>
+                                <span>Initializing workspace...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Mental Shift Overlay Pane -->
+                        <div id="mental-shift-overlay" class="editor-overlay-card" style="display: none;">
+                            <div class="overlay-header">
+                                <h3><span class="material-icons-round text-purple inline-icon">psychology</span> C# to F# Mental Shift</h3>
+                            </div>
+                            <div class="overlay-body" id="mental-shift-content">
+                                <p>Load a code listing to inspect comparison notes.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FSI Terminal Console -->
+                    <div class="console-section">
+                        <div class="section-bar">
+                            <span class="console-title"><span class="material-icons-round console-title-icon">terminal</span> Output Console</span>
+                            <div class="console-actions">
+                                <button id="clear-console-btn" class="btn-icon-sm" title="Clear logs"><span class="material-icons-round">delete_outline</span></button>
+                            </div>
+                        </div>
+                        <div class="console-output" id="console-display">
+                            <div class="console-welcome">F# Interactive console ready.</div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </section>
+            
+        </main>
+        
+        <!-- About Material Modal -->
+        <div class="modal-backdrop" id="about-modal" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2><span class="material-icons-round text-purple inline-icon">info</span> F# Interactive Transition Portal</h2>
+                    <button class="modal-close" id="close-modal-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>This is a local developer guide generated from a PDF of the book <em>Get Programming with F#</em> by Isaac Abraham.</p>
+                    <h3>Material Design Shifts:</h3>
+                    <ul>
+                        <li><strong>Functional Mental Model</strong>: Immutability by default, expressions over statements, pipelines instead of nested method calls, and automatic type inference.</li>
+                        <li><strong>Live Compilation</strong>: Edit code in the workspace and click **Run Code** to compile F# files locally using <code>dotnet fsi</code>.</li>
+                        <li><strong>Type Translator</strong>: Paste F# types in the decoder tool to learn what they represent in C# delegates and classes.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Monaco Editor loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+    <!-- Frontend Logic -->
+    <script src="index.js"></script>
+</body>
+</html>
