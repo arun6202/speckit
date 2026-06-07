@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F# in Action Training Mode</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">F#</div>
+        <div>
+          <h1>Training Mode</h1>
+          <p>C# instincts to F# fluency</p>
+        </div>
+      </div>
+      <label class="search-label" for="searchBox">Search</label>
+      <input id="searchBox" class="search" type="search" placeholder="topic, file, mental model">
+      <nav id="topicList" class="topic-list" aria-label="Topics"></nav>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <p id="sourceFiles" class="source-files"></p>
+          <h2 id="topicTitle"></h2>
+          <p id="topicSummary" class="summary"></p>
+        </div>
+        <div class="status-pill" id="healthStatus">Checking runner...</div>
+      </header>
+
+      <div class="prompt-grid">
+        <article class="prompt-card">
+          <div class="prompt-card-header">
+            <h4>Try This</h4>
+            <div class="mini-nav">
+              <button id="prevPrompt" type="button" title="Previous variation">&lt;</button>
+              <span id="promptCount"></span>
+              <button id="nextPrompt" type="button" title="Next variation">&gt;</button>
+            </div>
+          </div>
+          <p id="stepTask"></p>
+        </article>
+
+        <article class="prompt-card">
+          <div class="prompt-card-header">
+            <h4>Look For</h4>
+            <button id="openConcept" class="concept-button" type="button">Concept</button>
+          </div>
+          <p id="stepExpected"></p>
+        </article>
+      </div>
+
+      <section class="lesson-layout">
+        <aside class="step-rail">
+          <div class="rail-title">Atomic Steps</div>
+          <div id="stepList" class="step-list"></div>
+        </aside>
+
+        <section class="lesson-panel">
+          <div class="step-header">
+            <div>
+              <p id="stepKicker" class="kicker"></p>
+              <h3 id="stepTitle"></h3>
+            </div>
+            <div class="step-actions">
+              <button id="prevStep" class="nav-button" title="Previous atomic step" type="button">
+                <span>&lt;</span>
+                <strong>Prev Step</strong>
+              </button>
+              <button id="nextStep" class="nav-button" title="Next atomic step" type="button">
+                <strong>Next Step</strong>
+                <span>&gt;</span>
+              </button>
+            </div>
+          </div>
+
+          <section class="workbench">
+            <div class="code-pane">
+              <div class="editor-toolbar">
+                <div>
+                  <div class="editor-title">F# Script</div>
+                </div>
+                <div class="editor-buttons">
+                  <button id="resetCode" type="button">Reset</button>
+                  <button id="copyCode" type="button">Copy</button>
+                  <button id="inferCode" type="button">Infer</button>
+                  <button id="runCode" class="primary" type="button">Run</button>
+                </div>
+              </div>
+              <div class="editor-shell">
+                <pre id="highlightLayer" aria-hidden="true"></pre>
+                <textarea id="codeEditor" spellcheck="false" wrap="soft" aria-label="F# script editor"></textarea>
+              </div>
+              <div id="inferenceBar" class="inference-bar" hidden>
+                <div>
+                  <h4>Inferred Types</h4>
+                  <p id="inferenceGuide"></p>
+                </div>
+                <pre id="inferencePanel">Click Infer to see F# Interactive val/type signatures.</pre>
+              </div>
+            </div>
+
+            <div class="output-pane">
+              <div class="output-toolbar">
+                <span>Output</span>
+                <span id="runMeta"></span>
+              </div>
+              <pre id="outputPanel" class="output-panel">Run a step to see F# output here.</pre>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="conceptDialog" class="concept-dialog">
+    <div class="dialog-header">
+      <div>
+        <div class="rail-title">Concept</div>
+        <h3 id="conceptTitle"></h3>
+      </div>
+      <button id="closeConcept" type="button" title="Close concept">Close</button>
+    </div>
+    <p id="stepConcept"></p>
+    <div class="concept-section">
+      <h4>Mental Model</h4>
+      <p id="mentalModel"></p>
+    </div>
+    <div class="concept-section">
+      <h4>C# Shift</h4>
+      <p id="csharpShift"></p>
+    </div>
+    <div class="concept-section">
+      <h4>Watch</h4>
+      <p id="watchFor"></p>
+    </div>
+  </dialog>
+
+  <script src="/lessons.js"></script>
+  <script src="/sample-catalog.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
