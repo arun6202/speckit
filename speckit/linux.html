@@ -1,0 +1,2503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Field Manual — for the Windows / .NET Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Material 3 Dark Colors */
+  --md-sys-color-background: #0d0e12;
+  --md-sys-color-on-background: #e1e2ec;
+  
+  --md-sys-color-surface: #101115;
+  --md-sys-color-on-surface: #e1e2ec;
+  
+  --md-sys-color-surface-variant: #1a1c22;
+  --md-sys-color-on-surface-variant: #c3c6cf;
+  
+  --md-sys-color-surface-container-low: #15161c;
+  --md-sys-color-surface-container: #1e2025;
+  --md-sys-color-surface-container-high: #282a30;
+  --md-sys-color-surface-container-highest: #33353c;
+  
+  --md-sys-color-primary: #a8c7fa;
+  --md-sys-color-on-primary: #062e6f;
+  --md-sys-color-primary-container: #004a77;
+  --md-sys-color-on-primary-container: #c2e7ff;
+  
+  --md-sys-color-secondary-container: #2d3038;
+  --md-sys-color-on-secondary-container: #c3c6cf;
+  
+  --md-sys-color-outline: #8c9199;
+  --md-sys-color-outline-variant: #43474e;
+  
+  --md-sys-color-oracle-red: #ff897a;
+  --md-sys-color-oracle-red-container: #5c0002;
+  --md-sys-color-on-oracle-red-container: #ffdad5;
+  
+  --md-sys-color-ubuntu-orange: #ffb59b;
+  --md-sys-color-ubuntu-orange-container: #5d1b00;
+  --md-sys-color-on-ubuntu-orange-container: #ffdbcf;
+  
+  --md-sys-color-ps-navy: #152232;
+  --md-sys-color-ps-navy-deep: #0a1420;
+  
+  /* Retained/Mapped variables for content compatibility */
+  --paper: var(--md-sys-color-background);
+  --panel: var(--md-sys-color-surface-container);
+  --ink: var(--md-sys-color-on-surface);
+  --ink-soft: var(--md-sys-color-on-surface-variant);
+  --rule: var(--md-sys-color-outline-variant);
+  --term-bg: #090a0d;
+  --term-ink: #e1e2ec;
+  --term-dim: #8c9199;
+  --prompt: var(--md-sys-color-primary);
+  --oracle: var(--md-sys-color-oracle-red);
+  --ubuntu: var(--md-sys-color-ubuntu-orange);
+  --psnavy: var(--md-sys-color-ps-navy);
+  --psnavy-deep: var(--md-sys-color-ps-navy-deep);
+  --accent: var(--md-sys-color-primary);
+  --warn-bg: rgba(235, 191, 56, 0.08);
+  --warn-edge: #ebbf38;
+  --ok: #81c784;
+  --radius: 16px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; animation: none !important; }
+}
+
+body {
+  font-family: "Roboto", -apple-system, Segoe UI, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+/* Subtle Material grid */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: linear-gradient(var(--rule) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.06;
+}
+
+/* ---------- Header & Top App Bar ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand .stamp {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-primary-container);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.brand h1 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: .02em;
+  color: var(--ink);
+}
+
+.brand h1 small {
+  font-weight: 400;
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin-left: 6px;
+}
+
+.topbar .spacer {
+  flex: 1;
+}
+
+/* Material 3 Segmented Button for Distro switch */
+.distro-switch {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 999px;
+  overflow: hidden;
+  background: transparent;
+  padding: 0;
+}
+
+.distro-switch button {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  padding: 8px 20px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: .05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s, color 0.2s;
+  border-right: 1px solid var(--md-sys-color-outline);
+}
+
+.distro-switch button:last-child {
+  border-right: none;
+}
+
+.distro-switch button .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.distro-switch button:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+/* Distro states mapped using active containers */
+body[data-distro="ol"] .distro-switch .b-ol {
+  background: var(--md-sys-color-oracle-red-container);
+  color: var(--md-sys-color-on-oracle-red-container);
+}
+body[data-distro="ol"] .distro-switch .b-ol .dot {
+  opacity: 1;
+  transform: scale(1.2);
+  background: var(--md-sys-color-oracle-red);
+}
+
+body[data-distro="ub"] .distro-switch .b-ub {
+  background: var(--md-sys-color-ubuntu-orange-container);
+  color: var(--md-sys-color-on-ubuntu-orange-container);
+}
+body[data-distro="ub"] .distro-switch .b-ub .dot {
+  opacity: 1;
+  transform: scale(1.2);
+  background: var(--md-sys-color-ubuntu-orange);
+}
+
+/* Pill Search Wrap */
+.searchwrap {
+  position: relative;
+}
+
+.searchwrap input {
+  width: 250px;
+  max-width: 45vw;
+  padding: 10px 16px 10px 40px;
+  border-radius: 28px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--ink);
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.searchwrap input:focus {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.searchwrap input::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+.searchwrap .mag {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-soft);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.search-results {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 360px;
+  max-width: 85vw;
+  max-height: 350px;
+  overflow: auto;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  display: none;
+  z-index: 60;
+}
+
+.search-results.open {
+  display: block;
+}
+
+.search-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 12px 16px;
+  font-family: "Roboto", sans-serif;
+  font-size: 14.5px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule);
+  transition: background-color 0.2s;
+}
+
+.search-results button:hover,
+.search-results button:focus-visible {
+  background: var(--md-sys-color-surface-container-highest);
+  outline: none;
+}
+
+.search-results .where {
+  display: block;
+  font-size: 11px;
+  color: var(--md-sys-color-primary);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.search-results .none {
+  padding: 16px;
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  text-align: center;
+}
+
+/* ---------- Layout & Shell ---------- */
+.shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 24px;
+}
+
+/* Navigation Rail (Material 3 style) */
+nav.rail {
+  position: sticky;
+  top: 88px;
+  flex: 0 0 260px;
+  align-self: flex-start;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+  padding: 0 8px 24px 0;
+}
+
+nav.rail .railhead {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .15em;
+  color: var(--md-sys-color-primary);
+  text-transform: uppercase;
+  margin: 20px 12px 8px;
+}
+
+nav.rail a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--ink-soft);
+  padding: 10px 16px;
+  border-radius: 16px;
+  font-size: 14.5px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-bottom: 4px;
+}
+
+nav.rail a:hover {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--ink);
+}
+
+nav.rail a.active {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+nav.rail .num {
+  font-family: "Roboto Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 2px 6px;
+  min-width: 28px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+nav.rail a.active .num {
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
+}
+
+nav.rail .pr {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .04em;
+  border-radius: 6px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+.pr.d1 { background: rgba(129, 199, 132, 0.15); color: #81c784; }
+.pr.w1 { background: rgba(100, 181, 246, 0.15); color: #64b5f6; }
+.pr.m1 { background: rgba(186, 104, 200, 0.15); color: #ba68c8; }
+
+/* ---------- Main & Panels ---------- */
+main {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.panel {
+  display: none;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+.panel.active {
+  display: block;
+  animation: rise 0.3s cubic-bezier(0.2, 0, 0, 1.0);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+.kicker {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary);
+  margin-bottom: 8px;
+}
+
+.kicker .pr {
+  font-size: 11px;
+  letter-spacing: .04em;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.panel h2 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 38px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 8px 0 16px;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 76ch;
+  margin-bottom: 24px;
+}
+
+.panel h3 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: .02em;
+  color: var(--ink);
+  margin: 40px 0 16px;
+  padding-top: 24px;
+  border-top: 1px dashed var(--rule);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel h3 .tick {
+  width: 8px;
+  height: 8px;
+  background: var(--md-sys-color-primary);
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.panel p {
+  max-width: 78ch;
+  margin-bottom: 16px;
+  color: var(--ink-soft);
+}
+
+.panel ul {
+  margin: 0 0 20px 24px;
+  max-width: 78ch;
+  color: var(--ink-soft);
+}
+
+.panel li {
+  margin-bottom: 8px;
+}
+
+.panel code:not(pre code) {
+  font-family: "Roboto Mono", monospace;
+  font-size: .88em;
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 2px 6px;
+  color: var(--md-sys-color-primary);
+}
+
+/* ---------- Windows Translation Console ---------- */
+.winmap {
+  margin: 24px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.winmap .bar {
+  background: var(--psnavy-deep);
+  color: #cfe3ff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.winmap .bar::before {
+  content: ">_";
+  font-family: "Roboto Mono", monospace;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+}
+
+.winmap table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--psnavy);
+  color: #e3ecf8;
+  font-size: 14px;
+}
+
+.winmap th {
+  text-align: left;
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 12.5px;
+  color: #a8c7fa;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  background: rgba(0,0,0,0.15);
+}
+
+.winmap td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  vertical-align: top;
+  color: #cfe3ff;
+}
+
+.winmap tr:last-child td {
+  border-bottom: 0;
+}
+
+.winmap code {
+  font-family: "Roboto Mono", monospace;
+  font-size: .88em;
+  color: #a8c7fa;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  padding: 2px 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ---------- Command Cards ---------- */
+.cmd {
+  background: var(--term-bg);
+  border-radius: 16px;
+  margin: 20px 0;
+  color: var(--term-ink);
+  border-left: 6px solid var(--md-sys-color-outline);
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-left-width: 6px;
+}
+
+.cmd[data-d="ol"] { border-left-color: var(--md-sys-color-oracle-red); }
+.cmd[data-d="ub"] { border-left-color: var(--md-sys-color-ubuntu-orange); }
+
+body[data-distro="ol"] .cmd[data-d="ub"] { display: none; }
+body[data-distro="ub"] .cmd[data-d="ol"] { display: none; }
+
+span.ol, span.ub { font-weight: 600; }
+span.ol { color: var(--md-sys-color-oracle-red); }
+span.ub { color: var(--md-sys-color-ubuntu-orange); }
+
+body[data-distro="ol"] span.ub { display: none; }
+body[data-distro="ub"] span.ol { display: none; }
+
+.cmd-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 4px;
+}
+
+.cmd-head b {
+  font-family: "Outfit", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f0f5f9;
+}
+
+.chip {
+  flex: 0 0 auto;
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .08em;
+  border-radius: 6px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+}
+
+.chip.both { background: #2A3947; color: #a8c7fa; }
+.chip.olc { background: var(--md-sys-color-oracle-red-container); color: var(--md-sys-color-on-oracle-red-container); }
+.chip.ubc { background: var(--md-sys-color-ubuntu-orange-container); color: var(--md-sys-color-on-ubuntu-orange-container); }
+
+.copy {
+  margin-left: auto;
+  flex: 0 0 auto;
+  appearance: none;
+  border: 1px solid var(--md-sys-color-outline);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.copy:hover {
+  border-color: var(--md-sys-color-primary);
+  color: var(--ink);
+  background: rgba(168, 199, 250, 0.08);
+}
+
+.copy.ok {
+  border-color: var(--ok);
+  color: var(--ok);
+  background: rgba(129, 199, 132, 0.08);
+}
+
+.cmd pre {
+  padding: 12px 16px 16px;
+  overflow-x: auto;
+}
+
+.cmd pre code {
+  font-family: "Roboto Mono", monospace;
+  font-size: 13.5px;
+  line-height: 1.65;
+  white-space: pre;
+}
+
+.cmd pre code .c { color: var(--term-dim); }
+.cmd pre code .p { color: var(--md-sys-color-primary); user-select: none; }
+
+.cmd .why {
+  padding: 12px 16px 16px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  max-width: 90ch;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cmd .why code {
+  font-family: "Roboto Mono", monospace;
+  font-size: .88em;
+  color: var(--md-sys-color-primary);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+/* ---------- Callout Banners ---------- */
+aside.dotnet, aside.gotcha {
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 24px 0;
+  max-width: 86ch;
+  border: 1px solid transparent;
+}
+
+aside.dotnet {
+  background: rgba(168, 199, 250, 0.08);
+  border-color: rgba(168, 199, 250, 0.2);
+  border-left: 6px solid var(--md-sys-color-primary);
+}
+
+aside.gotcha {
+  background: rgba(255, 137, 122, 0.08);
+  border-color: rgba(255, 137, 122, 0.2);
+  border-left: 6px solid var(--md-sys-color-oracle-red);
+}
+
+aside .tag {
+  display: inline-block;
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+aside.dotnet .tag { color: var(--md-sys-color-primary); }
+aside.gotcha .tag { color: var(--md-sys-color-oracle-red); }
+
+aside p {
+  margin-bottom: 8px;
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+
+aside p:last-child {
+  margin-bottom: 0;
+}
+
+aside code {
+  font-family: "Roboto Mono", monospace;
+  font-size: .88em;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+/* ---------- Expansion Panels ---------- */
+details.deep {
+  margin: 20px 0;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-low);
+  max-width: 86ch;
+  overflow: hidden;
+}
+
+details.deep summary {
+  cursor: pointer;
+  padding: 16px 20px;
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color 0.2s;
+}
+
+details.deep summary:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+details.deep summary::-webkit-details-marker {
+  display: none;
+}
+
+details.deep summary::after {
+  content: "+";
+  font-family: "Roboto Mono", monospace;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+details.deep[open] summary::after {
+  content: "−";
+}
+
+details.deep .body {
+  padding: 4px 20px 20px;
+  border-top: 1px solid var(--rule);
+  background: var(--md-sys-color-surface-container);
+}
+
+/* ---------- Comparison Tables ---------- */
+table.cmp {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+table.cmp th {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: 13px;
+  text-align: left;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.15);
+  border-bottom: 1px solid var(--rule);
+}
+
+table.cmp th.olh { color: var(--md-sys-color-oracle-red); }
+table.cmp th.ubh { color: var(--md-sys-color-ubuntu-orange); }
+
+table.cmp td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+  color: var(--ink-soft);
+}
+
+table.cmp tr:last-child td {
+  border-bottom: 0;
+}
+
+table.cmp code {
+  font-family: "Roboto Mono", monospace;
+  font-size: .88em;
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  color: var(--md-sys-color-primary);
+}
+
+.legendline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.legendline span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* ---------- Roadmap Cards ---------- */
+.roadmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.road {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.road h4 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--ink);
+}
+
+.road ul {
+  margin-left: 20px;
+  font-size: 14px;
+}
+
+/* ---------- Scrollbars ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--md-sys-color-background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-outline);
+}
+
+/* ---------- Responsiveness ---------- */
+@media (max-width: 960px) {
+  .shell {
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+  }
+  nav.rail {
+    position: static;
+    flex: none;
+    width: 100%;
+    max-height: none;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule);
+    scrollbar-width: none;
+  }
+  nav.rail::-webkit-scrollbar {
+    display: none;
+  }
+  nav.rail .railhead {
+    display: none;
+  }
+  nav.rail a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border: 1px solid var(--rule);
+    background: var(--md-sys-color-surface-container-low);
+    margin-bottom: 0;
+    border-radius: 20px;
+    padding: 8px 16px;
+  }
+  nav.rail .pr {
+    margin-left: 8px;
+  }
+  main {
+    width: 100%;
+  }
+  .panel {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+  .panel h2 {
+    font-size: 28px;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+</style>
+</head>
+<body data-distro="ub">
+<header class="topbar">
+  <div class="brand">
+    <span class="stamp">FM-12</span>
+    <h1>Linux Field Manual <small>· for the Windows / .NET developer</small></h1>
+  </div>
+  <div class="spacer"></div>
+  <div class="distro-switch" role="group" aria-label="Active distribution">
+    <button class="b-ol" id="btnOL" title="Show Oracle Linux (RHEL-family) commands"><span class="dot"></span>ORACLE LINUX</button>
+    <button class="b-ub" id="btnUB" title="Show Ubuntu (Debian-family) commands"><span class="dot"></span>UBUNTU</button>
+  </div>
+  <div class="searchwrap">
+    <span class="mag">⌕</span>
+    <input id="search" type="search" placeholder="Search commands &amp; topics…" autocomplete="off" aria-label="Search the manual">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</header>
+<div class="shell">
+<nav class="rail" id="rail" aria-label="Concepts">
+  <div class="railhead">Orientation</div>
+  <a href="#p0" class="active"><span class="num">00</span>Start here: Win → Linux</a>
+  <div class="railhead">The 12 concepts</div>
+  <a href="#p1"><span class="num">01</span>Linux architecture</a>
+  <a href="#p2"><span class="num">02</span>File system hierarchy</a>
+  <a href="#p3"><span class="num">03</span>Permissions &amp; chmod</a>
+  <a href="#p4"><span class="num">04</span>Process management</a>
+  <a href="#p5"><span class="num">05</span>Streams, pipes, redirects</a>
+  <a href="#p6"><span class="num">06</span>Users, groups &amp; sudo</a>
+  <a href="#p7"><span class="num">07</span>Package management</a>
+  <a href="#p8"><span class="num">08</span>Shell scripting</a>
+  <a href="#p9"><span class="num">09</span>Networking commands</a>
+  <a href="#p10"><span class="num">10</span>systemd &amp; services</a>
+  <a href="#p11"><span class="num">11</span>Disk &amp; storage</a>
+  <a href="#p12"><span class="num">12</span>Boot process</a>
+</nav>
+<main id="main">
+
+<!-- ============ 00 START HERE ============ -->
+<section class="panel active" id="p0" data-title="Start here: Windows to Linux">
+  <span class="kicker">Orientation </span>
+  <h2>You know Windows. Here's the map.</h2>
+  <p class="lede">You can <code>ssh</code> in and run <code>ls</code>. This manual takes you from there to confidently deploying and operating .NET services on the two distro families you'll actually meet in the enterprise: <b>Oracle Linux</b> (RHEL family — common under Oracle DB, OCI, corporate datacenters) and <b>Ubuntu</b> (Debian family — common on Azure, AWS, and developer machines). Use the switch in the header: <b>every command card on every page swaps to the distro you pick.</b></p>
+  <div class="legendline">
+    <span><span class="swatch" style="background:var(--oracle)"></span>Oracle Linux / RHEL-family command</span>
+    <span><span class="swatch" style="background:var(--ubuntu)"></span>Ubuntu / Debian-family command</span>
+    <span><span class="swatch" style="background:#45576A"></span>Identical on both</span>
+    <span><span class="swatch" style="background:var(--psnavy)"></span>Windows translation table</span>
+  </div>
+
+  <h3><span class="tick"></span>The five mental-model shifts</h3>
+  <p>Most friction for a Windows developer isn't commands — it's five assumptions that quietly stop being true:</p>
+  <ul>
+    <li><b>One tree, no drive letters.</b> There is no <code>C:\</code>. Everything — disks, USB sticks, even network shares — is grafted ("mounted") somewhere under a single root <code>/</code>.</li>
+    <li><b>Everything is a file.</b> Devices (<code>/dev/sda</code>), kernel state (<code>/proc</code>), sockets — readable and writable like files. There is no Registry; configuration is plain text in <code>/etc</code>.</li>
+    <li><b>Case matters, extensions don't.</b> <code>Program.cs</code> and <code>program.cs</code> are different files. A file is executable because of a <i>permission bit</i>, not because it ends in <code>.exe</code>.</li>
+    <li><b>Text streams are the universal interface.</b> PowerShell pipes .NET objects; bash pipes raw text. Small tools chained with <code>|</code> replace most GUI consoles.</li>
+    <li><b>Root ≠ Administrator-with-UAC.</b> <code>sudo</code> elevates a single command, is logged, and is granted per-user. You almost never log in as root.</li>
+  </ul>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · daily survival</div>
+    <table>
+      <tr><th>You reach for…</th><th>On Linux it's…</th><th>Notes</th></tr>
+      <tr><td>Task Manager</td><td><code>top</code> / <code>htop</code>, <code>ps aux</code></td><td>Concept 04</td></tr>
+      <tr><td>services.msc / <code>sc.exe</code></td><td><code>systemctl</code></td><td>Concept 10</td></tr>
+      <tr><td>Event Viewer</td><td><code>journalctl</code>, <code>/var/log</code></td><td>Concepts 05 &amp; 10</td></tr>
+      <tr><td>Registry (HKLM\...)</td><td>text files in <code>/etc</code></td><td>Concept 02</td></tr>
+      <tr><td>Add/Remove Programs, winget</td><td><code>dnf</code> (Oracle) / <code>apt</code> (Ubuntu)</td><td>Concept 07</td></tr>
+      <tr><td>icacls / file Properties → Security</td><td><code>chmod</code>, <code>chown</code></td><td>Concept 03</td></tr>
+      <tr><td>ipconfig / netstat</td><td><code>ip addr</code>, <code>ss -tulnp</code></td><td>Concept 09</td></tr>
+      <tr><td>Disk Management</td><td><code>lsblk</code>, <code>df -h</code>, LVM</td><td>Concept 11</td></tr>
+      <tr><td>%PATH%, where.exe</td><td><code>$PATH</code>, <code>which</code> / <code>command -v</code></td><td>Concept 08</td></tr>
+      <tr><td>notepad on the server</td><td><code>nano</code> (easy) or <code>vim</code></td><td><code>nano file</code>, Ctrl+O save, Ctrl+X exit</td></tr>
+    </table>
+  </div>
+
+  <h3><span class="tick"></span>First ten minutes on any unfamiliar box</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Identify what you've logged into</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> cat /etc/os-release        <span class="c"># distro + version (works everywhere)</span>
+<span class="p">$</span> hostname -f                 <span class="c"># full machine name</span>
+<span class="p">$</span> uname -r                    <span class="c"># kernel version</span>
+<span class="p">$</span> whoami &amp;&amp; id                <span class="c"># who am I, what groups do I have</span>
+<span class="p">$</span> df -h                       <span class="c"># disks and free space</span>
+<span class="p">$</span> free -h                     <span class="c"># RAM</span>
+<span class="p">$</span> uptime                      <span class="c"># load + how long it's been up</span></code></pre>
+    <div class="why">On Oracle Linux, <code>uname -r</code> ending in <code>…el9uek…</code> means the box runs Oracle's <b>UEK</b> kernel — see Concept 01. <code>id</code> tells you immediately whether you're in the <span class="ol">wheel</span><span class="ub">sudo</span> group, i.e. whether <code>sudo</code> will work for you.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Navigation beyond ls — the moves you'll use hourly</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> pwd                         <span class="c"># where am I (print working directory)</span>
+<span class="p">$</span> cd /var/log &amp;&amp; ls -lah      <span class="c"># -l long, -a hidden (.files), -h human sizes</span>
+<span class="p">$</span> cd -                        <span class="c"># jump back to previous directory</span>
+<span class="p">$</span> less /var/log/syslog        <span class="c"># page a file: space=down, /text=search, q=quit</span>
+<span class="p">$</span> tail -f /var/log/syslog     <span class="c"># live-follow a log (Ctrl+C to stop)</span>
+<span class="p">$</span> grep -rn "Exception" .      <span class="c"># recursive text search with line numbers</span>
+<span class="p">$</span> find / -name "appsettings*.json" 2&gt;/dev/null   <span class="c"># find files by name</span></code></pre>
+    <div class="why"><code>less</code> is your Notepad-readonly; <code>tail -f</code> is your live log window; <code>grep -rn</code> is Ctrl+Shift+F for an entire server. The <code>2&gt;/dev/null</code> trick (hide permission errors) is explained in Concept 05.</div>
+  </div>
+
+  <h3><span class="tick"></span>Your learning path, prioritized</h3>
+  <p>Badges in the sidebar encode this. Given your background, this is the order that pays off fastest:</p>
+  <div class="roadmap">
+    <div class="road"><h4> Survive</h4><ul>
+      <li><b>02</b> File system — where things live</li>
+      <li><b>03</b> Permissions — why you get <i>Permission denied</i></li>
+      <li><b>06</b> sudo — how to fix it properly</li>
+      <li><b>07</b> Packages — install tools &amp; .NET</li>
+    </ul></div>
+    <div class="road"><h4> Operate</h4><ul>
+      <li><b>10</b> systemd — run your app as a service</li>
+      <li><b>04</b> Processes — find &amp; stop things</li>
+      <li><b>05</b> Pipes — interrogate logs</li>
+      <li><b>09</b> Networking — ports &amp; firewalls</li>
+      <li><b>08</b> Scripting — automate deploys</li>
+      <li><b>01</b> Architecture — the why behind it all</li>
+    </ul></div>
+    <div class="road"><h4> Own the box</h4><ul>
+      <li><b>11</b> Storage &amp; LVM — grow disks, hunt space</li>
+      <li><b>12</b> Boot process — debug a VM that won't come up</li>
+    </ul></div>
+  </div>
+
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Your C# skills transfer almost completely: ASP.NET Core, EF Core, gRPC and console apps run natively on both distros. What changes is <b>everything around the process</b> — where files go, who owns them, how the service starts, which port it may bind. That's exactly what these 12 concepts cover.</p>
+    <p>Practice risk-free: enable <b>WSL2</b> on your Windows machine (<code>wsl --install -d Ubuntu</code>) for the Ubuntu side, and run Oracle Linux free in a VirtualBox VM or an always-free OCI instance for the RHEL side. Same commands, zero fear of breaking a server.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — line endings &amp; case</span>
+    <p>Files edited on Windows carry CRLF endings; a bash script with CRLF fails with the baffling error <code>/bin/bash^M: bad interpreter</code>. Fix with <code>dos2unix script.sh</code>, and set <code>git config core.autocrlf input</code>. Also remember: <code>appSettings.json</code> ≠ <code>appsettings.json</code> on Linux — a classic first-deploy crash for ASP.NET devs.</p>
+  </aside>
+</section>
+
+<!-- ============ 01 ARCHITECTURE ============ -->
+<section class="panel" id="p1" data-title="Linux architecture">
+  <span class="kicker">Concept 01 </span>
+  <h2>Linux architecture</h2>
+  <p class="lede">Three layers: <b>user space</b> (your apps, the shell, libraries like glibc), the <b>kernel</b> (process scheduling, memory, drivers, file systems — ~30M lines of code), and <b>hardware</b>. Apps never touch hardware directly; they make <b>system calls</b> that cross into privileged kernel mode. Same idea as Windows' user mode / NT kernel split — but on Linux the seams are visible and inspectable.</p>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · architecture</div>
+    <table>
+      <tr><th>Windows concept</th><th>Linux equivalent</th><th>Difference that matters</th></tr>
+      <tr><td>ntoskrnl.exe (NT kernel)</td><td>the Linux kernel (<code>vmlinuz</code>)</td><td>Monolithic but modular — drivers load/unload at runtime as modules</td></tr>
+      <tr><td>Win32 API / kernel32.dll</td><td>glibc wrapping syscalls</td><td><code>CreateProcess</code> ≈ <code>fork()</code> + <code>exec()</code> — two steps, not one</td></tr>
+      <tr><td>HAL + .sys drivers</td><td>kernel modules (<code>.ko</code>)</td><td><code>lsmod</code> lists them; no reboot for most loads</td></tr>
+      <tr><td>cmd / PowerShell</td><td>bash / zsh — just user-space programs</td><td>The shell has no special status; replace it freely</td></tr>
+      <tr><td>WinDbg / Sysinternals ProcMon</td><td><code>dmesg</code>, <code>strace</code>, <code>/proc</code></td><td>Built into every box, no install needed</td></tr>
+    </table>
+  </div>
+
+  
+<div class="diagram-wrapper" style="margin: 24px 0;">
+  <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--md-sys-color-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Visual Guide: Linux Architecture Layers</div>
+  <svg viewBox="0 0 600 240" class="concept-diagram" style="width: 100%; border-radius: 16px; background: var(--md-sys-color-surface-container-low); border: 1px solid var(--rule); padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+    <style>
+      .diag-text { font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500; }
+      .diag-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; }
+      .layer-rect { rx: 8px; fill: var(--md-sys-color-surface-container-high); stroke: var(--rule); stroke-width: 1.5; }
+      .highlight-rect { rx: 8px; fill: var(--md-sys-color-primary-container); stroke: var(--md-sys-color-primary); stroke-width: 2; }
+      .arrow-line { stroke: var(--md-sys-color-primary); stroke-width: 2; fill: none; stroke-dasharray: 4; }
+    </style>
+    <!-- User Space -->
+    <g transform="translate(10, 10)">
+      <rect class="layer-rect" x="0" y="0" width="540" height="50" />
+      <text class="diag-title" fill="var(--ink)" x="20" y="30">User Space</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="130" y="30">.NET Apps</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="230" y="30">Shells (bash/zsh)</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="380" y="30">glibc (C Library)</text>
+    </g>
+    <!-- Syscall Barrier -->
+    <g transform="translate(10, 75)">
+      <rect class="highlight-rect" x="0" y="0" width="540" height="30" />
+      <text class="diag-title" fill="var(--md-sys-color-on-primary-container)" x="20" y="20">System Call Interface (fork, read, write, connect)</text>
+    </g>
+    <!-- Kernel Space -->
+    <g transform="translate(10, 120)">
+      <rect class="layer-rect" x="0" y="0" width="540" height="60" />
+      <text class="diag-title" fill="var(--ink)" x="20" y="35">Kernel Space</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="130" y="25">Process Scheduler</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="270" y="25">VFS &amp; Filesystems</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="410" y="25">Network Stack</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="130" y="50">Memory Manager</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="270" y="50">Device Drivers</text>
+    </g>
+    <!-- Hardware -->
+    <g transform="translate(10, 195)">
+      <rect style="rx: 8px; fill: var(--md-sys-color-surface-container-highest); stroke: var(--rule);" x="0" y="0" width="540" height="35" />
+      <text class="diag-title" fill="var(--ink)" x="20" y="22">Hardware</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="130" y="22">CPU / RAM</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="270" y="22">Disks (NVMe/SATA)</text>
+      <text class="diag-text" fill="var(--ink-soft)" x="410" y="22">Network Card (NIC)</text>
+    </g>
+  </svg>
+</div>
+<h3><span class="tick"></span>See the layers yourself</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Kernel identity and messages</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> uname -a                    <span class="c"># kernel version, arch, build date</span>
+<span class="p">$</span> sudo dmesg --human | less   <span class="c"># kernel ring buffer — Linux's "Event Viewer, System"</span>
+<span class="p">$</span> lsmod | head                 <span class="c"># loaded kernel modules (≈ drivers)</span>
+<span class="p">$</span> cat /proc/cpuinfo | grep "model name" | uniq
+<span class="p">$</span> cat /proc/meminfo | head -3  <span class="c"># /proc = live kernel state exposed as files</span></code></pre>
+    <div class="why"><code>/proc</code> isn't on disk — it's the kernel answering questions in file form. <code>cat /proc/1234/cmdline</code> shows how process 1234 was launched; Task Manager's "command line" column, as a file.</div>
+  </div>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>UEK vs RHCK — Oracle ships two kernels</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> uname -r
+<span class="c">5.15.0-205.149.5.1.el9uek.x86_64     ← "uek" = Unbreakable Enterprise Kernel</span>
+<span class="p">$</span> ls /boot/vmlinuz*                   <span class="c"># both kernels usually installed</span>
+<span class="p">$</span> sudo grubby --info=ALL | grep -E "^kernel"   <span class="c"># boot entries available</span>
+<span class="p">$</span> sudo grubby --set-default /boot/vmlinuz-5.14.0-...el9.x86_64  <span class="c"># switch to RHCK</span></code></pre>
+    <div class="why">Oracle Linux boots its own tuned <b>UEK</b> kernel by default but also ships the <b>RHCK</b> (Red Hat Compatible Kernel). Some third-party agents/drivers are certified only against RHCK — when a vendor says "unsupported kernel," this is the knob.</div>
+  </div>
+  <div class="cmd" data-d="ub">
+    <div class="cmd-head"><span class="chip ubc">Ubuntu</span><b>Kernel flavours &amp; HWE</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> uname -r
+<span class="c">6.8.0-58-generic                      ← "generic" flavour on most servers/VMs</span>
+<span class="p">$</span> apt list --installed 2&gt;/dev/null | grep linux-image | head
+<span class="p">$</span> sudo apt install --install-recommends linux-generic-hwe-24.04  <span class="c"># newer HWE kernel on LTS</span></code></pre>
+    <div class="why">Ubuntu LTS can run a newer <b>HWE</b> (Hardware Enablement) kernel for recent hardware. Cloud images use <code>-aws</code>/<code>-azure</code> flavours pre-tuned for that hypervisor.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Watch syscalls live — strace</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> <span class="ol">sudo dnf install -y strace</span><span class="ub">sudo apt install -y strace</span>
+<span class="p">$</span> strace -f -e trace=openat,connect dotnet MyApp.dll 2&gt;&amp;1 | head -40</code></pre>
+    <div class="why">Every file your app opens, every socket it connects — the user-space → kernel boundary, live. The fastest answer to "which config file is it <i>actually</i> reading?" Think Sysinternals ProcMon, built in.</div>
+  </div>
+
+  <details class="deep"><summary>Deep dive: what actually happens on a syscall</summary><div class="body">
+    <p>When your .NET app calls <code>File.ReadAllText</code>, the runtime calls glibc's <code>read()</code>, which executes a special CPU instruction that switches the processor to privileged mode and jumps to a fixed kernel entry point. The kernel validates the request (permissions — Concept 03), talks to the file-system driver and the disk, copies data into your process's buffer, then drops back to user mode. This boundary is why a crashing app can't take the OS down — same philosophy as Windows user/kernel mode, enforced the same way by the CPU.</p>
+  </div></details>
+
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>The .NET runtime ID <code>linux-x64</code> assumes <b>glibc</b> — fine on both Oracle Linux and Ubuntu. Alpine containers use musl instead, which needs <code>linux-musl-x64</code>. When a published binary dies instantly with a cryptic loader error, mismatched C library is suspect #1 — check with <code>ldd ./MyApp</code>, which lists the native libraries your binary links (like Dependency Walker for Linux).</p>
+  </aside>
+</section>
+
+<!-- ============ 02 FHS ============ -->
+<section class="panel" id="p2" data-title="File system hierarchy">
+  <span class="kicker">Concept 02 </span>
+  <h2>File system hierarchy</h2>
+  <p class="lede">Forget drive letters. One tree, rooted at <code>/</code>, with standardized branches (the FHS — Filesystem Hierarchy Standard). Once you memorize the top ten directories, every Linux box in the world — Oracle, Ubuntu, a Docker container — feels familiar.</p>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · where things live</div>
+    <table>
+      <tr><th>On Windows</th><th>On Linux</th><th>What it holds</th></tr>
+      <tr><td>C:\Program Files</td><td><code>/usr</code>, <code>/opt</code></td><td><code>/usr</code> = package-managed software; <code>/opt</code> = self-contained vendor apps (your .NET app belongs here)</td></tr>
+      <tr><td>C:\Users\you</td><td><code>/home/you</code></td><td><code>~</code> expands to it; root's home is <code>/root</code></td></tr>
+      <tr><td>The Registry</td><td><code>/etc</code></td><td>Plain-text config — grep-able, diff-able, version-controllable</td></tr>
+      <tr><td>C:\Windows\System32</td><td><code>/bin</code>, <code>/sbin</code>, <code>/lib</code></td><td>Essential binaries &amp; libraries (symlinked into /usr on modern distros)</td></tr>
+      <tr><td>Event logs, C:\Windows\Temp</td><td><code>/var/log</code>, <code>/tmp</code></td><td><code>/var</code> = data that grows; <code>/tmp</code> is wiped on reboot</td></tr>
+      <tr><td>Device Manager's world</td><td><code>/dev</code>, <code>/proc</code>, <code>/sys</code></td><td>Devices and kernel state, exposed as files</td></tr>
+      <tr><td>D:\, E:\ mounted drives</td><td><code>/mnt</code>, <code>/media</code>, any dir</td><td>Disks mount <i>into</i> the tree at any empty directory</td></tr>
+    </table>
+  </div>
+
+  
+<div class="diagram-wrapper" style="margin: 24px 0;">
+  <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--md-sys-color-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Visual Guide: Root Directory Tree Layout</div>
+  <svg viewBox="0 0 600 420" class="concept-diagram" style="width: 100%; border-radius: 16px; background: var(--md-sys-color-surface-container-low); border: 1px solid var(--rule); padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+    <style>
+      .tree-text { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; }
+      .tree-desc { font-family: 'Roboto', sans-serif; font-size: 12px; }
+      .tree-line { stroke: var(--rule); stroke-width: 1.5; fill: none; stroke-dasharray: 2 1; }
+      .highlight-row { rx: 8px; fill: rgba(168, 199, 250, 0.08); stroke: rgba(168, 199, 250, 0.2); stroke-width: 1; }
+    </style>
+    
+    <defs>
+      <!-- Folder Icon -->
+      <g id="folder-icon">
+        <path d="M2 4h4l1.5 1.5h6.5c.8 0 1.5.7 1.5 1.5v6c0 .8-.7 1.5-1.5 1.5H2c-.8 0-1.5-.7-1.5-1.5V5.5c0-.8.7-1.5 1.5-1.5z" fill="var(--md-sys-color-primary)"/>
+      </g>
+      <!-- Active App Folder Icon -->
+      <g id="folder-icon-active">
+        <path d="M2 4h4l1.5 1.5h6.5c.8 0 1.5.7 1.5 1.5v6c0 .8-.7 1.5-1.5 1.5H2c-.8 0-1.5-.7-1.5-1.5V5.5c0-.8.7-1.5 1.5-1.5z" fill="var(--md-sys-color-oracle-red)"/>
+      </g>
+    </defs>
+    
+    <!-- Tree connection lines -->
+    <path class="tree-line" d="
+      M 30,35 L 30,385 
+      M 30,70 L 55,70
+      M 30,105 L 55,105
+      M 30,140 L 55,140
+      M 30,175 L 55,175
+      M 30,245 L 55,245
+      M 30,350 L 55,350
+      M 30,385 L 55,385
+      
+      M 70,175 L 70,210
+      M 70,210 L 95,210
+      
+      M 70,245 L 70,315
+      M 70,280 L 95,280
+      M 70,315 L 95,315
+    " />
+    
+    <!-- Highlights -->
+    <rect class="highlight-row" x="85" y="198" width="490" height="24" />
+    
+    <!-- Root / -->
+    <g transform="translate(20, 20)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="135" y="12">Root folder of the entire system</text>
+    </g>
+    
+    <!-- /bin -->
+    <g transform="translate(55, 55)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/bin</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="100" y="12">Essential user command binaries (e.g. ls, cat)</text>
+    </g>
+    
+    <!-- /etc -->
+    <g transform="translate(55, 90)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/etc</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="100" y="12">System configuration files (all plain text)</text>
+    </g>
+    
+    <!-- /home -->
+    <g transform="translate(55, 125)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/home</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="100" y="12">User home directories (e.g. /home/arun)</text>
+    </g>
+    
+    <!-- /opt -->
+    <g transform="translate(55, 160)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/opt</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="100" y="12">Self-contained vendor app packages</text>
+    </g>
+    
+    <!-- /opt/orderapi -->
+    <g transform="translate(95, 195)">
+      <use href="#folder-icon-active" x="0" y="0" />
+      <text class="tree-text" fill="var(--md-sys-color-oracle-red)" x="22" y="12">/opt/orderapi</text>
+      <text class="tree-desc" fill="var(--md-sys-color-oracle-red)" font-weight="500" x="125" y="12">★ Deployed .NET service directory</text>
+    </g>
+    
+    <!-- /var -->
+    <g transform="translate(55, 230)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/var</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="100" y="12">Variable data files that grow over time</text>
+    </g>
+    
+    <!-- /var/log -->
+    <g transform="translate(95, 265)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/var/log</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="125" y="12">System &amp; service log files</text>
+    </g>
+    
+    <!-- /var/lib -->
+    <g transform="translate(95, 300)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/var/lib</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="125" y="12">Application state &amp; local databases</text>
+    </g>
+    
+    <!-- /dev -->
+    <g transform="translate(55, 335)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/dev</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="100" y="12">Device nodes (everything is a file)</text>
+    </g>
+    
+    <!-- /proc -->
+    <g transform="translate(55, 370)">
+      <use href="#folder-icon" x="0" y="0" />
+      <text class="tree-text" fill="var(--ink)" x="22" y="12">/proc</text>
+      <text class="tree-desc" fill="var(--ink-soft)" x="100" y="12">Virtual files exposing live kernel &amp; process states</text>
+    </g>
+  </svg>
+</div>
+<h3><span class="tick"></span>Explore the tree</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>The guided tour</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> ls -lah /                       <span class="c"># the top of everything</span>
+<span class="p">$</span> ls /etc | head -20              <span class="c"># config land — note: plain files</span>
+<span class="p">$</span> sudo ls -lah /var/log           <span class="c"># the server's diary</span>
+<span class="p">$</span> ls -l /dev/sd* /dev/nvme* 2&gt;/dev/null   <span class="c"># your disks, as files</span>
+<span class="p">$</span> man hier                        <span class="c"># the FHS, documented on the box itself</span></code></pre>
+    <div class="why"><code>man &lt;anything&gt;</code> is the offline documentation system — <code>man ls</code>, <code>man systemctl</code>. Press <code>/</code> to search inside, <code>q</code> to quit. It's the single highest-leverage habit to build.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Links — Linux's shortcuts, but better</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> ln -s /opt/myapp/appsettings.json ~/appcfg.json   <span class="c"># symbolic link (like a .lnk)</span>
+<span class="p">$</span> ls -l ~/appcfg.json
+<span class="c">lrwxrwxrwx 1 arun arun 31 Jun 10 10:02 appcfg.json -&gt; /opt/myapp/appsettings.json</span>
+<span class="p">$</span> readlink -f ~/appcfg.json       <span class="c"># resolve to the real path</span></code></pre>
+    <div class="why">Unlike .lnk files, symlinks are transparent to programs — open the link, you open the target. Deployments often use <code>/opt/myapp/current → /opt/myapp/releases/2026-06-10</code> so a rollback is one <code>ln -sfn</code>.</div>
+  </div>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>Distro-specific landmarks</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> cat /etc/oracle-release         <span class="c"># e.g. Oracle Linux Server release 9.4</span>
+<span class="p">$</span> ls /etc/yum.repos.d/            <span class="c"># package repo definitions live here</span>
+<span class="p">$</span> ls /var/log/messages            <span class="c"># the general system log (RHEL family)</span></code></pre>
+    <div class="why">RHEL-family logs to <code>/var/log/messages</code> and <code>/var/log/secure</code> (auth). Default filesystem is <b>XFS</b>.</div>
+  </div>
+  <div class="cmd" data-d="ub">
+    <div class="cmd-head"><span class="chip ubc">Ubuntu</span><b>Distro-specific landmarks</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> lsb_release -a                  <span class="c"># e.g. Ubuntu 24.04.2 LTS (Noble)</span>
+<span class="p">$</span> ls /etc/apt/sources.list.d/     <span class="c"># package repo definitions live here</span>
+<span class="p">$</span> ls /var/log/syslog              <span class="c"># the general system log (Debian family)</span>
+<span class="p">$</span> ls /snap                        <span class="c"># snap-packaged apps mount here</span></code></pre>
+    <div class="why">Debian-family logs to <code>/var/log/syslog</code> and <code>/var/log/auth.log</code>. Default filesystem is <b>ext4</b>. The <code>/snap</code> tree is Ubuntu-only (containerized desktop/server apps).</div>
+  </div>
+
+  <h3><span class="tick"></span>A standard layout for your own app</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Where a deployed .NET service should live</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo mkdir -p /opt/orderapi              <span class="c"># binaries (self-contained vendor app)</span>
+<span class="p">$</span> sudo mkdir -p /etc/orderapi              <span class="c"># environment-specific config</span>
+<span class="p">$</span> sudo mkdir -p /var/log/orderapi          <span class="c"># file logs (if not using journald)</span>
+<span class="p">$</span> sudo mkdir -p /var/lib/orderapi          <span class="c"># app state/data the app writes</span></code></pre>
+    <div class="why">This separation is the Linux convention and it pays off: config survives redeploys, logs are where log rotation expects them, and backups can target <code>/etc</code> + <code>/var/lib</code> only. It's the moral equivalent of not writing into <code>Program Files</code> at runtime.</div>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — /tmp is not a parking lot</span>
+    <p>Both distros clean <code>/tmp</code> aggressively (Ubuntu on reboot; Oracle Linux additionally ages files out via <code>systemd-tmpfiles</code> after ~10 days). Never store anything you need there. Also: <code>/proc</code> and <code>/dev</code> consume no disk — don't be alarmed by their contents in <code>du</code> output; exclude them with <code>du -xh</code>.</p>
+  </aside>
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>ASP.NET Core resolves <code>appsettings.json</code> relative to the <b>working directory</b>, not the binary. When you later write the systemd unit (Concept 10), set <code>WorkingDirectory=/opt/orderapi</code> or your config silently won't load — the #1 first-deploy bug. Environment-specific overrides belong in <code>/etc/orderapi</code> and can be layered via <code>ASPNETCORE_ENVIRONMENT</code> + a config path, keeping secrets out of the deploy artifact.</p>
+  </aside>
+</section>
+
+<!-- ============ 03 PERMISSIONS ============ -->
+<section class="panel" id="p3" data-title="Permissions and chmod">
+  <span class="kicker">Concept 03 </span>
+  <h2>File permissions &amp; chmod</h2>
+  <p class="lede">Every file has an owner, a group, and nine permission bits: read/write/execute for <b>u</b>ser (owner), <b>g</b>roup, and <b>o</b>thers. Simpler than Windows ACLs — and the cause of 90% of your early "Permission denied" errors, so learn to <i>read</i> them before you learn to change them.</p>
+
+  
+<div class="diagram-wrapper" style="margin: 24px 0;">
+  <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--md-sys-color-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Visual Guide: UNIX Permissions Map (e.g. 750)</div>
+  <svg viewBox="0 0 600 240" class="concept-diagram" style="width: 100%; border-radius: 16px; background: var(--md-sys-color-surface-container-low); border: 1px solid var(--rule); padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+    <style>
+      .perm-box { fill: var(--md-sys-color-surface-container-high); stroke: var(--rule); stroke-width: 1.5; rx: 8px; }
+      .perm-box-highlight { fill: var(--md-sys-color-primary-container); stroke: var(--md-sys-color-primary); stroke-width: 2; rx: 8px; }
+      .perm-char { font-family: 'Roboto Mono', monospace; font-size: 22px; font-weight: 700; text-anchor: middle; }
+      .perm-label { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; text-anchor: middle; }
+      .perm-num { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; text-anchor: middle; }
+      .perm-desc { font-family: 'Roboto', sans-serif; font-size: 11px; text-anchor: middle; }
+    </style>
+    
+    <!-- File Type -->
+    <g transform="translate(10, 20)">
+      <rect class="perm-box" x="0" y="0" width="45" height="100" />
+      <text class="perm-char" fill="var(--ink)" x="22.5" y="45">-</text>
+      <text class="perm-label" fill="var(--ink-soft)" x="22.5" y="75">Type</text>
+      <text class="perm-desc" fill="var(--ink-soft)" x="22.5" y="92">Regular</text>
+    </g>
+    
+    <!-- Owner -->
+    <g transform="translate(65, 20)">
+      <rect class="perm-box-highlight" x="0" y="0" width="165" height="100" />
+      <text class="perm-char" fill="var(--md-sys-color-on-primary-container)" x="30" y="45">r</text>
+      <text class="perm-char" fill="var(--md-sys-color-on-primary-container)" x="82.5" y="45">w</text>
+      <text class="perm-char" fill="var(--md-sys-color-on-primary-container)" x="135" y="45">x</text>
+      <text class="perm-label" fill="var(--md-sys-color-on-primary-container)" x="82.5" y="75">Owner (User)</text>
+      <text class="perm-desc" fill="var(--md-sys-color-on-primary-container)" x="82.5" y="92">Read (4)+Write (2)+Exec (1)</text>
+      <text class="perm-num" fill="var(--md-sys-color-primary)" x="82.5" y="150">Value: 7</text>
+    </g>
+
+    <!-- Group -->
+    <g transform="translate(240, 20)">
+      <rect class="perm-box" x="0" y="0" width="165" height="100" />
+      <text class="perm-char" fill="var(--ink)" x="30" y="45">r</text>
+      <text class="perm-char" fill="var(--ink-soft)" x="82.5" y="45">-</text>
+      <text class="perm-char" fill="var(--ink)" x="135" y="45">x</text>
+      <text class="perm-label" fill="var(--ink)" x="82.5" y="75">Group</text>
+      <text class="perm-desc" fill="var(--ink-soft)" x="82.5" y="92">Read (4)+Write (0)+Exec (1)</text>
+      <text class="perm-num" fill="var(--md-sys-color-primary)" x="82.5" y="150">Value: 5</text>
+    </g>
+
+    <!-- Others -->
+    <g transform="translate(415, 20)">
+      <rect class="perm-box" x="0" y="0" width="165" height="100" />
+      <text class="perm-char" fill="var(--ink-soft)" x="30" y="45">-</text>
+      <text class="perm-char" fill="var(--ink-soft)" x="82.5" y="45">-</text>
+      <text class="perm-char" fill="var(--ink-soft)" x="135" y="45">-</text>
+      <text class="perm-label" fill="var(--ink)" x="82.5" y="75">Others</text>
+      <text class="perm-desc" fill="var(--ink-soft)" x="82.5" y="92">No access</text>
+      <text class="perm-num" fill="var(--md-sys-color-primary)" x="82.5" y="150">Value: 0</text>
+    </g>
+    
+    <text class="perm-num" fill="var(--ink)" x="300" y="205">Full Permission Representation (Octal): 750</text>
+  </svg>
+</div>
+<h3><span class="tick"></span>Reading the wall of letters</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Decode ls -l</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> ls -l /opt/orderapi/
+<span class="c">-rwxr-x--- 1 orderapi orderapi 84512 Jun 10 09:14 OrderApi
+-rw-r----- 1 orderapi orderapi  1311 Jun 10 09:14 appsettings.json
+drwxr-x--- 2 orderapi orderapi  4096 Jun 10 09:14 wwwroot
+
+ d rwx r-x ---
+ │ │   │   └── others: nothing
+ │ │   └────── group "orderapi": read + enter/execute
+ │ └────────── owner "orderapi": read + write + execute
+ └──────────── type: d=directory, -=file, l=symlink</span></code></pre>
+    <div class="why">Numerically: r=4, w=2, x=1 per triad → <code>rwxr-x---</code> = <b>750</b>. Common values: <b>755</b> (everyone can read/execute — binaries, public dirs), <b>644</b> (everyone can read — config), <b>600</b> (owner only — secrets, SSH keys), <b>750/640</b> (group-restricted service files).</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>chmod &amp; chown — the verbs</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> chmod +x deploy.sh                    <span class="c"># make a script runnable (symbolic)</span>
+<span class="p">$</span> chmod 640 appsettings.Production.json <span class="c"># numeric: owner rw, group r, others none</span>
+<span class="p">$</span> chmod u=rw,g=r,o= secrets.env         <span class="c"># symbolic equivalent of 640</span>
+<span class="p">$</span> sudo chown -R orderapi:orderapi /opt/orderapi   <span class="c"># owner:group, recursive</span>
+<span class="p">$</span> sudo chmod -R u=rwX,g=rX,o= /opt/orderapi       <span class="c"># capital X: execute only on dirs</span></code></pre>
+    <div class="why">On a <b>directory</b>, <code>x</code> means "may enter / traverse" and <code>r</code> means "may list". The capital-<code>X</code> trick sets execute on directories (so they're traversable) without making every data file executable — exactly what you want after copying a publish folder.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Diagnose a Permission denied in 20 seconds</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> namei -l /opt/orderapi/appsettings.json   <span class="c"># shows perms of EVERY path component</span>
+<span class="p">$</span> id                                        <span class="c"># my uid, gid, groups</span>
+<span class="p">$</span> sudo -u orderapi cat /opt/orderapi/appsettings.json   <span class="c"># test AS the service user</span></code></pre>
+    <div class="why">Access requires permission on the file <i>and traverse (<code>x</code>) on every directory above it</i> — <code>namei -l</code> reveals the broken link in the chain instantly. <code>sudo -u svc cmd</code> reproduces exactly what your service experiences.</div>
+  </div>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · security model</div>
+    <table>
+      <tr><th>Windows</th><th>Linux</th><th>Note</th></tr>
+      <tr><td>icacls file /grant user:RX</td><td><code>chmod</code> / <code>chown</code></td><td>9 bits instead of arbitrary ACEs — coarser, far easier to reason about</td></tr>
+      <tr><td>Full ACLs when you need them</td><td><code>setfacl</code> / <code>getfacl</code></td><td>POSIX ACLs exist on both distros; reach for them rarely</td></tr>
+      <tr><td>"Run as administrator" to fix perms</td><td><code>sudo chown</code> to the right user</td><td>Fix ownership, don't 777 your way out</td></tr>
+      <tr><td>Defender SmartScreen "unblock"</td><td>the execute bit</td><td>Files aren't runnable until someone says so</td></tr>
+    </table>
+  </div>
+
+  <details class="deep"><summary>Deep dive: umask, setuid and the sticky bit</summary><div class="body">
+    <p><b>umask</b> decides default permissions for new files: with the usual <code>umask 022</code>, new files arrive as 644 and directories as 755. Services that write shared data sometimes need <code>umask 027</code> set in their unit file.</p>
+    <p><b>setuid</b> (<code>chmod u+s</code>, shows as <code>rws</code>) makes a binary run as its owner — it's how <code>passwd</code> edits root-owned files. Treat unexpected setuid binaries as a security red flag: <code>find / -perm -4000 2&gt;/dev/null</code>.</p>
+    <p>The <b>sticky bit</b> on <code>/tmp</code> (<code>drwxrwxrwt</code>) means anyone may create files there but only owners may delete their own — why a world-writable /tmp isn't chaos.</p>
+  </div></details>
+
+  <aside class="gotcha"><span class="tag">Gotcha — never chmod 777</span>
+    <p><code>chmod -R 777</code> "fixes" the error and creates three new problems: any process can tamper with your binaries, SSH refuses keys in over-permissive dirs, and security scans flag the host. The correct fix is always ownership (<code>chown</code> to the service user) plus minimal bits (750/640). Relatedly: a private SSH key must be <code>600</code> or <code>ssh</code> will refuse it with <i>UNPROTECTED PRIVATE KEY FILE</i>.</p>
+  </aside>
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>After <code>dotnet publish</code> on Windows and copying to Linux, the apphost (<code>./OrderApi</code>) loses its execute bit — run <code>chmod +x OrderApi</code> (or launch via <code>dotnet OrderApi.dll</code>, which needs no bit). On <b>Oracle Linux there's a second permission system: SELinux</b> — if perms look right but access is still denied, jump to the SELinux block in Concept 09. Ubuntu's AppArmor rarely interferes with custom services.</p>
+  </aside>
+</section>
+
+<!-- ============ 04 PROCESSES ============ -->
+<section class="panel" id="p4" data-title="Process management">
+  <span class="kicker">Concept 04 </span>
+  <h2>Process management</h2>
+  <p class="lede">Every process has a PID, a parent, and a state (running, sleeping, stopped, zombie). PID 1 — <code>systemd</code> — is the ancestor of everything. Where Windows gives you Task Manager and <code>taskkill</code>, Linux gives you a toolbox of small, composable views into the same process table.</p>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · processes</div>
+    <table>
+      <tr><th>Windows</th><th>Linux</th><th>Note</th></tr>
+      <tr><td>Task Manager (live view)</td><td><code>top</code> / <code>htop</code></td><td>htop adds colors, tree view, mouse; <code>F9</code> to kill</td></tr>
+      <tr><td>tasklist</td><td><code>ps aux</code></td><td>Snapshot; pipe into grep to filter</td></tr>
+      <tr><td>taskkill /PID 1234</td><td><code>kill 1234</code></td><td>Polite by default (SIGTERM)</td></tr>
+      <tr><td>taskkill /F</td><td><code>kill -9 1234</code></td><td>SIGKILL — no cleanup, last resort</td></tr>
+      <tr><td>Process Explorer tree</td><td><code>pstree -p</code></td><td>Shows the systemd → service → child lineage</td></tr>
+      <tr><td>Resource Monitor</td><td><code>htop</code>, <code>iotop</code>, <code>free -h</code></td><td>CPU / disk IO / memory respectively</td></tr>
+    </table>
+  </div>
+
+  <h3><span class="tick"></span>Find, inspect, stop</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>The hunting kit</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> ps aux | grep -i [d]otnet        <span class="c"># find your app ([d] trick excludes grep itself)</span>
+<span class="p">$</span> pgrep -af dotnet                 <span class="c"># cleaner: PIDs + full command line</span>
+<span class="p">$</span> pstree -p $(pgrep -f OrderApi)   <span class="c"># its child processes</span>
+<span class="p">$</span> top -c                            <span class="c"># live view; press M = sort by memory, P = by CPU, q = quit</span>
+<span class="p">$</span> <span class="ol">sudo dnf install -y htop</span><span class="ub">sudo apt install -y htop</span> &amp;&amp; htop   <span class="c"># the nicer top</span></code></pre>
+    <div class="why"><code>ps aux</code> columns to read: %CPU, %MEM, VSZ/RSS (virtual/actual memory), STAT (S=sleeping, R=running, Z=zombie, T=stopped), and the command. A high-CPU <code>dotnet</code> here plus <code>htop</code>'s thread view (press <code>H</code>) is your first GC/spin diagnosis pass.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Signals — graceful first, force later</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> kill 4321            <span class="c"># sends SIGTERM (15): "please shut down cleanly"</span>
+<span class="p">$</span> kill -INT 4321       <span class="c"># SIGINT: same as pressing Ctrl+C in its terminal</span>
+<span class="p">$</span> kill -9 4321          <span class="c"># SIGKILL: kernel removes it, NO cleanup runs</span>
+<span class="p">$</span> pkill -f OrderApi     <span class="c"># signal by name pattern instead of PID</span></code></pre>
+    <div class="why">SIGTERM matters to you specifically: ASP.NET Core's generic host listens for it and runs <code>IHostApplicationLifetime</code> shutdown — draining requests, flushing logs, disposing DbContexts. <code>kill -9</code> skips all of that. Same etiquette as "Close window" vs Task Manager's "End task".</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Keep things running after you log out</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> dotnet OrderApi.dll &amp;            <span class="c"># & = background job of THIS shell (dies with it)</span>
+<span class="p">$</span> jobs                              <span class="c"># list shell jobs; fg %1 brings one back</span>
+<span class="p">$</span> nohup dotnet OrderApi.dll &gt; app.log 2&gt;&amp;1 &amp;   <span class="c"># survives logout (quick &amp; dirty)</span>
+<span class="p">$</span> tmux                              <span class="c"># better: a detachable terminal session</span>
+<span class="c">  inside tmux: run anything … then Ctrl+B, D to detach; later: tmux attach</span></code></pre>
+    <div class="why"><code>tmux</code> is the remote-desktop-session of the terminal world — your long task keeps running when Wi-Fi drops. For anything real, though, the correct answer is a systemd service (Concept 10), not nohup.</div>
+  </div>
+
+  <details class="deep"><summary>Deep dive: fork/exec, zombies and the OOM killer</summary><div class="body">
+    <p>Linux creates processes in two steps: <code>fork()</code> clones the current process, then <code>exec()</code> replaces the clone's program. When a child exits, it lingers as a <b>zombie</b> (STAT <code>Z</code>) until its parent reads the exit code — zombies hold no memory, but hundreds of them indicate a buggy parent that isn't reaping. You can't kill a zombie (it's already dead); restart the parent.</p>
+    <p>When RAM + swap run out, the kernel's <b>OOM killer</b> sacrifices the process with the worst score — frequently your JIT-heavy dotnet process. If your service vanished without an exception in its logs, check <code>sudo dmesg | grep -i "out of memory"</code> and <code>journalctl -k</code>. The fix is memory limits in the unit file (<code>MemoryMax=</code>) or right-sizing the VM.</p>
+  </div></details>
+
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Three openers for any misbehaving dotnet process: <code>ls /proc/&lt;pid&gt;/fd | wc -l</code> (open file/socket handles — leak detector), <code>cat /proc/&lt;pid&gt;/limits</code> (is it about to hit the open-files ceiling? Kestrel under load often does — raise via <code>LimitNOFILE=</code> in the unit), and <code>dotnet-counters monitor -p &lt;pid&gt;</code> (works identically on Linux). <code>dotnet-dump collect -p &lt;pid&gt;</code> gives you a core you can analyze back on Windows.</p>
+  </aside>
+</section>
+
+<!-- ============ 05 PIPES ============ -->
+<section class="panel" id="p5" data-title="Streams pipes redirection">
+  <span class="kicker">Concept 05 </span>
+  <h2>Stdin, stdout, stderr &amp; pipes</h2>
+  <p class="lede">Every process is born with three streams: stdin (fd 0), stdout (fd 1), stderr (fd 2). Pipes connect one program's stdout to the next one's stdin. This is the superpower of Linux: instead of one giant console app, you chain ten small ones. PowerShell borrowed the idea — but pipes <i>objects</i>; bash pipes <i>text</i>, so text-wrangling tools are the vocabulary.</p>
+
+  
+<div class="diagram-wrapper" style="margin: 24px 0;">
+  <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--md-sys-color-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Visual Guide: Streams Redirection & Pipes Pipeline</div>
+  <svg viewBox="0 0 600 240" class="concept-diagram" style="width: 100%; border-radius: 16px; background: var(--md-sys-color-surface-container-low); border: 1px solid var(--rule); padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+    <style>
+      .flow-cmd { fill: var(--md-sys-color-surface-container-high); stroke: var(--rule); stroke-width: 1.5; rx: 8px; }
+      .flow-special { fill: var(--md-sys-color-primary-container); stroke: var(--md-sys-color-primary); stroke-width: 2; rx: 8px; }
+      .flow-blackhole { fill: var(--md-sys-color-oracle-red-container); stroke: var(--md-sys-color-oracle-red); stroke-width: 1.5; rx: 8px; }
+      .flow-line { stroke: var(--md-sys-color-primary); stroke-width: 2; fill: none; }
+      .flow-text { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; }
+      .flow-code { font-family: 'Roboto Mono', monospace; font-size: 11px; }
+    </style>
+    
+    <!-- Command 1 -->
+    <g transform="translate(10, 40)">
+      <rect class="flow-cmd" x="0" y="0" width="160" height="70" />
+      <text class="flow-text" fill="var(--ink)" x="15" y="25">Command 1</text>
+      <text class="flow-code" fill="var(--md-sys-color-primary)" x="15" y="48">cat /var/log/syslog</text>
+    </g>
+    
+    <!-- Stdout Arrow -->
+    <path d="M 170,60 L 220,60" class="flow-line" marker-end="url(#arrow)" />
+    <text class="flow-code" fill="var(--ink-soft)" x="175" y="52">stdout (1)</text>
+
+    <!-- Stderr Arrow -->
+    <path d="M 90,110 L 90,165" style="stroke: var(--md-sys-color-oracle-red); stroke-width: 2; fill: none; stroke-dasharray: 4;" marker-end="url(#red-arrow)" />
+    <text class="flow-code" fill="var(--md-sys-color-oracle-red)" x="100" y="140">stderr (2) via 2&gt;</text>
+
+    <!-- Blackhole -->
+    <g transform="translate(10, 165)">
+      <rect class="flow-blackhole" x="0" y="0" width="160" height="50" />
+      <text class="flow-text" fill="var(--md-sys-color-on-oracle-red-container)" x="15" y="22">/dev/null</text>
+      <text class="flow-code" fill="var(--md-sys-color-on-oracle-red-container)" x="15" y="40">Discarded output</text>
+    </g>
+    
+    <!-- Pipe Node -->
+    <g transform="translate(230, 45)">
+      <rect class="flow-special" x="0" y="0" width="50" height="60" />
+      <text class="flow-char" fill="var(--md-sys-color-on-primary-container)" font-family="Roboto Mono" font-size="28px" font-weight="700" text-anchor="middle" x="25" y="40">|</text>
+    </g>
+    
+    <!-- Arrow to Cmd 2 -->
+    <path d="M 280,60 L 320,60" class="flow-line" marker-end="url(#arrow)" />
+    <text class="flow-code" fill="var(--ink-soft)" x="285" y="52">stdin (0)</text>
+
+    <!-- Command 2 -->
+    <g transform="translate(330, 40)">
+      <rect class="flow-cmd" x="0" y="0" width="140" height="70" />
+      <text class="flow-text" fill="var(--ink)" x="15" y="25">Command 2</text>
+      <text class="flow-code" fill="var(--md-sys-color-primary)" x="15" y="48">grep -i exception</text>
+    </g>
+
+    <!-- Arrow to File -->
+    <path d="M 470,60 L 510,60" class="flow-line" marker-end="url(#arrow)" />
+    <text class="flow-code" fill="var(--ink-soft)" x="475" y="52">via &gt;&gt;</text>
+
+    <!-- Output File -->
+    <g transform="translate(520, 40)">
+      <rect class="flow-special" x="0" y="0" width="70" height="70" />
+      <text class="flow-text" fill="var(--md-sys-color-on-primary-container)" x="10" y="25">File</text>
+      <text class="flow-code" fill="var(--md-sys-color-on-primary-container)" x="10" y="48">errors.log</text>
+    </g>
+    
+    <defs>
+      <marker id="red-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--md-sys-color-oracle-red)"/>
+      </marker>
+    </defs>
+  </svg>
+</div>
+<h3><span class="tick"></span>Redirection — six patterns cover 99% of use</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>The redirection table, live</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> dotnet OrderApi.dll &gt; out.log            <span class="c"># stdout → file (overwrite)</span>
+<span class="p">$</span> dotnet OrderApi.dll &gt;&gt; out.log           <span class="c"># stdout → file (append)</span>
+<span class="p">$</span> dotnet OrderApi.dll 2&gt; err.log           <span class="c"># stderr only</span>
+<span class="p">$</span> dotnet OrderApi.dll &gt; all.log 2&gt;&amp;1       <span class="c"># both streams, one file (order matters!)</span>
+<span class="p">$</span> dotnet ef database update &lt; answers.txt  <span class="c"># file → stdin</span>
+<span class="p">$</span> noisy-tool 2&gt;/dev/null                   <span class="c"># discard errors (/dev/null = NUL)</span></code></pre>
+    <div class="why"><code>2&gt;&amp;1</code> reads "point stream 2 at wherever 1 currently points" — which is why it must come <i>after</i> <code>&gt; all.log</code>. Exceptions and stack traces go to stderr, so if your captured log looks suspiciously clean, you forgot stream 2.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Pipelines you'll actually run on day 3</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> journalctl -u orderapi --since "1 hour ago" | grep -i exception | tail -20
+<span class="p">$</span> grep -c "HTTP/1.1\" 500" /var/log/nginx/access.log        <span class="c"># count 500s</span>
+<span class="p">$</span> awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c | sort -rn
+<span class="c">  # status-code histogram: awk grabs column 9, uniq -c counts, sort -rn ranks</span>
+<span class="p">$</span> ss -tn state established | wc -l                          <span class="c"># live TCP connections</span>
+<span class="p">$</span> dotnet OrderApi.dll 2&gt;&amp;1 | tee run.log                    <span class="c"># watch AND record</span>
+<span class="p">$</span> history | grep dnf                                        <span class="c"># what did I install last week?</span></code></pre>
+    <div class="why">The core vocabulary: <code>grep</code> (filter lines), <code>awk</code> (pick columns), <code>sort</code>, <code>uniq -c</code> (count duplicates), <code>wc -l</code> (count lines), <code>tee</code> (split the stream), <code>head</code>/<code>tail</code> (trim). Ten verbs, infinite sentences — the Unix grammar.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>JSON logs? Meet jq</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> <span class="ol">sudo dnf install -y jq</span><span class="ub">sudo apt install -y jq</span>
+<span class="p">$</span> tail -200 /var/log/orderapi/app.json \
+    | jq -r 'select(.Level=="Error") | "\(."@t") \(.RequestPath) \(.Exception)"'</code></pre>
+    <div class="why">If you use Serilog's compact JSON format, <code>jq</code> turns raw structured logs into queryable data right on the box — LINQ-for-the-terminal. <code>select()</code> is your <code>Where()</code>, the string template your <code>Select()</code>.</div>
+  </div>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · shells &amp; streams</div>
+    <table>
+      <tr><th>PowerShell</th><th>Bash</th><th>Difference</th></tr>
+      <tr><td><code>Get-Process | Where CPU -gt 10</code></td><td><code>ps aux | awk '$3&gt;10'</code></td><td>Objects with properties vs text with columns</td></tr>
+      <tr><td><code>Select-String "err" *.log</code></td><td><code>grep -i err *.log</code></td><td>grep is regex-first; add <code>-E</code> for extended regex</td></tr>
+      <tr><td><code>Out-File -Append</code></td><td><code>&gt;&gt;</code></td><td>Bash redirection is shorter and stream-aware</td></tr>
+      <tr><td><code>$null</code> redirection</td><td><code>/dev/null</code></td><td>A real (virtual) file — anything written vanishes</td></tr>
+      <tr><td><code>Tee-Object</code></td><td><code>tee</code></td><td>PowerShell literally took the name from Unix</td></tr>
+    </table>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — pipes hide failures</span>
+    <p>In a pipeline, the exit code you see is the <b>last</b> command's. <code>broken-cmd | tee log</code> reports success because <code>tee</code> succeeded. In scripts, enable <code>set -o pipefail</code> (Concept 08) so a failure anywhere in the chain fails the pipeline — the difference between a deploy script that lies and one that doesn't.</p>
+  </aside>
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Console apps on Linux should write logs to <b>stdout/stderr and nothing else</b> — systemd's journal (and Docker, and Kubernetes) captures the streams for you, timestamps them, and handles rotation. Drop file-logging gymnastics from your Linux deployments; <code>Console</code> + structured formatter is the native pattern, then read with <code>journalctl -u orderapi</code>.</p>
+  </aside>
+</section>
+
+<!-- ============ 06 USERS ============ -->
+<section class="panel" id="p6" data-title="Users groups sudo">
+  <span class="kicker">Concept 06 </span>
+  <h2>Users, groups &amp; sudo</h2>
+  <p class="lede">root (UID 0) is the all-powerful account — Administrator without UAC's training wheels. Daily work happens as a normal user; <code>sudo</code> grants surgical, logged elevation per command. Users live in <code>/etc/passwd</code>, password hashes in <code>/etc/shadow</code>, groups in <code>/etc/group</code> — plain text files, true to form.</p>
+
+  <h3><span class="tick"></span>Identity and elevation</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Who am I, and what may I do?</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> id
+<span class="c">uid=1001(arun) gid=1001(arun) groups=1001(arun),<span style="color:#E8B864">10(wheel)</span> ← Oracle  /  <span style="color:#E8B864">27(sudo)</span> ← Ubuntu</span>
+<span class="p">$</span> sudo -l                      <span class="c"># list exactly what sudo allows me</span>
+<span class="p">$</span> sudo systemctl restart nginx <span class="c"># elevate ONE command (asks YOUR password)</span>
+<span class="p">$</span> sudo -i                      <span class="c"># full root shell — use sparingly, exit promptly</span>
+<span class="p">$</span> sudo -u orderapi whoami      <span class="c"># act as another user (test service perms)</span></code></pre>
+    <div class="why">The admin group differs by family: <span class="ol"><b>wheel</b> on Oracle Linux</span><span class="ub"><b>sudo</b> on Ubuntu</span>. Every sudo invocation is logged to <span class="ol"><code>/var/log/secure</code></span><span class="ub"><code>/var/log/auth.log</code></span> — auditable elevation, unlike a perpetual admin session.</div>
+  </div>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>Create an admin user</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo useradd -m -s /bin/bash deploy     <span class="c"># -m = create /home/deploy</span>
+<span class="p">$</span> sudo passwd deploy                       <span class="c"># set password interactively</span>
+<span class="p">$</span> sudo usermod -aG wheel deploy            <span class="c"># -aG = APPEND to group (never forget -a!)</span>
+<span class="p">$</span> groups deploy                            <span class="c"># verify</span></code></pre>
+    <div class="why">RHEL family uses the low-level <code>useradd</code>; there is no friendly wrapper. Forgetting <code>-a</code> in <code>usermod -G</code> <i>replaces</i> all group memberships instead of adding — a classic lockout.</div>
+  </div>
+  <div class="cmd" data-d="ub">
+    <div class="cmd-head"><span class="chip ubc">Ubuntu</span><b>Create an admin user</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo adduser deploy                      <span class="c"># friendly wizard: home, shell, password</span>
+<span class="p">$</span> sudo usermod -aG sudo deploy             <span class="c"># admin group is "sudo" here</span>
+<span class="p">$</span> groups deploy                            <span class="c"># verify</span></code></pre>
+    <div class="why">Debian family ships interactive <code>adduser</code>/<code>deluser</code> wrappers; the low-level <code>useradd</code> also exists. Group membership applies on next login — re-SSH before testing.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Create a locked-down service account for your app</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo useradd -r -s /usr/sbin/nologin -d /opt/orderapi orderapi
+<span class="c">  -r          system account (low UID, no aging)
+  nologin     nobody can SSH in as it
+  -d          its "home" = the app directory</span>
+<span class="p">$</span> sudo chown -R orderapi:orderapi /opt/orderapi /var/log/orderapi /var/lib/orderapi</code></pre>
+    <div class="why">This is the Linux equivalent of running a Windows service as a virtual service account instead of LocalSystem. If the app is compromised, the blast radius is its own files — nothing else.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Grant precise sudo rights — visudo</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo visudo -f /etc/sudoers.d/deploy     <span class="c"># NEVER edit /etc/sudoers directly</span>
+<span class="c"># allow deploy to manage only the orderapi service, no password:</span>
+<span class="c">deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart orderapi, /usr/bin/systemctl status orderapi</span></code></pre>
+    <div class="why"><code>visudo</code> syntax-checks before saving — a typo in sudoers can lock everyone out of elevation. Scoped rules like this are how CI/CD users restart services without holding root.</div>
+  </div>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · identity</div>
+    <table>
+      <tr><th>Windows</th><th>Linux</th><th>Note</th></tr>
+      <tr><td>Administrator + UAC prompt</td><td>root + <code>sudo</code></td><td>sudo asks for <i>your</i> password and logs the command</td></tr>
+      <tr><td>Local Users and Groups (lusrmgr)</td><td><code>/etc/passwd</code>, <code>/etc/group</code></td><td>Text files; <code>getent passwd</code> queries them (and AD/LDAP if joined)</td></tr>
+      <tr><td>Service accounts / gMSA</td><td><code>useradd -r … nologin</code></td><td>Plus systemd's <code>User=</code> directive (Concept 10)</td></tr>
+      <tr><td>runas /user:</td><td><code>sudo -u user cmd</code>, <code>su - user</code></td><td><code>su -</code> gives that user's full login environment</td></tr>
+    </table>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — basic hardening is three lines</span>
+    <p>Day-one server hygiene: create your sudo user (above), then in <code>/etc/ssh/sshd_config</code> set <code>PermitRootLogin no</code> and <code>PasswordAuthentication no</code> (keys only), then <span class="ol"><code>sudo systemctl restart sshd</code></span><span class="ub"><code>sudo systemctl restart ssh</code></span>. Verify your key login works in a <b>second terminal before closing the first</b> — the oldest rule in remote administration.</p>
+  </aside>
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Per-user secrets for services: environment files owned <code>root:orderapi</code> with mode <code>640</code> (e.g. <code>/etc/orderapi/orderapi.env</code> holding <code>ConnectionStrings__Default=…</code>), loaded by systemd's <code>EnvironmentFile=</code>. The double-underscore maps to the <code>:</code> hierarchy in .NET configuration — <code>Serilog__MinimumLevel=Debug</code> works exactly as you'd hope.</p>
+  </aside>
+</section>
+
+<!-- ============ 07 PACKAGES ============ -->
+<section class="panel" id="p7" data-title="Package management">
+  <span class="kicker">Concept 07 </span>
+  <h2>Package management</h2>
+  <p class="lede">This is where the two families diverge the most — and where the header switch earns its keep. Ubuntu uses <b>APT</b> over <code>.deb</code> packages; Oracle Linux uses <b>DNF</b> (successor to yum) over <code>.rpm</code>. Same philosophy on both: signed repositories, automatic dependency resolution, one command to update the entire system — a world away from hunting installer EXEs.</p>
+
+  <table class="cmp">
+    <tr><th>Task</th><th class="olh">Oracle Linux (dnf/rpm)</th><th class="ubh">Ubuntu (apt/dpkg)</th></tr>
+    <tr><td>Refresh package index</td><td><code>dnf check-update</code> <i>(auto-refreshes anyway)</i></td><td><code>sudo apt update</code> <b>(mandatory first!)</b></td></tr>
+    <tr><td>Install</td><td><code>sudo dnf install nginx</code></td><td><code>sudo apt install nginx</code></td></tr>
+    <tr><td>Upgrade everything</td><td><code>sudo dnf upgrade</code></td><td><code>sudo apt update &amp;&amp; sudo apt upgrade</code></td></tr>
+    <tr><td>Remove (+ unused deps)</td><td><code>sudo dnf remove nginx</code> / <code>dnf autoremove</code></td><td><code>sudo apt remove nginx</code> / <code>apt autoremove</code></td></tr>
+    <tr><td>Search</td><td><code>dnf search keyword</code></td><td><code>apt search keyword</code></td></tr>
+    <tr><td>Which package owns a file?</td><td><code>rpm -qf /usr/bin/curl</code></td><td><code>dpkg -S /usr/bin/curl</code></td></tr>
+    <tr><td>Which package provides a missing cmd?</td><td><code>dnf provides */htop</code></td><td><code>apt-file search htop</code> <i>(install apt-file)</i></td></tr>
+    <tr><td>List files in a package</td><td><code>rpm -ql nginx</code></td><td><code>dpkg -L nginx</code></td></tr>
+    <tr><td>Pin a version</td><td><code>dnf versionlock add pkg</code></td><td><code>apt-mark hold pkg</code></td></tr>
+    <tr><td>History / rollback</td><td><code>dnf history</code>, <code>dnf history undo &lt;id&gt;</code></td><td><code>/var/log/apt/history.log</code> (no native undo)</td></tr>
+    <tr><td>Extra repos</td><td>EPEL, AppStream modules, <code>.repo</code> files</td><td>PPAs, third-party sources lists, snaps</td></tr>
+  </table>
+  <p>Mental model: <code>dnf</code>/<code>apt</code> are the smart front-ends (repos + dependencies); <code>rpm</code>/<code>dpkg</code> are the low-level back-ends (single package files). Prefer the front-end; reach for the back-end only for queries or local files.</p>
+
+  <h3><span class="tick"></span>Daily driver commands</h3>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>The DNF routine</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo dnf upgrade -y                       <span class="c"># patch the box</span>
+<span class="p">$</span> sudo dnf install -y git tmux jq htop      <span class="c"># the comfort kit</span>
+<span class="p">$</span> dnf repolist                               <span class="c"># enabled repos (ol9_appstream, ol9_baseos…)</span>
+<span class="p">$</span> sudo dnf config-manager --enable ol9_codeready_builder   <span class="c"># extra dev packages</span>
+<span class="p">$</span> sudo dnf install -y oracle-epel-release-el9 &amp;&amp; sudo dnf install -y htop
+<span class="c">  # EPEL = community repo for RHEL family; Oracle ships its own mirror package</span>
+<span class="p">$</span> dnf module list nodejs                     <span class="c"># AppStream modules = multiple versions per package</span></code></pre>
+    <div class="why"><code>dnf history</code> + <code>dnf history undo</code> is a genuinely great safety net the Debian world lacks — botched an install? Roll the transaction back.</div>
+  </div>
+  <div class="cmd" data-d="ub">
+    <div class="cmd-head"><span class="chip ubc">Ubuntu</span><b>The APT routine</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo apt update                            <span class="c"># ALWAYS first — refreshes the index</span>
+<span class="p">$</span> sudo apt upgrade -y                        <span class="c"># patch the box</span>
+<span class="p">$</span> sudo apt install -y git tmux jq htop       <span class="c"># the comfort kit</span>
+<span class="p">$</span> apt list --upgradable                      <span class="c"># what would upgrade?</span>
+<span class="p">$</span> sudo add-apt-repository ppa:longsleep/golang-backports   <span class="c"># PPA = personal repo (vet before trusting)</span>
+<span class="p">$</span> sudo apt autoremove --purge -y             <span class="c"># clean orphaned deps + their config</span></code></pre>
+    <div class="why">The #1 Ubuntu beginner error: <code>apt install foo</code> failing with "Unable to locate package" simply because <code>apt update</code> was never run on a fresh box. Index first, install second — always.</div>
+  </div>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>Install .NET 8</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo dnf install -y dotnet-sdk-8.0         <span class="c"># straight from Oracle's AppStream repo</span>
+<span class="p">$</span> dotnet --info</code></pre>
+    <div class="why">RHEL-family distros carry Microsoft-built .NET in their own repos — no extra repo setup. For runtime-only servers: <code>aspnetcore-runtime-8.0</code>.</div>
+  </div>
+  <div class="cmd" data-d="ub">
+    <div class="cmd-head"><span class="chip ubc">Ubuntu</span><b>Install .NET 8</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo apt update &amp;&amp; sudo apt install -y dotnet-sdk-8.0   <span class="c"># in Ubuntu's own repo (22.04+)</span>
+<span class="p">$</span> dotnet --info
+<span class="c"># Need a version Ubuntu doesn't carry? Add Microsoft's repo:</span>
+<span class="p">$</span> wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
+<span class="p">$</span> sudo dpkg -i packages-microsoft-prod.deb &amp;&amp; sudo apt update</code></pre>
+    <div class="why">If both Ubuntu's and Microsoft's repos are enabled, mixed-origin .NET packages can conflict — pick one source and stick with it (Ubuntu's is fine for mainstream versions).</div>
+  </div>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · software lifecycle</div>
+    <table>
+      <tr><th>Windows</th><th>Linux</th><th>Note</th></tr>
+      <tr><td>winget install / chocolatey</td><td><code>dnf install</code> / <code>apt install</code></td><td>Linux had this model decades earlier; repos hold tens of thousands of packages</td></tr>
+      <tr><td>Windows Update</td><td><code>dnf upgrade</code> / <code>apt upgrade</code></td><td>One mechanism updates OS <i>and</i> all installed software</td></tr>
+      <tr><td>MSI file double-click</td><td><code>sudo dnf install ./pkg.rpm</code> / <code>sudo apt install ./pkg.deb</code></td><td>Front-end resolves dependencies even for local files</td></tr>
+      <tr><td>Patch Tuesday automation</td><td><code>dnf-automatic</code> / <code>unattended-upgrades</code></td><td>Security-only auto-patching, configurable</td></tr>
+    </table>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — don't mix families, don't curl|bash casually</span>
+    <p>Commands from blog posts fail across families: there is no <code>apt</code> on Oracle Linux, no <code>dnf</code> on Ubuntu — translate first (the switch above is your dictionary). And treat <code>curl … | sudo bash</code> installers as a last resort: they bypass signature checks and the package database, so nothing tracks, updates, or cleanly removes what they install.</p>
+  </aside>
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>For your <i>own</i> app, prefer <b>self-contained publish</b> (<code>dotnet publish -c Release -r linux-x64 --self-contained</code>) deployed to <code>/opt</code> — zero runtime dependency on the box, no package-source drift between Oracle and Ubuntu hosts. Framework-dependent + distro runtime package is leaner when you control patching across a fleet. Both are valid; choose deliberately per environment.</p>
+  </aside>
+</section>
+
+<!-- ============ 08 SCRIPTING ============ -->
+<section class="panel" id="p8" data-title="Shell scripting">
+  <span class="kicker">Concept 08 </span>
+  <h2>Shell scripting anatomy</h2>
+  <p class="lede">A bash script is just commands in a file, plus a shebang line telling the kernel which interpreter runs it. You write C#; you'll find bash crude but devastatingly effective for glue — deploys, health checks, log sweeps. Learn the anatomy and the three safety flags, and keep scripts under ~100 lines (beyond that, reach for a real language).</p>
+
+  <h3><span class="tick"></span>Anatomy, executed</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>A real deploy script — every construct labeled</b><button class="copy">Copy</button></div>
+    <pre><code>#!/bin/bash                                <span class="c"># ① shebang: which interpreter</span>
+set -euo pipefail                          <span class="c"># ② safety: die on error/-u unset var/pipe fail</span>
+
+APP="orderapi"                             <span class="c"># ③ variables: NO spaces around =</span>
+RELEASE_DIR="/opt/${APP}/releases/$(date +%Y%m%d-%H%M%S)"   <span class="c"># $( ) = command substitution</span>
+
+if [[ ! -f "publish/${APP}.dll" ]]; then   <span class="c"># ④ conditional: [[ ]] for tests, -f = file exists</span>
+  echo "ERROR: run dotnet publish first" &gt;&amp;2
+  exit 1                                   <span class="c"># ⑥ exit code: 0=success, non-zero=failure</span>
+fi
+
+deploy() {                                 <span class="c"># ⑤ function</span>
+  sudo mkdir -p "$RELEASE_DIR"
+  sudo cp -r publish/* "$RELEASE_DIR/"
+  sudo chown -R "$APP:$APP" "$RELEASE_DIR"
+  sudo ln -sfn "$RELEASE_DIR" "/opt/${APP}/current"    <span class="c"># atomic-ish switch</span>
+  sudo systemctl restart "$APP"
+}
+
+for f in publish/*.json; do                <span class="c"># ④ loop over a glob</span>
+  echo "shipping config: $f"
+done
+
+deploy
+echo "deployed $APP → $RELEASE_DIR"</code></pre>
+    <div class="why">Save as <code>deploy.sh</code>, then <code>chmod +x deploy.sh</code> and run with <code>./deploy.sh</code>. The <code>./</code> is required — unlike cmd.exe, Linux does not search the current directory for executables (a deliberate security choice).</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>The idioms that prevent 2 a.m. incidents</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> echo $?                          <span class="c"># exit code of the last command (PowerShell's $LASTEXITCODE)</span>
+<span class="p">$</span> systemctl is-active orderapi &amp;&amp; echo UP || echo DOWN   <span class="c"># && = on success, || = on failure</span>
+<span class="p">$</span> cp "$SRC" "$DST"                  <span class="c"># ALWAYS quote variables — spaces in paths break unquoted ones</span>
+<span class="p">$</span> VER="${1:?usage: deploy.sh &lt;version&gt;}"   <span class="c"># $1 = first argument, :? = require it</span>
+<span class="p">$</span> bash -n deploy.sh                 <span class="c"># syntax check without executing</span>
+<span class="p">$</span> bash -x deploy.sh                 <span class="c"># trace mode: echo every command as it runs</span></code></pre>
+    <div class="why">Install <code>shellcheck</code> (<span class="ol"><code>dnf install ShellCheck</code></span><span class="ub"><code>apt install shellcheck</code></span>) and treat its output like compiler warnings — it catches quoting and logic bugs with Roslyn-analyzer-level precision.</div>
+  </div>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · scripting</div>
+    <table>
+      <tr><th>PowerShell</th><th>Bash</th><th>Note</th></tr>
+      <tr><td><code>$LASTEXITCODE</code> / <code>$?</code></td><td><code>$?</code> (numeric, 0 = success)</td><td>In bash, <code>$?</code> IS the exit code; 0 means true</td></tr>
+      <tr><td><code>param([string]$Name)</code></td><td><code>$1 $2 …</code>, <code>"$@"</code></td><td>Positional only; <code>getopts</code> for flags</td></tr>
+      <tr><td><code>if ($x -eq 5)</code></td><td><code>if [[ $x -eq 5 ]]</code></td><td><code>-eq</code> numeric, <code>==</code> string — bash distinguishes</td></tr>
+      <tr><td><code>try/catch</code></td><td><code>set -e</code> + <code>trap 'cleanup' ERR EXIT</code></td><td><code>trap</code> ≈ a finally block for scripts</td></tr>
+      <tr><td>profile.ps1</td><td><code>~/.bashrc</code></td><td>Aliases &amp; PATH tweaks; <code>source ~/.bashrc</code> to reload</td></tr>
+      <tr><td>Task Scheduler</td><td><code>cron</code> / systemd timers</td><td><code>crontab -e</code>; timers integrate with journald</td></tr>
+    </table>
+  </div>
+
+  <details class="deep"><summary>Deep dive: cron in 60 seconds</summary><div class="body">
+    <p><code>crontab -e</code> edits your schedule; each line is <code>min hour day month weekday command</code>. Nightly cleanup at 02:30: <code>30 2 * * * /opt/orderapi/scripts/prune-logs.sh &gt;&gt; /var/log/orderapi/cron.log 2&gt;&amp;1</code>. Cron runs with a minimal environment — no your-PATH, no your-aliases — so always use absolute paths and redirect output, or you'll debug "works in my shell, fails in cron" for an afternoon. For anything with dependencies or retry needs, prefer a systemd timer (Concept 10's <code>OnCalendar=</code>), which logs to journald automatically.</p>
+  </div></details>
+
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Don't over-invest in bash mastery: the sweet spot for a C# developer is bash for ≤50-line glue and <b>dotnet scripts or a console app for anything with real logic</b>. Modern option: PowerShell runs natively on both distros (<span class="ol"><code>dnf install powershell</code> via Microsoft repo</span><span class="ub"><code>snap install powershell --classic</code></span>) — legitimate for sharing automation between your Windows and Linux fleets, just expect raw-text interop at the edges.</p>
+  </aside>
+</section>
+
+<!-- ============ 09 NETWORKING ============ -->
+<section class="panel" id="p9" data-title="Networking commands">
+  <span class="kicker">Concept 09 </span>
+  <h2>Networking commands</h2>
+  <p class="lede">For an app developer, networking on Linux boils down to four questions: what's my address, is my app listening, can I reach that endpoint, and is the firewall in the way? Four questions, four tools — plus the firewall layer, which is the second-biggest Oracle↔Ubuntu divergence after packages.</p>
+
+  
+<div class="diagram-wrapper" style="margin: 24px 0;">
+  <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--md-sys-color-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Visual Guide: Reverse Proxy Web Traffic Route</div>
+  <svg viewBox="0 0 600 240" class="concept-diagram" style="width: 100%; border-radius: 16px; background: var(--md-sys-color-surface-container-low); border: 1px solid var(--rule); padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+    <style>
+      .net-box { fill: var(--md-sys-color-surface-container-high); stroke: var(--rule); stroke-width: 1.5; rx: 8px; }
+      .net-highlight { fill: var(--md-sys-color-primary-container); stroke: var(--md-sys-color-primary); stroke-width: 2; rx: 8px; }
+      .net-gate { fill: var(--md-sys-color-oracle-red-container); stroke: var(--md-sys-color-oracle-red); stroke-width: 1.5; rx: 6px; }
+      .net-line { stroke: var(--md-sys-color-primary); stroke-width: 2; fill: none; }
+      .net-text { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; }
+      .net-desc { font-family: 'Roboto', sans-serif; font-size: 11px; }
+    </style>
+
+    <!-- Client -->
+    <g transform="translate(10, 80)">
+      <rect class="net-box" x="0" y="0" width="90" height="60" />
+      <text class="net-text" fill="var(--ink)" x="12" y="25">Client</text>
+      <text class="net-desc" fill="var(--ink-soft)" x="12" y="42">Web Browser</text>
+    </g>
+
+    <path d="M 100,110 L 150,110" class="net-line" marker-end="url(#arrow)" />
+
+    <!-- Firewall -->
+    <g transform="translate(155, 60)">
+      <rect class="net-gate" x="0" y="0" width="65" height="100" />
+      <text class="net-text" fill="var(--md-sys-color-on-oracle-red-container)" x="8" y="25">Firewall</text>
+      <text class="net-desc" fill="var(--md-sys-color-on-oracle-red-container)" x="8" y="50">UFW /</text>
+      <text class="net-desc" fill="var(--md-sys-color-on-oracle-red-container)" x="8" y="65">firewalld</text>
+      <text class="net-desc" fill="var(--md-sys-color-oracle-red)" font-weight="700" x="8" y="85">Ports 80/443</text>
+    </g>
+
+    <path d="M 220,110 L 270,110" class="net-line" marker-end="url(#arrow)" />
+
+    <!-- Nginx -->
+    <g transform="translate(275, 70)">
+      <rect class="net-box" x="0" y="0" width="105" height="80" />
+      <text class="net-text" fill="var(--ink)" x="12" y="25">nginx Proxy</text>
+      <text class="net-desc" fill="var(--ink-soft)" x="12" y="45">Handles SSL</text>
+      <text class="net-desc" fill="var(--ink-soft)" x="12" y="60">Static content</text>
+    </g>
+
+    <!-- SELinux check in transit -->
+    <path d="M 380,110 L 475,110" class="net-line" marker-end="url(#arrow)" />
+    <text class="net-desc" fill="var(--md-sys-color-oracle-red)" font-weight="700" x="390" y="95">SELinux Check</text>
+    <text class="net-desc" fill="var(--ink-soft)" font-size="9px" x="390" y="130">httpd_can_network_connect</text>
+
+    <!-- Kestrel -->
+    <g transform="translate(480, 70)">
+      <rect class="net-highlight" x="0" y="0" width="110" height="80" />
+      <text class="net-text" fill="var(--md-sys-color-on-primary-container)" x="12" y="25">Kestrel / .NET</text>
+      <text class="net-desc" fill="var(--md-sys-color-on-primary-container)" x="12" y="45">Localhost bind</text>
+      <text class="net-desc" fill="var(--md-sys-color-primary)" font-weight="700" x="12" y="65">Port 5000</text>
+    </g>
+  </svg>
+</div>
+<h3><span class="tick"></span>The four questions</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>① What's my address? — ip</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> ip addr            <span class="c"># interfaces + IPs (ipconfig /all)  — short: ip a</span>
+<span class="p">$</span> ip route           <span class="c"># routing table; first line = default gateway</span>
+<span class="p">$</span> ip -br addr        <span class="c"># -br = brief, the human-friendly view</span></code></pre>
+    <div class="why"><code>ifconfig</code> is deprecated; <code>ip</code> replaced it years ago. Interface names like <code>ens160</code>/<code>eth0</code> are your "Ethernet adapter" equivalents; <code>lo</code> is loopback.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>② Is my app listening? — ss</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo ss -tulnp                       <span class="c"># Tcp+Udp, Listening, Numeric, Processes</span>
+<span class="c">tcp LISTEN 0 512  0.0.0.0:80     users:(("nginx",pid=812,…))
+tcp LISTEN 0 512  127.0.0.1:5000 users:(("dotnet",pid=1973,…))  ← localhost only!</span>
+<span class="p">$</span> sudo ss -tulnp | grep 5000           <span class="c"># the daily one-liner</span>
+<span class="p">$</span> sudo lsof -i :5000                   <span class="c"># alternative: which process owns port 5000</span></code></pre>
+    <div class="why">Memorize <code>ss -tulnp</code> — it's <code>netstat -ano</code> + Task Manager's PID lookup in one. The bind address column is the big tell: <code>127.0.0.1:5000</code> is unreachable from outside the box; <code>0.0.0.0:5000</code> listens on all interfaces.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>③ Can I reach it? — curl &amp; friends</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> curl -i http://localhost:5000/health      <span class="c"># -i = include response headers</span>
+<span class="p">$</span> curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" https://api.example.com
+<span class="p">$</span> curl -X POST -H "Content-Type: application/json" -d '{"id":1}' http://localhost:5000/orders
+<span class="p">$</span> ping -c 4 10.0.0.12                        <span class="c"># -c 4: Linux pings forever without it</span>
+<span class="p">$</span> dig api.example.com +short                 <span class="c"># DNS answer only (nslookup's better cousin)</span>
+<span class="p">$</span> traceroute api.example.com                 <span class="c"># the path (tracert)</span>
+<span class="p">$</span> nc -zv db-host 1521                        <span class="c"># "is THAT port open?" — Test-NetConnection</span></code></pre>
+    <div class="why"><code>curl</code> is Postman-in-the-terminal and lives on every server. The <code>-w</code> write-out format makes one-line health probes for scripts; <code>nc -zv</code> answers "firewall or app?" when a connection fails.</div>
+  </div>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>④ Firewall — firewalld</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo firewall-cmd --state
+<span class="p">$</span> sudo firewall-cmd --list-all                       <span class="c"># current zone, open services/ports</span>
+<span class="p">$</span> sudo firewall-cmd --permanent --add-service=https  <span class="c"># open 443 by service name</span>
+<span class="p">$</span> sudo firewall-cmd --permanent --add-port=5000/tcp  <span class="c"># open a raw port</span>
+<span class="p">$</span> sudo firewall-cmd --reload                          <span class="c"># --permanent changes need a reload!</span></code></pre>
+    <div class="why">firewalld thinks in <b>zones</b> and <b>services</b>. The classic trap: forgetting <code>--permanent</code> (rule vanishes on reboot) or forgetting <code>--reload</code> (permanent rule isn't live yet). You usually need both forms of the same rule, or run with <code>--permanent</code> then reload.</div>
+  </div>
+  <div class="cmd" data-d="ub">
+    <div class="cmd-head"><span class="chip ubc">Ubuntu</span><b>④ Firewall — ufw</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo ufw status verbose
+<span class="p">$</span> sudo ufw allow OpenSSH            <span class="c"># FIRST, before enabling — or you lock yourself out</span>
+<span class="p">$</span> sudo ufw allow 443/tcp
+<span class="p">$</span> sudo ufw allow from 10.0.0.0/24 to any port 5000 proto tcp   <span class="c"># scoped rule</span>
+<span class="p">$</span> sudo ufw enable</code></pre>
+    <div class="why">ufw (Uncomplicated Firewall) is exactly that — flat allow/deny rules, instantly persistent. Order of operations matters once in your life: allow SSH <i>before</i> <code>ufw enable</code> on a remote box.</div>
+  </div>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>The hidden layer: SELinux</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> getenforce                          <span class="c"># Enforcing | Permissive | Disabled</span>
+<span class="p">$</span> sudo grep denied /var/log/audit/audit.log | tail   <span class="c"># what did it block?</span>
+<span class="c"># nginx reverse-proxying to Kestrel on 127.0.0.1:5000 gets blocked? Allow outbound:</span>
+<span class="p">$</span> sudo setsebool -P httpd_can_network_connect 1
+<span class="c"># app listening on a non-standard port for a confined service:</span>
+<span class="p">$</span> sudo semanage port -a -t http_port_t -p tcp 5000
+<span class="c"># files moved into web roots need correct labels:</span>
+<span class="p">$</span> sudo restorecon -Rv /opt/orderapi</code></pre>
+    <div class="why">SELinux is mandatory access control <i>on top of</i> file permissions — when "everything looks right but it still fails" on Oracle Linux, check here before anything else. Never disable it to "fix" an issue; <code>sudo setenforce 0</code> (temporary permissive) is the honest diagnostic: if the problem vanishes, it's SELinux — re-enable with <code>setenforce 1</code> and add the proper boolean/port/label. Ubuntu uses AppArmor instead, which seldom touches custom services.</div>
+  </div>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · networking</div>
+    <table>
+      <tr><th>Windows</th><th>Linux</th><th>Note</th></tr>
+      <tr><td>ipconfig /all</td><td><code>ip addr</code>, <code>ip route</code></td><td>DNS servers: <code>resolvectl status</code></td></tr>
+      <tr><td>netstat -ano + tasklist</td><td><code>ss -tulnp</code></td><td>One command, process names included</td></tr>
+      <tr><td>Test-NetConnection -Port</td><td><code>nc -zv host port</code></td><td>Also <code>curl -v telnet://host:port</code></td></tr>
+      <tr><td>Windows Defender Firewall MMC</td><td><code>firewall-cmd</code> / <code>ufw</code></td><td>Cloud VMs ALSO have security groups outside the OS</td></tr>
+      <tr><td>nslookup</td><td><code>dig</code> (or <code>resolvectl query</code>)</td><td><code>+short</code> for script-friendly output</td></tr>
+    </table>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — "it works on the server but not from my laptop"</span>
+    <p>Debug in rings, inside-out: ① <code>curl localhost:5000</code> on the box (app up?) → ② <code>ss -tulnp</code> (bound to 0.0.0.0 or only 127.0.0.1?) → ③ firewall rules (above) → ④ cloud security group / corporate network. Kestrel binding localhost-only plus a missing firewall rule explains nearly every first-deployment "connection refused".</p>
+  </aside>
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Kestrel defaults to <code>localhost:5000/5001</code> — fine behind a reverse proxy on the same box, invisible otherwise. Set <code>ASPNETCORE_URLS=http://0.0.0.0:5000</code> (env or unit file) to expose it. Ports below 1024 are privileged: don't run dotnet as root for port 80 — either front it with nginx, or grant the one capability it needs: <code>sudo setcap 'cap_net_bind_service=+ep' /opt/orderapi/OrderApi</code>. Your MAUI / mobile clients hitting this API care about TLS — terminate HTTPS at nginx with a Let's Encrypt cert (<code>certbot</code>) and keep Kestrel on plain HTTP internally.</p>
+  </aside>
+</section>
+
+<!-- ============ 10 SYSTEMD ============ -->
+<section class="panel" id="p10" data-title="systemd and services">
+  <span class="kicker">Concept 10 </span>
+  <h2>systemd &amp; services</h2>
+  <p class="lede">systemd is PID 1 — the init system that starts, supervises, and restarts everything. For you it's three things in one: the Services console (<code>systemctl</code>), Event Viewer (<code>journalctl</code>), and Task Scheduler (timers). This is the single most valuable concept for an app developer: it's how your code becomes a first-class citizen of the OS. <b>Identical on Oracle Linux and Ubuntu.</b></p>
+
+  <h3><span class="tick"></span>Operating services</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>The systemctl verbs</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> systemctl status nginx            <span class="c"># state, PID, recent log lines — the health card</span>
+<span class="p">$</span> sudo systemctl start nginx        <span class="c"># … stop | restart</span>
+<span class="p">$</span> sudo systemctl reload nginx       <span class="c"># re-read config without dropping connections</span>
+<span class="p">$</span> sudo systemctl enable --now nginx <span class="c"># start now AND on every boot — one command</span>
+<span class="p">$</span> systemctl is-active nginx; systemctl is-enabled nginx   <span class="c"># script-friendly checks</span>
+<span class="p">$</span> systemctl list-units --type=service --state=running
+<span class="p">$</span> systemctl list-units --failed     <span class="c"># the morning-after triage view</span></code></pre>
+    <div class="why"><b>enabled ≠ running</b>: <i>enabled</i> means "starts at boot", <i>active</i> means "running now" — exactly Startup Type vs Status in services.msc. The web server unit is <span class="ol"><code>httpd</code> on Oracle Linux</span><span class="ub"><code>apache2</code> on Ubuntu</span> if you use Apache; <code>nginx</code> is nginx everywhere.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>journalctl — Event Viewer, but composable</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> journalctl -u orderapi -f                    <span class="c"># live tail of one service (THE command)</span>
+<span class="p">$</span> journalctl -u orderapi --since "30 min ago" -p warning   <span class="c"># by time + min priority</span>
+<span class="p">$</span> journalctl -u orderapi -b                     <span class="c"># since last boot</span>
+<span class="p">$</span> journalctl -u orderapi -o json | jq .MESSAGE | head      <span class="c"># structured output</span>
+<span class="p">$</span> journalctl --disk-usage &amp;&amp; sudo journalctl --vacuum-size=500M   <span class="c"># tame journal growth</span></code></pre>
+    <div class="why">Everything a service prints to stdout/stderr lands here, timestamped and indexed — which is precisely why Concept 05 told you to log to the console.</div>
+  </div>
+
+  <h3><span class="tick"></span>Your .NET app as a real service — the full unit file</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>/etc/systemd/system/orderapi.service</b><button class="copy">Copy</button></div>
+    <pre><code>[Unit]
+Description=Order API (ASP.NET Core)
+After=network.target                       <span class="c"># start after networking is up</span>
+
+[Service]
+Type=notify                                <span class="c"># .NET 7+: add Microsoft.Extensions.Hosting.Systemd</span>
+                                           <span class="c"># + UseSystemd() — else use Type=simple</span>
+User=orderapi
+Group=orderapi
+WorkingDirectory=/opt/orderapi/current     <span class="c"># ← appsettings.json resolves from here!</span>
+ExecStart=/usr/bin/dotnet /opt/orderapi/current/OrderApi.dll
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:5000
+EnvironmentFile=-/etc/orderapi/orderapi.env   <span class="c"># secrets; "-" = optional if missing</span>
+Restart=always                             <span class="c"># supervise: resurrect on crash</span>
+RestartSec=5
+KillSignal=SIGTERM                         <span class="c"># graceful: triggers IHostApplicationLifetime</span>
+TimeoutStopSec=30
+LimitNOFILE=65536                          <span class="c"># Kestrel under load needs file descriptors</span>
+# hardening (optional but cheap):
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/log/orderapi /var/lib/orderapi
+
+[Install]
+WantedBy=multi-user.target                 <span class="c"># "normal server boot" — see Concept 12</span></code></pre>
+    <div class="why">Activate it: <code>sudo systemctl daemon-reload</code> (re-read unit files — required after every edit) then <code>sudo systemctl enable --now orderapi</code>, verify with <code>systemctl status orderapi</code> and <code>journalctl -u orderapi -f</code>. This one file replaces a Windows Service wrapper, NSSM, and Recovery-tab settings combined.</div>
+  </div>
+
+  <details class="deep"><summary>Deep dive: timers — cron with logging and dependencies</summary><div class="body">
+    <p>Pair <code>orderapi-cleanup.service</code> (a oneshot unit running your cleanup command) with <code>orderapi-cleanup.timer</code> containing <code>OnCalendar=*-*-* 02:30:00</code> and <code>Persistent=true</code> (catch up if the box was off). Enable the <i>timer</i>: <code>sudo systemctl enable --now orderapi-cleanup.timer</code>; inspect schedules with <code>systemctl list-timers</code>. Unlike cron you get journald logs, dependency ordering, and missed-run handling for free.</p>
+  </div></details>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · services</div>
+    <table>
+      <tr><th>Windows</th><th>Linux</th><th>Note</th></tr>
+      <tr><td>services.msc / sc.exe</td><td><code>systemctl</code></td><td>Plus dependency graph: <code>systemctl list-dependencies</code></td></tr>
+      <tr><td>Event Viewer</td><td><code>journalctl</code></td><td>Filterable by unit, time, priority, boot</td></tr>
+      <tr><td>Recovery tab (restart on failure)</td><td><code>Restart=always</code>, <code>RestartSec=</code></td><td>Plus rate limiting via <code>StartLimitBurst</code></td></tr>
+      <tr><td>Task Scheduler</td><td>systemd timers</td><td><code>systemctl list-timers</code></td></tr>
+      <tr><td>Log On As… (service account)</td><td><code>User=</code> directive</td><td>Pairs with the nologin user from Concept 06</td></tr>
+    </table>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — the daemon-reload ritual</span>
+    <p>Edited a unit file and the change "didn't take"? You skipped <code>sudo systemctl daemon-reload</code>. systemd caches unit definitions; reload re-parses them. Sequence to memorize: <i>edit → daemon-reload → restart → status</i>. Also: unit files you author live in <code>/etc/systemd/system/</code>, never in <code>/usr/lib/systemd/system/</code> (that's package territory, overwritten on upgrade).</p>
+  </aside>
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Add the NuGet package <code>Microsoft.Extensions.Hosting.Systemd</code> and call <code>.UseSystemd()</code> on your host builder: with <code>Type=notify</code> systemd then knows the difference between "process launched" and "app actually ready", making <code>systemctl start</code> block until your health state is genuinely up — better zero-downtime restarts and accurate dependency ordering for free.</p>
+  </aside>
+</section>
+
+<!-- ============ 11 STORAGE ============ -->
+<section class="panel" id="p11" data-title="Disk and storage">
+  <span class="kicker">Concept 11 </span>
+  <h2>Disk &amp; storage management</h2>
+  <p class="lede">The chain is: physical disk → partitions → filesystem → mounted into the tree. Enterprise boxes add <b>LVM</b> (Logical Volume Manager) between partition and filesystem so volumes can grow without downtime — think Storage Spaces / dynamic disks, but standard and scriptable. Your two recurring real-world tasks: <i>find what's eating space</i> and <i>grow a volume</i>.</p>
+
+  <h3><span class="tick"></span>Task 1: the disk is full — find the eater</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>From symptom to culprit in four commands</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> df -h                                   <span class="c"># which filesystem is full?</span>
+<span class="c">/dev/mapper/ol-root   38G   36G  1.2G  97% /        ← this one</span>
+<span class="p">$</span> sudo du -xh / --max-depth=2 2&gt;/dev/null | sort -rh | head -15
+<span class="c">  # -x: stay on this filesystem (skip /proc etc.), sort by size, top 15</span>
+<span class="p">$</span> sudo du -sh /var/log/* | sort -rh | head <span class="c"># logs are the usual suspect</span>
+<span class="p">$</span> sudo journalctl --vacuum-size=300M       <span class="c"># shrink the journal</span>
+<span class="p">$</span> sudo lsof +L1 | head                      <span class="c"># deleted-but-open files still holding space</span></code></pre>
+    <div class="why">That last one solves a famous mystery: <code>du</code> says 20 GB used, <code>df</code> says 36 GB — a process holds a deleted log file open and the space won't free until it's restarted. Also check <span class="ol"><code>dnf clean all</code></span><span class="ub"><code>sudo apt clean</code></span> (package caches) and <code>docker system prune</code> if containers live there.</div>
+  </div>
+
+  
+<div class="diagram-wrapper" style="margin: 24px 0;">
+  <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--md-sys-color-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Visual Guide: LVM Storage Layers & Mount Points</div>
+  <svg viewBox="0 0 600 250" class="concept-diagram" style="width: 100%; border-radius: 16px; background: var(--md-sys-color-surface-container-low); border: 1px solid var(--rule); padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+    <style>
+      .lvm-disk { fill: var(--md-sys-color-surface-container-highest); stroke: var(--rule); stroke-width: 1.5; rx: 6px; }
+      .lvm-pv { fill: var(--md-sys-color-surface-container-high); stroke: var(--rule); stroke-dasharray: 2; stroke-width: 1.5; rx: 6px; }
+      .lvm-vg { fill: rgba(168, 199, 250, 0.05); stroke: var(--md-sys-color-primary); stroke-width: 2; rx: 12px; }
+      .lvm-lv { fill: var(--md-sys-color-primary-container); stroke: var(--md-sys-color-primary); stroke-width: 1.5; rx: 6px; }
+      .lvm-text { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; }
+      .lvm-desc { font-family: 'Roboto', sans-serif; font-size: 11px; }
+    </style>
+
+    <!-- Level 1: Disks -->
+    <g transform="translate(10, 10)">
+      <rect class="lvm-disk" x="0" y="0" width="130" height="35" />
+      <text class="lvm-text" fill="var(--ink)" x="10" y="22">sda2 (Partition)</text>
+    </g>
+    <g transform="translate(150, 10)">
+      <rect class="lvm-disk" x="0" y="0" width="130" height="35" />
+      <text class="lvm-text" fill="var(--ink)" x="10" y="22">sdb (Raw Disk)</text>
+    </g>
+    <text class="lvm-desc" fill="var(--ink-soft)" x="300" y="32">◀ Physical Storage Devices</text>
+
+    <!-- Level 2: PVs -->
+    <g transform="translate(10, 55)">
+      <rect class="lvm-pv" x="0" y="0" width="130" height="35" />
+      <text class="lvm-text" fill="var(--ink-soft)" x="10" y="22">PV /dev/sda2</text>
+    </g>
+    <g transform="translate(150, 55)">
+      <rect class="lvm-pv" x="0" y="0" width="130" height="35" />
+      <text class="lvm-text" fill="var(--ink-soft)" x="10" y="22">PV /dev/sdb</text>
+    </g>
+    <text class="lvm-desc" fill="var(--ink-soft)" x="300" y="77">◀ Physical Volumes registered in LVM</text>
+
+    <!-- Level 3: VG Pool -->
+    <g transform="translate(10, 100)">
+      <rect class="lvm-vg" x="0" y="0" width="270" height="50" />
+      <text class="lvm-text" fill="var(--md-sys-color-primary)" x="15" y="25">Volume Group: vg_data (Pool)</text>
+      <text class="lvm-desc" fill="var(--ink-soft)" x="15" y="42">Combines both PVs into one flexible pool</text>
+    </g>
+    <text class="lvm-desc" fill="var(--ink-soft)" x="300" y="130">◀ Storage Pool (combines all disks)</text>
+
+    <!-- Level 4: LVs & Mounts -->
+    <g transform="translate(10, 165)">
+      <rect class="lvm-lv" x="0" y="0" width="125" height="55" />
+      <text class="lvm-text" fill="var(--md-sys-color-on-primary-container)" x="10" y="22">LV: lv_root</text>
+      <text class="lvm-desc" fill="var(--md-sys-color-on-primary-container)" x="10" y="42">Mounted at: /</text>
+    </g>
+    <g transform="translate(145, 165)">
+      <rect class="lvm-lv" x="0" y="0" width="135" height="55" />
+      <text class="lvm-text" fill="var(--md-sys-color-on-primary-container)" x="10" y="22">LV: lv_orderapi</text>
+      <text class="lvm-desc" fill="var(--md-sys-color-on-primary-container)" x="10" y="42">Mount: /var/lib/orderapi</text>
+    </g>
+    <text class="lvm-desc" fill="var(--ink-soft)" x="300" y="195">◀ Logical Volumes (formatted, can resize online!)</text>
+
+    <!-- Connections -->
+    <path d="M 75,45 L 75,55 M 215,45 L 215,55 M 75,90 L 75,100 M 215,90 L 215,100 M 75,150 L 75,165 M 215,150 L 215,165" style="stroke: var(--rule); stroke-width: 1; fill: none;" />
+  </svg>
+</div>
+<h3><span class="tick"></span>Task 2: grow a volume (the LVM chain)</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Survey the layers</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> lsblk                                    <span class="c"># the disk → partition → LV tree (start here, always)</span>
+<span class="c">sda             50G
+├─sda1           1G  /boot
+└─sda2          49G
+  ├─vg0-root    30G  /
+  └─vg0-data    19G  /var/lib/orderapi</span>
+<span class="p">$</span> sudo pvs &amp;&amp; sudo vgs &amp;&amp; sudo lvs         <span class="c"># physical volumes, volume groups, logical volumes</span>
+<span class="p">$</span> mount | grep vg0                          <span class="c"># what's mounted where, with which fs type</span></code></pre>
+    <div class="why">Read <code>lsblk</code> like a family tree: disks have partitions; partitions feed a volume group (the pool); logical volumes are carved from the pool and carry filesystems. PV/VG/LV → <code>pvcreate</code>, <code>vgcreate</code>, <code>lvcreate</code> when building from scratch.</div>
+  </div>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>Grow a volume — XFS (the OL default)</b><button class="copy">Copy</button></div>
+    <pre><code><span class="c"># after enlarging the cloud disk / adding capacity to the VG:</span>
+<span class="p">$</span> sudo lvextend -l +100%FREE /dev/vg0/data   <span class="c"># give the LV all free VG space</span>
+<span class="p">$</span> sudo xfs_growfs /var/lib/orderapi          <span class="c"># XFS grows by MOUNT POINT, online</span>
+<span class="p">$</span> df -h /var/lib/orderapi                    <span class="c"># verify</span></code></pre>
+    <div class="why">Oracle Linux defaults to <b>XFS</b>: grows online in seconds, but <b>can never shrink</b> — size conservatively and grow on demand. (<code>lvextend -r</code> runs the right grow tool for you on either filesystem.)</div>
+  </div>
+  <div class="cmd" data-d="ub">
+    <div class="cmd-head"><span class="chip ubc">Ubuntu</span><b>Grow a volume — ext4 (the Ubuntu default)</b><button class="copy">Copy</button></div>
+    <pre><code><span class="c"># after enlarging the cloud disk / adding capacity to the VG:</span>
+<span class="p">$</span> sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+<span class="p">$</span> sudo resize2fs /dev/ubuntu-vg/ubuntu-lv    <span class="c"># ext4 grows by DEVICE, online</span>
+<span class="p">$</span> df -h /                                    <span class="c"># verify</span>
+<span class="c"># fresh Ubuntu installs often leave VG space unallocated on purpose — check vgs!</span></code></pre>
+    <div class="why">Ubuntu defaults to <b>ext4</b> (<code>resize2fs</code> to grow; can also shrink, offline). The default LVM install frequently allocates only half the disk to <code>/</code> — "out of space" on a roomy disk usually means free extents are sitting in the VG waiting for exactly this command pair.</div>
+  </div>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>Mount a new data disk permanently</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> lsblk                                     <span class="c"># identify the new disk, e.g. sdb</span>
+<span class="p">$</span> sudo mkfs.xfs /dev/sdb                    <span class="c"># or mkfs.ext4 — format it</span>
+<span class="p">$</span> sudo mkdir /data &amp;&amp; sudo mount /dev/sdb /data
+<span class="p">$</span> sudo blkid /dev/sdb                       <span class="c"># copy the UUID, then persist in /etc/fstab:</span>
+<span class="c">UUID=3f1c…  /data  xfs  defaults,nofail  0 2</span>
+<span class="p">$</span> sudo systemctl daemon-reload &amp;&amp; sudo mount -a   <span class="c"># test fstab WITHOUT rebooting</span></code></pre>
+    <div class="why">Always mount by <b>UUID</b> (device names like sdb can shuffle between boots) and add <code>nofail</code> so a missing data disk doesn't stop the whole boot. <code>mount -a</code> is the safe dress rehearsal — a broken fstab discovered at boot time is a Concept-12 rescue session.</div>
+  </div>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · storage</div>
+    <table>
+      <tr><th>Windows</th><th>Linux</th><th>Note</th></tr>
+      <tr><td>Disk Management / diskpart</td><td><code>lsblk</code>, <code>fdisk</code>, <code>parted</code></td><td>lsblk first, always — it's read-only and orienting</td></tr>
+      <tr><td>Format dialog (NTFS)</td><td><code>mkfs.xfs</code> / <code>mkfs.ext4</code></td><td>Filesystem choice is per-volume, not per-OS</td></tr>
+      <tr><td>Assign drive letter</td><td><code>mount</code> + <code>/etc/fstab</code></td><td>Mounted into the tree at any directory</td></tr>
+      <tr><td>Storage Spaces / dynamic disks</td><td>LVM (PV → VG → LV)</td><td>Online grow is routine, not exotic</td></tr>
+      <tr><td>Properties → size of folder</td><td><code>du -sh dir</code></td><td><code>ncdu</code> (installable) = WinDirStat for the terminal</td></tr>
+    </table>
+  </div>
+
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Put growing app data (uploads, SQLite caches, EF-generated content) on its <b>own LV</b> mounted at <code>/var/lib/orderapi</code> — a runaway file can then never choke <code>/</code> and take sshd down with it. In code, write through <code>IConfiguration</code>-supplied paths rather than <code>AppContext.BaseDirectory</code>; with systemd's <code>ProtectSystem=strict</code> (Concept 10), only your declared <code>ReadWritePaths</code> are writable anyway — a nice enforcement of the discipline.</p>
+  </aside>
+</section>
+
+<!-- ============ 12 BOOT ============ -->
+<section class="panel" id="p12" data-title="Linux boot process">
+  <span class="kicker">Concept 12 </span>
+  <h2>Linux boot process</h2>
+  <p class="lede">Firmware (BIOS/UEFI) → GRUB bootloader → kernel + initramfs → systemd (PID 1) → target reached → login. Five stages, three to five seconds on a cloud VM. You need this concept for exactly two moments: when a server boots slowly, and when it doesn't boot at all.</p>
+
+  <div class="winmap">
+    <div class="bar">Windows translation · boot</div>
+    <table>
+      <tr><th>Windows</th><th>Linux</th><th>Note</th></tr>
+      <tr><td>UEFI → Windows Boot Manager (BCD)</td><td>UEFI → GRUB2 (<code>grub.cfg</code>)</td><td>GRUB is a text menu you can edit live at boot</td></tr>
+      <tr><td>ntoskrnl + boot drivers</td><td>kernel + initramfs</td><td>initramfs = mini root fs with the drivers needed to reach the real disk</td></tr>
+      <tr><td>Session Manager → services start</td><td>systemd → units start in parallel</td><td>Dependency-driven, hence the speed</td></tr>
+      <tr><td>Safe Mode</td><td>rescue / emergency target, single-user</td><td>Reached by editing the kernel line in GRUB</td></tr>
+      <tr><td>msconfig boot tab</td><td><code>/etc/default/grub</code></td><td>Kernel parameters live here</td></tr>
+    </table>
+  </div>
+
+  <h3><span class="tick"></span>Slow boot: profile it</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>systemd-analyze — the boot profiler</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> systemd-analyze                       <span class="c"># total: firmware / loader / kernel / userspace</span>
+<span class="p">$</span> systemd-analyze blame | head          <span class="c"># slowest units, ranked</span>
+<span class="p">$</span> systemd-analyze critical-chain        <span class="c"># the dependency path that gated boot</span>
+<span class="p">$</span> journalctl -b -p err                  <span class="c"># errors from THIS boot; -b -1 = previous boot</span></code></pre>
+    <div class="why">A unit "blamed" for 90 s is usually waiting on something — DNS, a dead NFS mount, a misordered dependency. <code>critical-chain</code> shows whether it actually delayed anyone else. <code>journalctl -b -1 -e</code> answers "why did it die last night?" after an unexpected reboot.</div>
+  </div>
+
+  <h3><span class="tick"></span>Targets — runlevels, modernized</h3>
+  <div class="cmd" data-d="both">
+    <div class="cmd-head"><span class="chip both">Both</span><b>What does this machine boot into?</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> systemctl get-default
+<span class="c">multi-user.target          ← server: network + services, no GUI</span>
+<span class="p">$</span> sudo systemctl set-default multi-user.target   <span class="c"># graphical.target = with GUI</span>
+<span class="p">$</span> sudo systemctl isolate rescue.target            <span class="c"># drop to single-user maintenance NOW</span></code></pre>
+    <div class="why">This is why your unit file said <code>WantedBy=multi-user.target</code> (Concept 10): "when the machine reaches normal server mode, include me." The enable/disable mechanic is just symlinks into the target's <code>.wants</code> directory.</div>
+  </div>
+
+  <h3><span class="tick"></span>Kernel parameters &amp; GRUB — the family split</h3>
+  <div class="cmd" data-d="ol">
+    <div class="cmd-head"><span class="chip olc">Oracle Linux</span><b>Change kernel parameters</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudo grubby --info=DEFAULT                       <span class="c"># current default kernel + args</span>
+<span class="p">$</span> sudo grubby --update-kernel=ALL --args="audit=1" <span class="c"># add a parameter, all kernels</span>
+<span class="c"># the traditional route still works:</span>
+<span class="p">$</span> sudoedit /etc/default/grub
+<span class="p">$</span> sudo grub2-mkconfig -o /boot/grub2/grub.cfg      <span class="c"># regenerate (note: grub2-*)</span></code></pre>
+    <div class="why">RHEL family prefers <code>grubby</code> with BLS (one snippet per kernel under <code>/boot/loader/entries/</code>) — it edits entries safely without regenerating the whole config. The kernel-switch trick from Concept 01 (UEK ↔ RHCK) is the same tool.</div>
+  </div>
+  <div class="cmd" data-d="ub">
+    <div class="cmd-head"><span class="chip ubc">Ubuntu</span><b>Change kernel parameters</b><button class="copy">Copy</button></div>
+    <pre><code><span class="p">$</span> sudoedit /etc/default/grub
+<span class="c">GRUB_CMDLINE_LINUX_DEFAULT="quiet splash audit=1"</span>
+<span class="p">$</span> sudo update-grub                                  <span class="c"># Ubuntu's wrapper for grub-mkconfig</span>
+<span class="p">$</span> reboot
+<span class="p">$</span> cat /proc/cmdline                                 <span class="c"># verify what the kernel booted with</span></code></pre>
+    <div class="why">On Ubuntu it's always the same two-step: edit <code>/etc/default/grub</code>, run <code>update-grub</code>. Note the binary names differ across families: <code>update-grub</code>/<code>grub-mkconfig</code> here vs <code>grub2-mkconfig</code> there.</div>
+  </div>
+
+  <details class="deep"><summary>Deep dive: the won't-boot rescue playbook</summary><div class="body">
+    <p>At the GRUB menu (hold/press <code>Shift</code> or <code>Esc</code> early if hidden), press <code>e</code> on the entry and append to the <code>linux</code> line: <code>systemd.unit=rescue.target</code> (single-user with most services off) or <code>systemd.unit=emergency.target</code> (barest minimum, root fs read-only). Boot with <code>Ctrl+X</code>. Typical fixes from there: <code>mount -o remount,rw /</code>, repair a bad <code>/etc/fstab</code> line (the #1 cause — which is why Concept 11 insisted on <code>nofail</code> + <code>mount -a</code>), or disable the offending unit. Cloud VMs without console keyboards offer the same via their serial-console feature. The infographic's whiteboard wisdom applies: most cloud VMs boot in under 3 seconds — when one takes minutes, something specific is waiting, and <code>blame</code>/<code>critical-chain</code> will name it.</p>
+  </div></details>
+
+  <aside class="dotnet"><span class="tag">.NET corner</span>
+    <p>Boot order is your app's startup contract: <code>After=network.target</code> only waits for network <i>management</i> to be up, not actual connectivity — an API that needs DNS/DB at startup should either use <code>After=network-online.target</code> + <code>Wants=network-online.target</code>, or better, retry connections in code (Polly) so boot order stops mattering. Verify your service truly comes back from a cold start: <code>sudo reboot</code>, then <code>systemctl status orderapi</code> — the test most deployments skip until the first unplanned outage runs it for them.</p>
+  </aside>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  /* ---------- tabs ---------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.rail a"));
+  var panels = Array.prototype.slice.call(document.querySelectorAll(".panel"));
+  function activate(id, scroll){
+    panels.forEach(function(p){ p.classList.toggle("active", p.id === id); });
+    links.forEach(function(a){ a.classList.toggle("active", a.getAttribute("href") === "#"+id); });
+    if (scroll !== false) window.scrollTo({top:0});
+  }
+  links.forEach(function(a){
+    a.addEventListener("click", function(e){
+      e.preventDefault();
+      activate(a.getAttribute("href").slice(1));
+      try{ history.replaceState(null,"",a.getAttribute("href")); }catch(_){}
+    });
+  });
+  if (location.hash && document.querySelector(".panel"+location.hash)) activate(location.hash.slice(1), false);
+
+  /* ---------- distro switch (in-memory only) ---------- */
+  var body = document.body;
+  document.getElementById("btnOL").addEventListener("click", function(){ body.setAttribute("data-distro","ol"); });
+  document.getElementById("btnUB").addEventListener("click", function(){ body.setAttribute("data-distro","ub"); });
+
+  /* ---------- copy buttons ---------- */
+  function visibleCode(pre){
+    /* clone, strip elements hidden by current distro + prompt markers, return text */
+    var clone = pre.cloneNode(true);
+    var hideSel = body.getAttribute("data-distro")==="ol" ? ".ub" : ".ol";
+    Array.prototype.forEach.call(clone.querySelectorAll(hideSel), function(n){ n.parentNode.removeChild(n); });
+    return clone.textContent.replace(/^\$\s?/gm,"").replace(/\n{3,}/g,"\n\n").trim();
+  }
+  document.addEventListener("click", function(e){
+    var btn = e.target.closest(".copy");
+    if(!btn) return;
+    var pre = btn.closest(".cmd").querySelector("pre");
+    var text = visibleCode(pre);
+    function done(ok){
+      btn.textContent = ok ? "Copied" : "Select+Ctrl C";
+      btn.classList.toggle("ok", ok);
+      setTimeout(function(){ btn.textContent="Copy"; btn.classList.remove("ok"); }, 1600);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){done(true);}, function(){ fallback(); });
+    } else fallback();
+    function fallback(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+        document.body.appendChild(ta); ta.select();
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta); done(ok);
+      }catch(_){ done(false); }
+    }
+  });
+
+  /* ---------- search ---------- */
+  var index = [];
+  panels.forEach(function(p){
+    var ptitle = p.getAttribute("data-title") || p.querySelector("h2").textContent;
+    /* command card titles */
+    Array.prototype.forEach.call(p.querySelectorAll(".cmd"), function(c){
+      var t = c.querySelector(".cmd-head b");
+      var code = c.querySelector("pre") ? c.querySelector("pre").textContent : "";
+      if (t) index.push({label:t.textContent, where:ptitle, panel:p.id, hay:(t.textContent+" "+code).toLowerCase(), el:c});
+    });
+    /* section headings */
+    Array.prototype.forEach.call(p.querySelectorAll("h3"), function(h){
+      index.push({label:h.textContent, where:ptitle, panel:p.id, hay:h.textContent.toLowerCase(), el:h});
+    });
+    index.push({label:ptitle, where:"Open chapter", panel:p.id, hay:ptitle.toLowerCase(), el:null});
+  });
+  var input = document.getElementById("search");
+  var resBox = document.getElementById("searchResults");
+  function closeResults(){ resBox.classList.remove("open"); resBox.innerHTML=""; }
+  function runSearch(){
+    var q = input.value.trim().toLowerCase();
+    if (q.length < 2){ closeResults(); return; }
+    var hits = index.filter(function(i){ return i.hay.indexOf(q) !== -1; }).slice(0,12);
+    resBox.innerHTML = "";
+    if (!hits.length){
+      var d=document.createElement("div"); d.className="none"; d.textContent="No matches — try a command name like chmod, ss, dnf…";
+      resBox.appendChild(d);
+    } else {
+      hits.forEach(function(h){
+        var b=document.createElement("button");
+        var w=document.createElement("span"); w.className="where"; w.textContent=h.where;
+        b.appendChild(w); b.appendChild(document.createTextNode(h.label));
+        b.addEventListener("click", function(){
+          activate(h.panel);
+          closeResults(); input.value="";
+          if (h.el){
+            h.el.scrollIntoView({block:"center"});
+            h.el.style.outline="3px solid var(--accent)"; h.el.style.outlineOffset="3px";
+            setTimeout(function(){ h.el.style.outline=""; h.el.style.outlineOffset=""; }, 1800);
+          }
+        });
+        resBox.appendChild(b);
+      });
+    }
+    resBox.classList.add("open");
+  }
+  input.addEventListener("input", runSearch);
+  input.addEventListener("focus", runSearch);
+  document.addEventListener("click", function(e){
+    if (!e.target.closest(".searchwrap")) closeResults();
+  });
+  input.addEventListener("keydown", function(e){
+    if (e.key === "Escape"){ closeResults(); input.blur(); }
+    if (e.key === "Enter"){
+      var first = resBox.querySelector("button");
+      if (first) first.click();
+    }
+  });
+})();
+</script>
+</body>
+</html>
