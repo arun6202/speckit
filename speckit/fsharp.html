@@ -1,0 +1,2559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F# Field Manual — hands-on walkthrough for the C# / .NET developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --md-sys-color-background: #0d0e12;
+  --md-sys-color-on-background: #e1e2ec;
+  --md-sys-color-surface: #101115;
+  --md-sys-color-on-surface: #e1e2ec;
+  --md-sys-color-surface-variant: #1a1c22;
+  --md-sys-color-on-surface-variant: #c3c6cf;
+  --md-sys-color-surface-container-low: #15161c;
+  --md-sys-color-surface-container: #1e2025;
+  --md-sys-color-surface-container-high: #282a30;
+  --md-sys-color-surface-container-highest: #33353c;
+  --md-sys-color-primary: #a8c7fa;
+  --md-sys-color-on-primary: #062e6f;
+  --md-sys-color-primary-container: #004a77;
+  --md-sys-color-on-primary-container: #c2e7ff;
+  --md-sys-color-secondary-container: #2d3038;
+  --md-sys-color-on-secondary-container: #c3c6cf;
+  --md-sys-color-outline: #8c9199;
+  --md-sys-color-outline-variant: #43474e;
+
+  /* F# brand purple + C# green-ish accents */
+  --fs-purple: #c5a8fa;
+  --fs-purple-container: #38215c;
+  --on-fs-purple-container: #e8dcff;
+  --cs-green: #8fd9a8;
+  --cs-green-container: #0d3a21;
+  --on-cs-green-container: #c9f2d6;
+  --psnavy: #152232;
+  --psnavy-deep: #0a1420;
+
+  --paper: var(--md-sys-color-background);
+  --panel: var(--md-sys-color-surface-container);
+  --ink: var(--md-sys-color-on-surface);
+  --ink-soft: var(--md-sys-color-on-surface-variant);
+  --rule: var(--md-sys-color-outline-variant);
+  --term-bg: #090a0d;
+  --term-ink: #e1e2ec;
+  --term-dim: #8c9199;
+  --accent: var(--md-sys-color-primary);
+  --warn-edge: #ebbf38;
+  --ok: #81c784;
+  --bad: #ff897a;
+  --radius: 16px;
+
+  /* code highlight palette */
+  --hl-k: #c5a8fa;   /* keyword  */
+  --hl-s: #a5d6a7;   /* string   */
+  --hl-c: #777e8a;   /* comment  */
+  --hl-n: #ffcc80;   /* number   */
+  --hl-t: #80cbc4;   /* type-ish */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; animation: none !important; }
+}
+
+body {
+  font-family: "Roboto", -apple-system, Segoe UI, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+body::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: linear-gradient(var(--rule) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.06;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule);
+  padding: 12px 24px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.progressline {
+  position: absolute; left: 0; bottom: -1px; height: 2px;
+  background: var(--fs-purple); width: 0%;
+  transition: width .4s cubic-bezier(.2,0,0,1);
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand .stamp {
+  font-family: "Outfit", sans-serif; font-weight: 700; font-size: 12px;
+  letter-spacing: .1em;
+  color: var(--on-fs-purple-container);
+  background: var(--fs-purple-container);
+  padding: 4px 10px; border-radius: 8px;
+}
+.brand h1 {
+  font-family: "Outfit", sans-serif; font-weight: 700; font-size: 22px;
+  letter-spacing: .02em; color: var(--ink);
+}
+.brand h1 small { font-weight: 400; color: var(--ink-soft); font-size: 14px; margin-left: 6px; }
+.topbar .spacer { flex: 1; }
+
+/* lens switch */
+.lens-switch {
+  display: flex; align-items: center;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 999px; overflow: hidden; background: transparent;
+}
+.lens-switch button {
+  appearance: none; border: 0; cursor: pointer; padding: 8px 20px;
+  background: transparent; color: var(--ink-soft);
+  font-family: "Outfit", sans-serif; font-weight: 600; font-size: 13px;
+  letter-spacing: .05em; display: flex; align-items: center; gap: 8px;
+  transition: background .2s, color .2s;
+  border-right: 1px solid var(--md-sys-color-outline);
+}
+.lens-switch button:last-child { border-right: none; }
+.lens-switch button .dot {
+  width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+  opacity: .6; transition: transform .2s, opacity .2s;
+}
+.lens-switch button:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: -2px; }
+body[data-lens="cs"] .lens-switch .b-cs { background: var(--cs-green-container); color: var(--on-cs-green-container); }
+body[data-lens="cs"] .lens-switch .b-cs .dot { opacity: 1; transform: scale(1.2); background: var(--cs-green); }
+body[data-lens="fs"] .lens-switch .b-fs { background: var(--fs-purple-container); color: var(--on-fs-purple-container); }
+body[data-lens="fs"] .lens-switch .b-fs .dot { opacity: 1; transform: scale(1.2); background: var(--fs-purple); }
+body[data-lens="fs"] aside.csharp { display: none; }
+
+/* search */
+.searchwrap { position: relative; }
+.searchwrap input {
+  width: 250px; max-width: 45vw;
+  padding: 10px 16px 10px 40px;
+  border-radius: 28px; border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--ink); font-family: "Roboto", sans-serif; font-size: 14px;
+  outline: none; transition: border-color .2s, background-color .2s;
+}
+.searchwrap input:focus { border-color: var(--md-sys-color-primary); background: var(--md-sys-color-surface-container-highest); }
+.searchwrap input::placeholder { color: var(--ink-soft); opacity: .7; }
+.searchwrap .mag {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--ink-soft); font-size: 16px; pointer-events: none;
+}
+.search-results {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  width: 360px; max-width: 85vw; max-height: 350px; overflow: auto;
+  background: var(--md-sys-color-surface-container-high); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.4);
+  display: none; z-index: 60;
+}
+.search-results.open { display: block; }
+.search-results button {
+  display: block; width: 100%; text-align: left; background: none; border: 0;
+  cursor: pointer; padding: 12px 16px; font-family: "Roboto", sans-serif;
+  font-size: 14.5px; color: var(--ink); border-bottom: 1px solid var(--rule);
+  transition: background-color .2s;
+}
+.search-results button:hover, .search-results button:focus-visible {
+  background: var(--md-sys-color-surface-container-highest); outline: none;
+}
+.search-results .where {
+  display: block; font-size: 11px; color: var(--fs-purple);
+  letter-spacing: .06em; text-transform: uppercase;
+  font-family: "Outfit", sans-serif; font-weight: 600; margin-bottom: 2px;
+}
+.search-results .none { padding: 16px; color: var(--ink-soft); font-size: 14.5px; text-align: center; }
+
+/* ---------- Shell ---------- */
+.shell {
+  position: relative; z-index: 1;
+  display: flex; max-width: 1400px; margin: 0 auto; gap: 24px;
+  align-items: flex-start; padding: 24px;
+}
+nav.rail {
+  position: sticky; top: 88px; flex: 0 0 270px; align-self: flex-start;
+  max-height: calc(100vh - 120px); overflow: auto; padding: 0 8px 24px 0;
+}
+nav.rail .railhead {
+  font-family: "Outfit", sans-serif; font-weight: 700; font-size: 12px;
+  letter-spacing: .15em; color: var(--fs-purple);
+  text-transform: uppercase; margin: 20px 12px 8px;
+}
+nav.rail a {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+  color: var(--ink-soft); padding: 9px 14px; border-radius: 16px;
+  font-size: 14px; font-weight: 500; transition: all .2s; margin-bottom: 3px;
+}
+nav.rail a:hover { background: var(--md-sys-color-surface-container-high); color: var(--ink); }
+nav.rail a.active { background: var(--fs-purple-container); color: var(--on-fs-purple-container); }
+nav.rail .num {
+  font-family: "Roboto Mono", monospace; font-size: 12px; font-weight: 500;
+  color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 2px 6px; min-width: 28px; text-align: center; flex: 0 0 auto;
+}
+nav.rail a.active .num { color: var(--on-fs-purple-container); border-color: var(--fs-purple); }
+nav.rail a.done .num { border-color: var(--ok); color: var(--ok); }
+nav.rail a .tickmark { margin-left: auto; color: var(--ok); font-size: 13px; display: none; }
+nav.rail a.done .tickmark { display: inline; }
+nav.rail .pr {
+  margin-left: auto; flex: 0 0 auto;
+  font-family: "Outfit", sans-serif; font-weight: 700; font-size: 10.5px;
+  letter-spacing: .04em; border-radius: 6px; padding: 2px 6px; text-transform: uppercase;
+}
+nav.rail a.done .pr { display: none; }
+.pr.d1 { background: rgba(129,199,132,.15); color: #81c784; }
+.pr.w1 { background: rgba(100,181,246,.15); color: #64b5f6; }
+.pr.m1 { background: rgba(186,104,200,.15); color: #ba68c8; }
+
+/* ---------- Panels ---------- */
+main { flex: 1; min-width: 0; }
+.panel {
+  display: none; background: var(--panel);
+  border: 1px solid var(--rule); border-radius: 24px; padding: 40px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.15);
+}
+.panel.active { display: block; animation: rise .3s cubic-bezier(.2,0,0,1); }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+.kicker {
+  display: inline-flex; gap: 12px; align-items: center;
+  font-family: "Outfit", sans-serif; font-weight: 600; font-size: 13px;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--fs-purple);
+  margin-bottom: 8px;
+}
+.panel h2 {
+  font-family: "Outfit", sans-serif; font-weight: 700; font-size: 38px;
+  line-height: 1.15; letter-spacing: -.01em; color: var(--ink); margin: 8px 0 16px;
+}
+.lede { font-size: 17px; line-height: 1.6; color: var(--ink-soft); max-width: 76ch; margin-bottom: 24px; }
+.panel h3 {
+  font-family: "Outfit", sans-serif; font-weight: 700; font-size: 22px;
+  letter-spacing: .02em; color: var(--ink); margin: 40px 0 16px;
+  padding-top: 24px; border-top: 1px dashed var(--rule);
+  display: flex; align-items: center; gap: 12px;
+}
+.panel h3 .tick { width: 8px; height: 8px; background: var(--fs-purple); border-radius: 50%; flex: 0 0 auto; }
+.panel p { max-width: 78ch; margin-bottom: 16px; color: var(--ink-soft); }
+.panel ul, .panel ol { margin: 0 0 20px 24px; max-width: 78ch; color: var(--ink-soft); }
+.panel li { margin-bottom: 8px; }
+.panel code:not(pre code) {
+  font-family: "Roboto Mono", monospace; font-size: .88em;
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 2px 6px;
+  color: var(--md-sys-color-primary);
+}
+.panel b { color: var(--ink); }
+
+/* ---------- C# translation console ---------- */
+.winmap { margin: 24px 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--md-sys-color-outline-variant); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+.winmap .bar {
+  background: var(--psnavy-deep); color: #cfe3ff;
+  display: flex; align-items: center; gap: 10px;
+  font-family: "Outfit", sans-serif; font-weight: 600; font-size: 14px;
+  letter-spacing: .1em; text-transform: uppercase; padding: 10px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+.winmap .bar::before { content: ">_"; font-family: "Roboto Mono", monospace; font-weight: 700; color: var(--cs-green); }
+.winmap table { width: 100%; border-collapse: collapse; background: var(--psnavy); color: #e3ecf8; font-size: 14px; }
+.winmap th {
+  text-align: left; font-family: "Outfit", sans-serif; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; font-size: 12.5px;
+  color: #a8c7fa; padding: 12px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant); background: rgba(0,0,0,.15);
+}
+.winmap td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.05); vertical-align: top; color: #cfe3ff; }
+.winmap tr:last-child td { border-bottom: 0; }
+.winmap code {
+  font-family: "Roboto Mono", monospace; font-size: .88em; color: #a8c7fa;
+  background: rgba(0,0,0,.25); border-radius: 6px; padding: 2px 6px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+/* ---------- Code cards ---------- */
+.cmd {
+  background: var(--term-bg); border-radius: 16px; margin: 20px 0;
+  color: var(--term-ink);
+  overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-left: 6px solid var(--fs-purple);
+}
+.cmd[data-kind="shell"] { border-left-color: var(--md-sys-color-primary); }
+.cmd[data-kind="cs"] { border-left-color: var(--cs-green); }
+.cmd-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px 4px; }
+.cmd-head b { font-family: "Outfit", sans-serif; font-size: 15px; font-weight: 600; color: #f0f5f9; }
+.chip {
+  flex: 0 0 auto; font-family: "Outfit", sans-serif; font-weight: 700;
+  font-size: 11px; letter-spacing: .08em; border-radius: 6px;
+  padding: 2px 8px; text-transform: uppercase;
+}
+.chip.fsx { background: var(--fs-purple-container); color: var(--on-fs-purple-container); }
+.chip.sh  { background: #2A3947; color: #a8c7fa; }
+.chip.csc { background: var(--cs-green-container); color: var(--on-cs-green-container); }
+.copy {
+  margin-left: auto; flex: 0 0 auto; appearance: none;
+  border: 1px solid var(--md-sys-color-outline); background: transparent;
+  color: var(--ink-soft); font-family: "Outfit", sans-serif; font-weight: 600;
+  font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+  border-radius: 8px; padding: 4px 12px; cursor: pointer; transition: all .15s;
+}
+.copy:hover { border-color: var(--md-sys-color-primary); color: var(--ink); background: rgba(168,199,250,.08); }
+.copy.ok { border-color: var(--ok); color: var(--ok); background: rgba(129,199,132,.08); }
+.cmd pre { padding: 12px 16px 16px; overflow-x: auto; }
+.cmd pre code { font-family: "Roboto Mono", monospace; font-size: 13.5px; line-height: 1.65; white-space: pre; }
+.cmd pre code .c { color: var(--hl-c); font-style: italic; }
+.cmd pre code .s { color: var(--hl-s); }
+.cmd pre code .k { color: var(--hl-k); font-weight: 500; }
+.cmd pre code .n { color: var(--hl-n); }
+.cmd pre code .p { color: var(--md-sys-color-primary); user-select: none; }
+.cmd .why {
+  padding: 12px 16px 16px; font-size: 14px; color: var(--ink-soft);
+  max-width: 90ch; border-top: 1px solid rgba(255,255,255,.05);
+  background: rgba(255,255,255,.02);
+}
+.cmd .why code {
+  font-family: "Roboto Mono", monospace; font-size: .88em;
+  color: var(--md-sys-color-primary); background: rgba(0,0,0,.25);
+  border: 1px solid var(--md-sys-color-outline-variant); border-radius: 6px; padding: 2px 6px;
+}
+/* FSI output strip */
+.out {
+  margin: 0 16px 16px; border-left: 3px solid var(--md-sys-color-outline);
+  background: rgba(255,255,255,.03); border-radius: 0 8px 8px 0;
+  padding: 8px 14px; font-family: "Roboto Mono", monospace; font-size: 12.5px;
+  color: var(--term-dim); white-space: pre-wrap;
+}
+.out::before {
+  content: "fsi output"; display: block; font-family: "Outfit", sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--md-sys-color-outline); margin-bottom: 4px;
+}
+
+/* ---------- Asides ---------- */
+aside.csharp, aside.gotcha, aside.tryit {
+  border-radius: 16px; padding: 16px 20px; margin: 24px 0; max-width: 86ch;
+  border: 1px solid transparent;
+}
+aside.csharp { background: rgba(143,217,168,.07); border-color: rgba(143,217,168,.2); border-left: 6px solid var(--cs-green); }
+aside.gotcha { background: rgba(255,137,122,.08); border-color: rgba(255,137,122,.2); border-left: 6px solid var(--bad); }
+aside.tryit  { background: rgba(168,199,250,.07); border-color: rgba(168,199,250,.2); border-left: 6px solid var(--md-sys-color-primary); }
+aside .tag {
+  display: inline-block; font-family: "Outfit", sans-serif; font-weight: 700;
+  font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px;
+}
+aside.csharp .tag { color: var(--cs-green); }
+aside.gotcha .tag { color: var(--bad); }
+aside.tryit .tag { color: var(--md-sys-color-primary); }
+aside p { margin-bottom: 8px; font-size: 14.5px; color: var(--ink-soft); }
+aside p:last-child { margin-bottom: 0; }
+aside code {
+  font-family: "Roboto Mono", monospace; font-size: .88em;
+  background: rgba(0,0,0,.25); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 2px 6px;
+}
+aside pre {
+  background: var(--term-bg); border-radius: 10px; padding: 10px 14px;
+  overflow-x: auto; margin: 8px 0;
+}
+aside pre code { background: none; border: 0; padding: 0; font-size: 13px; line-height: 1.6; white-space: pre; display: block; }
+
+/* ---------- Expansion panels ---------- */
+details.deep {
+  margin: 20px 0; border: 1px solid var(--rule); border-radius: 16px;
+  background: var(--md-sys-color-surface-container-low); max-width: 86ch; overflow: hidden;
+}
+details.deep summary {
+  cursor: pointer; padding: 16px 20px;
+  font-family: "Outfit", sans-serif; font-weight: 600; font-size: 15px;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--fs-purple);
+  list-style: none; display: flex; align-items: center; justify-content: space-between;
+  transition: background-color .2s;
+}
+details.deep summary:hover { background: var(--md-sys-color-surface-container-high); }
+details.deep summary::-webkit-details-marker { display: none; }
+details.deep summary::after { content: "+"; font-family: "Roboto Mono", monospace; font-weight: 700; font-size: 18px; }
+details.deep[open] summary::after { content: "−"; }
+details.deep .body { padding: 4px 20px 20px; border-top: 1px solid var(--rule); background: var(--md-sys-color-surface-container); }
+
+/* ---------- Comparison tables ---------- */
+table.cmp {
+  width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--rule); border-radius: 12px; overflow: hidden;
+}
+table.cmp th {
+  font-family: "Outfit", sans-serif; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; font-size: 13px; text-align: left;
+  padding: 12px 16px; background: rgba(0,0,0,.15); border-bottom: 1px solid var(--rule);
+}
+table.cmp td { padding: 12px 16px; border-bottom: 1px solid var(--rule); vertical-align: top; color: var(--ink-soft); }
+table.cmp tr:last-child td { border-bottom: 0; }
+table.cmp code {
+  font-family: "Roboto Mono", monospace; font-size: .88em;
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 2px 6px;
+  white-space: nowrap; color: var(--md-sys-color-primary);
+}
+
+/* ---------- Quiz ---------- */
+.quiz {
+  margin: 24px 0; max-width: 86ch; border: 1px solid var(--rule);
+  border-radius: 16px; overflow: hidden; background: var(--md-sys-color-surface-container-low);
+}
+.quiz .qhead {
+  padding: 12px 20px; font-family: "Outfit", sans-serif; font-weight: 700;
+  font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--warn-edge); background: rgba(235,191,56,.06);
+  border-bottom: 1px solid var(--rule);
+}
+.quiz .q { padding: 16px 20px 4px; font-weight: 500; color: var(--ink); }
+.quiz .q code { font-family: "Roboto Mono", monospace; font-size: .88em; background: var(--md-sys-color-surface-container-high); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 6px; color: var(--md-sys-color-primary); }
+.quiz .opts { padding: 12px 20px 16px; display: grid; gap: 8px; }
+.quiz .opt {
+  appearance: none; text-align: left; cursor: pointer;
+  border: 1px solid var(--rule); border-radius: 12px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--ink-soft); padding: 10px 16px;
+  font-family: "Roboto", sans-serif; font-size: 14.5px;
+  transition: all .15s;
+}
+.quiz .opt code { font-family: "Roboto Mono", monospace; font-size: .9em; }
+.quiz .opt:hover { border-color: var(--md-sys-color-primary); color: var(--ink); }
+.quiz.answered .opt { cursor: default; opacity: .6; }
+.quiz.answered .opt[data-ok] { border-color: var(--ok); color: var(--ok); opacity: 1; background: rgba(129,199,132,.07); }
+.quiz.answered .opt.wrong { border-color: var(--bad); color: var(--bad); opacity: 1; background: rgba(255,137,122,.07); }
+.quiz .expl { display: none; padding: 0 20px 16px; font-size: 14px; color: var(--ink-soft); }
+.quiz.answered .expl { display: block; }
+.quiz .expl code { font-family: "Roboto Mono", monospace; font-size: .88em; background: var(--md-sys-color-surface-container-high); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 6px; }
+
+/* ---------- Roadmap cards ---------- */
+.roadmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 20px 0; }
+.road {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--rule); border-radius: 16px; padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+.road h4 {
+  font-family: "Outfit", sans-serif; font-weight: 700; font-size: 18px;
+  letter-spacing: .02em; text-transform: uppercase; margin-bottom: 12px;
+  display: flex; gap: 10px; align-items: center; color: var(--ink);
+}
+.road ul { margin-left: 20px; font-size: 14px; }
+
+.legendline { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0 0; font-size: 13px; color: var(--ink-soft); }
+.legendline span { display: inline-flex; align-items: center; gap: 8px; }
+.swatch { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+
+/* ---------- Panel footer nav ---------- */
+.panelfoot {
+  margin-top: 48px; padding-top: 24px; border-top: 1px dashed var(--rule);
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.pfbtn {
+  appearance: none; cursor: pointer;
+  font-family: "Outfit", sans-serif; font-weight: 600; font-size: 13.5px;
+  letter-spacing: .05em; border-radius: 999px; padding: 10px 22px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: transparent; color: var(--ink-soft); transition: all .2s;
+}
+.pfbtn:hover { border-color: var(--md-sys-color-primary); color: var(--ink); }
+.pfbtn.next { background: var(--fs-purple-container); color: var(--on-fs-purple-container); border-color: transparent; }
+.pfbtn.next:hover { filter: brightness(1.15); }
+.pfbtn.donebtn.is-done { border-color: var(--ok); color: var(--ok); }
+.panelfoot .spacer { flex: 1; }
+kbd {
+  font-family: "Roboto Mono", monospace; font-size: 12px;
+  border: 1px solid var(--rule); border-bottom-width: 2px;
+  border-radius: 6px; padding: 1px 6px; color: var(--ink-soft);
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* ---------- Scrollbars / responsive ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--md-sys-color-background); }
+::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline-variant); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--md-sys-color-outline); }
+
+@media (max-width: 960px) {
+  .shell { flex-direction: column; padding: 16px; gap: 16px; }
+  nav.rail {
+    position: static; flex: none; width: 100%; max-height: none;
+    display: flex; gap: 8px; overflow-x: auto; padding: 8px 0;
+    border-bottom: 1px solid var(--rule); scrollbar-width: none;
+  }
+  nav.rail::-webkit-scrollbar { display: none; }
+  nav.rail .railhead { display: none; }
+  nav.rail a {
+    flex: 0 0 auto; white-space: nowrap; border: 1px solid var(--rule);
+    background: var(--md-sys-color-surface-container-low); margin-bottom: 0;
+    border-radius: 20px; padding: 8px 16px;
+  }
+  nav.rail .pr { margin-left: 8px; }
+  main { width: 100%; }
+  .panel { padding: 24px 20px; border-radius: 16px; }
+  .panel h2 { font-size: 28px; }
+}
+:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 2px; }
+</style>
+</head>
+<body data-lens="cs">
+<header class="topbar">
+  <div class="brand">
+    <span class="stamp">FS-15</span>
+    <h1>F# Field Manual <small>· hands-on walkthrough for the C# / .NET developer</small></h1>
+  </div>
+  <div class="spacer"></div>
+  <div class="lens-switch" role="group" aria-label="C# comparison lens">
+    <button class="b-cs" id="btnCS" title="Show C# comparison callouts"><span class="dot"></span>C# LENS</button>
+    <button class="b-fs" id="btnFS" title="Hide C# comparisons — pure F#"><span class="dot"></span>PURE F#</button>
+  </div>
+  <div class="searchwrap">
+    <span class="mag">⌕</span>
+    <input id="search" type="search" placeholder="Search code &amp; topics…" autocomplete="off" aria-label="Search the manual">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+  <div class="progressline" id="progressline"></div>
+</header>
+<div class="shell">
+<nav class="rail" id="rail" aria-label="Chapters">
+  <div class="railhead">Orientation</div>
+  <a href="#p0" class="active"><span class="num">00</span>Start here: C# → F#<span class="tickmark">✓</span><span class="pr d1">core</span></a>
+  <div class="railhead">The language</div>
+  <a href="#p1"><span class="num">01</span>let &amp; type inference<span class="tickmark">✓</span><span class="pr d1">core</span></a>
+  <a href="#p2"><span class="num">02</span>Expressions &amp; immutability<span class="tickmark">✓</span><span class="pr d1">core</span></a>
+  <a href="#p3"><span class="num">03</span>Tuples &amp; records<span class="tickmark">✓</span><span class="pr d1">core</span></a>
+  <a href="#p4"><span class="num">04</span>Functions &amp; pipelines<span class="tickmark">✓</span><span class="pr d1">core</span></a>
+  <a href="#p5"><span class="num">05</span>Collections<span class="tickmark">✓</span><span class="pr d1">core</span></a>
+  <a href="#p6"><span class="num">06</span>Pattern matching<span class="tickmark">✓</span><span class="pr w1">applied</span></a>
+  <a href="#p7"><span class="num">07</span>Discriminated unions<span class="tickmark">✓</span><span class="pr w1">applied</span></a>
+  <a href="#p8"><span class="num">08</span>Options &amp; Results<span class="tickmark">✓</span><span class="pr w1">applied</span></a>
+  <a href="#p9"><span class="num">09</span>Computation expressions<span class="tickmark">✓</span><span class="pr w1">applied</span></a>
+  <div class="railhead">The ecosystem</div>
+  <a href="#p10"><span class="num">10</span>JSON &amp; type providers<span class="tickmark">✓</span><span class="pr m1">pro</span></a>
+  <a href="#p11"><span class="num">11</span>C# interop<span class="tickmark">✓</span><span class="pr m1">pro</span></a>
+  <a href="#p12"><span class="num">12</span>Async &amp; tasks<span class="tickmark">✓</span><span class="pr m1">pro</span></a>
+  <a href="#p13"><span class="num">13</span>Web apps with Giraffe<span class="tickmark">✓</span><span class="pr m1">pro</span></a>
+  <a href="#p14"><span class="num">14</span>Testing<span class="tickmark">✓</span><span class="pr m1">pro</span></a>
+</nav>
+<main id="main">
+<!-- ============ 00 START HERE ============ -->
+<section class="panel active" id="p0" data-title="Start here: C# to F#">
+  <span class="kicker">Orientation</span>
+  <h2>You know .NET. Now meet its best-kept secret.</h2>
+  <p class="lede">F# is the functional-first language of .NET — same runtime, same BCL, same NuGet packages you already use, but with a type system that catches whole categories of bugs at compile time and a fraction of the ceremony. This manual walks you through the language hands-on, chapter by chapter, following Isaac Abraham's <b>F# in Action</b>. Every code card is real, runnable code — paste it into an <code>.fsx</code> script and run it interactively. Toggle the <b>C# lens</b> in the header to show or hide C# comparison callouts.</p>
+  <div class="legendline">
+    <span><span class="swatch" style="background:var(--fs-purple)"></span>F# script code (.fsx — run in FSI)</span>
+    <span><span class="swatch" style="background:var(--md-sys-color-primary)"></span>Terminal command</span>
+    <span><span class="swatch" style="background:var(--cs-green)"></span>C# comparison</span>
+  </div>
+
+  <h3><span class="tick"></span>The five mental-model shifts</h3>
+  <p>The friction for a C# developer isn't syntax — it's five assumptions that quietly stop being true:</p>
+  <ul>
+    <li><b>Everything is an expression.</b> <code>if/else</code>, <code>match</code>, even a code block — they all <i>return a value</i>. There are no statements that "do nothing and return void"; even side effects return <code>unit</code>.</li>
+    <li><b>Immutable by default.</b> <code>let x = 5</code> is final. Mutation requires opting in with <code>mutable</code> and the <code>&lt;-</code> operator. You'll write 95% of code without it — and your code becomes trivially easy to reason about.</li>
+    <li><b>Types are inferred, not declared.</b> The compiler works out types from usage — full static typing with the feel of a scripting language. You'll write <code>int</code> and <code>string</code> annotations rarely.</li>
+    <li><b>Data and behavior live apart.</b> Instead of classes with methods, you model data with records and unions, then operate on it with standalone functions in modules. Think "C# static classes + immutable DTOs," minus the boilerplate.</li>
+    <li><b>Declaration order matters.</b> Files compile top to bottom; a file can only see code declared <i>above</i> it. This sounds restrictive — it's actually F#'s secret weapon against spaghetti dependencies.</li>
+  </ul>
+
+  <div class="winmap">
+    <div class="bar">C# translation · daily survival</div>
+    <table>
+      <tr><th>You reach for…</th><th>In F# it's…</th><th>Notes</th></tr>
+      <tr><td><code>var x = 5;</code> (still mutable)</td><td><code>let x = 5</code> (immutable)</td><td>Chapter 01</td></tr>
+      <tr><td><code>string Foo(int x) { return …; }</code></td><td><code>let foo x = …</code></td><td>Chapters 01 &amp; 04</td></tr>
+      <tr><td>POCO / <code>record class</code></td><td>Record: <code>type P = { Name: string }</code></td><td>Chapter 03</td></tr>
+      <tr><td><code>enum</code> + class hierarchy</td><td>Discriminated union</td><td>Chapter 07</td></tr>
+      <tr><td><code>switch</code> expression</td><td><code>match</code> expression (exhaustive!)</td><td>Chapter 06</td></tr>
+      <tr><td><code>null</code> / <code>Nullable&lt;T&gt;</code></td><td><code>Option&lt;T&gt;</code> — <code>Some x</code> / <code>None</code></td><td>Chapter 08</td></tr>
+      <tr><td>throwing exceptions for flow</td><td><code>Result&lt;'T,'Error&gt;</code></td><td>Chapter 08</td></tr>
+      <tr><td>LINQ: <code>Select / Where / Aggregate</code></td><td><code>List.map / List.filter / List.fold</code></td><td>Chapter 05</td></tr>
+      <tr><td><code>async/await</code></td><td><code>task { let! … }</code></td><td>Chapter 12</td></tr>
+      <tr><td>LINQPad scratchpad</td><td><code>.fsx</code> scripts + F# Interactive</td><td>This chapter</td></tr>
+    </table>
+  </div>
+
+  <h3><span class="tick"></span>Set up in five minutes</h3>
+  <div class="cmd" data-kind="shell">
+    <div class="cmd-head"><span class="chip sh">Terminal</span><b>Install once: .NET SDK + VS Code + Ionide</b><button class="copy">Copy</button></div>
+    <pre><code data-nohl><span class="p">$</span> dotnet --version              <span class="c"># any modern SDK (6+) includes F# out of the box</span>
+<span class="p">$</span> code --install-extension ionide.ionide-fsharp   <span class="c"># the F# extension for VS Code</span>
+<span class="p">$</span> dotnet fsi                    <span class="c"># launch F# Interactive (REPL) — quit with #quit;;</span></code></pre>
+    <div class="why">No new runtime, no new package manager. If you have the .NET SDK, you already have F#: the compiler, <b>F# Interactive (FSI)</b>, and project templates. <b>Ionide</b> gives VS Code type hints, tooltips and the killer feature: <kbd>Alt</kbd>+<kbd>Enter</kbd> to send code from a script straight into FSI. Visual Studio and Rider also fully support F#.</div>
+  </div>
+  <div class="cmd" data-kind="shell">
+    <div class="cmd-head"><span class="chip sh">Terminal</span><b>Two ways to run F#</b><button class="copy">Copy</button></div>
+    <pre><code data-nohl><span class="c"># 1. The scripting workflow you'll live in while learning:</span>
+<span class="p">$</span> echo 'printfn "Hi from a script!"' &gt; scratch.fsx
+<span class="p">$</span> dotnet fsi scratch.fsx
+
+<span class="c"># 2. A real console app (compiled, deployable — same as C#):</span>
+<span class="p">$</span> dotnet new console -lang F# -o helloworld
+<span class="p">$</span> cd helloworld &amp;&amp; dotnet run</code></pre>
+    <div class="why"><code>.fsx</code> scripts need no project file, no <code>Main</code>, no build step — they're how F# developers explore problems. The console app gives you a familiar <code>.fsproj</code> + <code>Program.fs</code>. A project's F# files compile <b>in strict order</b> — remember shift #5.</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">scratch.fsx</span><b>Your first interactive session</b><button class="copy">Copy</button></div>
+    <pre><code>1 + 2
+
+System.DateTime.Now    // the entire BCL is right here
+
+let version = 9
+$"F# {version} is cool"
+
+let greetPerson name age =
+    $"Hello, {name}. You are {age} years old"
+
+greetPerson "Fred" 21</code></pre>
+    <div class="out">val it: int = 3
+val version: int = 9
+val it: string = "F# 9 is cool"
+val greetPerson: name: 'a -> age: 'b -> string
+val it: string = "Hello, Fred. You are 21 years old"</div>
+    <div class="why">Highlight each line in VS Code and hit <kbd>Alt</kbd>+<kbd>Enter</kbd>. FSI evaluates it and prints the value <i>and its inferred type</i>. Note <code>greetPerson</code>: two parameters, no type annotations, no braces, no <code>return</code> — the last expression <i>is</i> the return value. <code>'a</code> and <code>'b</code> mean it's generic.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>The closest C# experience to FSI is LINQPad or <code>dotnet-script</code> / top-level programs — but FSI ships in the box and works with full type checking on every line you send. There is no "edit → rebuild → rerun the whole app" loop; you keep a live session and grow your program a few lines at a time. State stays in memory between evaluations.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — whitespace is syntax</span>
+    <p>F# uses indentation instead of <code>{ }</code>. The rule that covers 99% of cases: <b>indent consistently with spaces (4 is standard), and anything indented under a <code>let</code> belongs to it</b>. If FSI complains about "unexpected token" or "incomplete structured construct", check your indentation first. Tabs are a compile error.</p>
+  </aside>
+
+  <h3><span class="tick"></span>Your learning path, prioritized</h3>
+  <p>Badges in the sidebar encode this order. Mark chapters done as you go — progress is saved locally.</p>
+  <div class="roadmap">
+    <div class="road"><h4>Core</h4><ul>
+      <li><b>01</b> let &amp; type inference</li>
+      <li><b>02</b> Expressions &amp; immutability</li>
+      <li><b>03</b> Tuples &amp; records</li>
+      <li><b>04</b> Functions &amp; pipelines</li>
+      <li><b>05</b> Collections</li>
+    </ul></div>
+    <div class="road"><h4>Applied</h4><ul>
+      <li><b>06</b> Pattern matching</li>
+      <li><b>07</b> Discriminated unions — F#'s superpower</li>
+      <li><b>08</b> Options &amp; Results — goodbye <code>null</code></li>
+      <li><b>09</b> Computation expressions</li>
+    </ul></div>
+    <div class="road"><h4>Pro</h4><ul>
+      <li><b>10</b> JSON &amp; type providers</li>
+      <li><b>11</b> C# interop</li>
+      <li><b>12</b> Async &amp; tasks</li>
+      <li><b>13</b> Web apps with Giraffe</li>
+      <li><b>14</b> Testing</li>
+    </ul></div>
+  </div>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">In F#, what does the <i>last expression</i> in a function body do?</div>
+    <div class="opts">
+      <button class="opt">Nothing — you still need an explicit <code>return</code> keyword</button>
+      <button class="opt" data-ok>It becomes the function's return value automatically</button>
+      <button class="opt">It must always be <code>unit</code></button>
+    </div>
+    <div class="expl">Everything in F# is an expression that produces a value, so the last expression of a function body is its return value. <code>return</code> only appears inside computation expressions (chapter 09).</div>
+  </div>
+
+  <div class="panelfoot">
+    <span style="font-size:13px;color:var(--ink-soft)">Navigate with <kbd>←</kbd> <kbd>→</kbd> · search with <kbd>/</kbd></span>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p0">Mark complete</button>
+    <button class="pfbtn next" data-nav="p1">Next: let &amp; type inference →</button>
+  </div>
+</section>
+
+<!-- ============ 01 LET & TYPE INFERENCE ============ -->
+<section class="panel" id="p1" data-title="let bindings and type inference">
+  <span class="kicker">Chapter 01</span>
+  <h2>let, scoping &amp; type inference</h2>
+  <p class="lede"><code>let</code> binds a value to a symbol — that's it, and it replaces fields, locals, properties and methods in one keyword. Combined with the most powerful type inference on .NET, you get code that looks dynamic but is statically checked end to end.</p>
+
+  <h3><span class="tick"></span>let binds values — and functions are values</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>One keyword for everything</b><button class="copy">Copy</button></div>
+    <pre><code>let isaac = 42                      // an int value
+let fname = "Frank"                 // a string value
+let fullName = $"{fname} Schmidt"   // computed from other values
+
+// a function: same keyword, parameters after the name
+let addTenThenDouble theNumber =
+    let addedTen = theNumber + 10   // nested bindings, scoped to this function
+    let answer = addedTen * 2
+    printfn $"({theNumber} + 10) * 2 is {answer}"
+    answer                          // last expression = return value
+
+addTenThenDouble 5</code></pre>
+    <div class="out">val addTenThenDouble: theNumber: int -> int
+(5 + 10) * 2 is 30
+val it: int = 30</div>
+    <div class="why">Read the inferred signature <code>int -&gt; int</code> as "takes an int, returns an int". The compiler worked that out because <code>theNumber + 10</code> uses an int literal. No annotations anywhere — but this is <b>fully statically typed</b>; try <code>addTenThenDouble "five"</code> and you get a compile error, not a runtime crash.</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>The same function, fully annotated (you almost never do this)</b><button class="copy">Copy</button></div>
+    <pre><code>let addTenThenDoubleVerbose (theNumber: int) : int =
+    let addedTen: int = theNumber + 10
+    let answer: int = addedTen * 2
+    answer</code></pre>
+    <div class="why">Annotations go <code>(name: Type)</code> for parameters and <code>: Type</code> before the <code>=</code> for the return. You'll use them at public API boundaries, when inference needs a hint for .NET members (see below), or as documentation. Inside ordinary code, let the compiler do the work.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p><code>var</code> infers a local's type from its initializer and stops there. F# inference flows through entire call graphs: parameter types, return types, and generics are all solved together via Hindley–Milner inference. The C# equivalent of the snippet above needs a method signature like <code>int AddTenThenDouble(int theNumber)</code> — F# derives every part of it.</p>
+  </aside>
+
+  <h3><span class="tick"></span>Scoping without braces</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Indentation creates scope — and lets you hide intermediate state</b><button class="copy">Copy</button></div>
+    <pre><code>let greetingTextScoped =
+    let fullName =
+        let fname = "Frank"
+        let sname = "Schmidt"
+        $"{fname} {sname}"
+    // fname / sname are out of scope here — only fullName survives
+    $"Greetings, {fullName}"
+
+// nested *functions* work the same way
+let greetingFor person =
+    let makeFullName fname sname = $"{fname} {sname}"
+    let fullName = makeFullName "Frank" "Schmidt"
+    $"Greetings {fullName} from {person}."</code></pre>
+    <div class="why">In C# you'd reach for a private helper method or pollute the method body with locals. Here you scope working data <i>inside</i> the value that needs it. The inner bindings are invisible outside, so refactoring is fearless — nothing else can depend on them.</div>
+  </div>
+
+  <h3><span class="tick"></span>Where inference shines — and where it needs help</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Automatic generalization: you get generics for free</b><button class="copy">Copy</button></div>
+    <pre><code>let combineElements a b c =
+    let output = ResizeArray()    // .NET List&lt;T&gt; — T not yet known!
+    output.Add a
+    output.Add b
+    output.Add c
+    output
+
+combineElements 1 2 3            // ResizeArray&lt;int&gt;
+combineElements "a" "b" "c"      // ResizeArray&lt;string&gt;</code></pre>
+    <div class="out">val combineElements: a: 'a -> b: 'b -> c: 'c -> ResizeArray&lt;'a&gt;
+   (constrained: 'a = 'b = 'c)
+val it: ResizeArray&lt;int&gt; = seq [1; 2; 3]</div>
+    <div class="why">You wrote zero type parameters yet got a fully generic function — the compiler <i>generalized</i> it because nothing pinned the types down. <code>ResizeArray</code> is F#'s friendly alias for <code>System.Collections.Generic.List&lt;T&gt;</code>.</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>The one place inference gives up: .NET member access</b><button class="copy">Copy</button></div>
+    <pre><code>// Won't compile: what type is theDate? AddDays exists on many types...
+// let addThreeDays theDate = theDate.AddDays 3
+
+// Fix: annotate the parameter
+let addThreeDays (theDate: System.DateTime) = theDate.AddDays 3
+
+// ...and now inference can ride along elsewhere:
+let addAYearAndThreeDays theDate =
+    let threeDaysForward = addThreeDays theDate   // theDate must be DateTime
+    theDate.AddYears 1                            // so .AddYears now resolves!</code></pre>
+    <div class="why">Inference works left-to-right, top-to-bottom and can't guess which .NET type owns a "dot" member. Rule of thumb: <b>when you dot into a parameter, annotate it</b> — or arrange code so the compiler learns the type first, as in <code>addAYearAndThreeDays</code>.</div>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — shadowing, not assignment</span>
+    <p>Binding the same name twice (<code>let x = 5</code> then <code>let x = x + 1</code>) is legal in scripts and nested scopes — but it's <b>shadowing</b>: a brand-new symbol hides the old one. It is not mutation. If two evaluations of the same FSI line behave oddly, you probably shadowed something. Chapter 02 covers real mutation.</p>
+  </aside>
+
+  <aside class="tryit"><span class="tag">Try it — exercise 3.1 from the book</span>
+    <p>Write a function that takes three numbers <code>a b c</code>, adds <code>a</code> and <code>b</code>, multiplies the sum by <code>c</code>, and returns the string <code>"The answer is {answer}"</code>. Check the signature FSI infers.</p>
+  </aside>
+  <details class="deep"><summary>Show solution</summary><div class="body">
+    <div class="cmd"><div class="cmd-head"><span class="chip fsx">fsx</span><b>Solution</b><button class="copy">Copy</button></div>
+    <pre><code>let exercise31 a b c =
+    let inProgress = a + b
+    let answer = inProgress * c
+    $"The answer is {answer}"
+
+exercise31 2 3 4   // "The answer is 20"</code></pre>
+    <div class="out">val exercise31: a: int -> b: int -> c: int -> string</div></div>
+    <p>Note how <code>+</code> defaulted everything to <code>int</code>, and the interpolated string fixed the return type as <code>string</code>.</p>
+  </div></details>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">Why does <code>let addThreeDays theDate = theDate.AddDays 3</code> fail to compile without an annotation?</div>
+    <div class="opts">
+      <button class="opt">F# doesn't support calling .NET methods</button>
+      <button class="opt">Functions can't take dates as parameters</button>
+      <button class="opt" data-ok>Inference can't tell which .NET type owns <code>.AddDays</code> from usage alone</button>
+    </div>
+    <div class="expl">Member ("dot") access is the main limit of F# type inference: many types could have an <code>AddDays</code> member, so you annotate the parameter — <code>(theDate: System.DateTime)</code> — and everything downstream is inferred again.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p0">← Start here</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p1">Mark complete</button>
+    <button class="pfbtn next" data-nav="p2">Next: Expressions →</button>
+  </div>
+</section>
+
+<!-- ============ 02 EXPRESSIONS & IMMUTABILITY ============ -->
+<section class="panel" id="p2" data-title="Expressions immutability and unit">
+  <span class="kicker">Chapter 02</span>
+  <h2>Expressions, immutability &amp; unit</h2>
+  <p class="lede">C# is built on statements that <i>do</i> things; F# is built on expressions that <i>produce</i> things. Add immutable-by-default bindings and you get code where data flows visibly from input to output — no spooky action at a distance.</p>
+
+  <h3><span class="tick"></span>if/else returns a value</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Branches are expressions — both sides must produce the same type</b><button class="copy">Copy</button></div>
+    <pre><code>let describeAge age =
+    let ageDescription =
+        if age &lt; 18 then "Child"
+        elif age &lt; 65 then "Adult"
+        else "OAP"
+    let greeting = "Hello"
+    $"{greeting}! You are a '{ageDescription}'."
+
+describeAge 12</code></pre>
+    <div class="out">val describeAge: age: int -> string
+val it: string = "Hello! You are a 'Child'."</div>
+    <div class="why">The whole <code>if/elif/else</code> evaluates to a string and is bound directly to <code>ageDescription</code> — like C#'s ternary <code>?:</code>, but readable at any size. Because the branches must agree on type and an <code>else</code> is required (when the result isn't <code>unit</code>), you can't forget a case and accidentally return nothing.</div>
+  </div>
+
+  <h3><span class="tick"></span>unit: the type of "nothing useful"</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>unit replaces void — and exposes hidden side effects</b><button class="copy">Copy</button></div>
+    <pre><code>let printAddition a b =
+    let answer = a + b
+    printfn $"{a} plus {b} equals {answer}."   // printfn returns unit
+    // no other final expression: this function returns unit
+
+// DANGER: no parens = evaluated ONCE at binding time
+let getTheCurrentTime = System.DateTime.Now      // a value, frozen
+let rightNow () = System.DateTime.Now            // a function: unit -> DateTime
+
+getTheCurrentTime = getTheCurrentTime   // always true — same frozen value
+rightNow () = rightNow ()               // false (clock moved on)</code></pre>
+    <div class="out">val printAddition: a: int -> b: int -> unit
+val getTheCurrentTime: DateTime = 10/06/2026 14:03:11
+val rightNow: unit -> DateTime</div>
+    <div class="why"><code>unit</code> (written <code>()</code>) is a real value meaning "nothing interesting". A function whose signature ends in <code>-&gt; unit</code> is a red flag saying <i>I exist only for side effects</i>. And any function that takes <code>unit</code> as input — like <code>rightNow ()</code> — must be getting its data from somewhere hidden (clock, disk, network). Signatures become an honesty report.</div>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — ignoring return values is explicit</span>
+    <p>In C# you can call a method and silently discard its result. F# warns you: if an expression mid-function returns a non-unit value you don't use, the compiler flags it. Discard deliberately with <code>|&gt; ignore</code> — a built-in function that swallows any value and returns <code>unit</code>. That warning regularly catches real bugs ("I computed the new state… and threw it away").</p>
+  </aside>
+
+  <h3><span class="tick"></span>Mutation is opt-in — and usually unnecessary</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 4.6 — a mutable gas tank, then the immutable refactor</b><button class="copy">Copy</button></div>
+    <pre><code>// Opting in to mutation: 'mutable' keyword, '&lt;-' to assign
+let mutable gas = 100.0
+let drive distance =
+    if distance = "far" then gas &lt;- gas / 2.0
+    elif distance = "medium" then gas &lt;- gas - 10.0
+    else gas &lt;- gas - 1.0
+
+drive "far"; drive "medium"; drive "near"
+gas   // 39.0 — but only if you ran the calls in exactly that order!
+
+// The immutable version: state in, state out
+let driveImmutable gas distance =
+    if distance = "far" then gas / 2.0
+    elif distance = "medium" then gas - 10.0
+    else gas - 1.0
+
+let initialState = 100.0
+let firstState  = driveImmutable initialState "far"
+let secondState = driveImmutable firstState "medium"
+let finalState  = driveImmutable secondState "near"   // 39.0, provably</code></pre>
+    <div class="out">val mutable gas: float = 39.0
+val driveImmutable: gas: float -> distance: string -> float
+val finalState: float = 39.0</div>
+    <div class="why">The mutable version's behavior depends on hidden state and call order — the classic source of "works on my machine". The immutable version makes the data flow explicit: each call takes the previous state and returns the next. Same logic, but now it's repeatable, testable and thread-safe for free. In chapter 04 the pipeline operator turns that chain into one elegant line.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>C# has been drifting this way for years — <code>readonly</code>, <code>record</code> types, init-only setters, switch <i>expressions</i> — but they're all opt-in and the ecosystem defaults to mutability. F# flips every default: immutable, expression-based, non-null. You opt <i>out</i> when you have a measured reason (tight loops, interop), not opt in.</p>
+  </aside>
+
+  <aside class="tryit"><span class="tag">Try it — exercise 4.3</span>
+    <p>Rewrite <code>driveImmutable</code> so <code>distance</code> is an <code>int</code>: more than 50 halves the gas, more than 25 subtracts 10, more than 0 subtracts 1, otherwise gas is unchanged.</p>
+  </aside>
+  <details class="deep"><summary>Show solution</summary><div class="body">
+    <div class="cmd"><div class="cmd-head"><span class="chip fsx">fsx</span><b>Solution</b><button class="copy">Copy</button></div>
+    <pre><code>let drive43 gas distance =
+    if distance &gt; 50 then gas / 2.0
+    elif distance &gt; 25 then gas - 10.0
+    elif distance &gt; 0 then gas - 1.0
+    else gas</code></pre></div>
+    <p>Note the final <code>else gas</code> — every branch must return a value, so "no change" means returning the input untouched.</p>
+  </div></details>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">A function has signature <code>unit -&gt; string</code>. What does that tell you?</div>
+    <div class="opts">
+      <button class="opt">It's a pure function of no arguments — always returns the same string</button>
+      <button class="opt" data-ok>It takes no real input, so the string almost certainly comes from a side effect (clock, disk, randomness…)</button>
+      <button class="opt">It can't be called from C#</button>
+    </div>
+    <div class="expl">If a function needs no input but produces output, the data must come from somewhere hidden. F# signatures make impurity visible: <code>unit</code> on either side of the arrow is a side-effect tell.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p1">← let &amp; inference</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p2">Mark complete</button>
+    <button class="pfbtn next" data-nav="p3">Next: Tuples &amp; records →</button>
+  </div>
+</section>
+<!-- ============ 03 TUPLES & RECORDS ============ -->
+<section class="panel" id="p3" data-title="Tuples records and anonymous records">
+  <span class="kicker">Chapter 03</span>
+  <h2>Shaping data: tuples &amp; records</h2>
+  <p class="lede">F# treats data modeling as a first-class activity. Tuples group values ad hoc; records give them names, structural equality and copy-update semantics — everything a C# DTO needs, in three lines, with zero boilerplate.</p>
+
+  <h3><span class="tick"></span>Tuples: lightweight grouping &amp; deconstruction</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Pack with a comma, unpack with a pattern</b><button class="copy">Copy</button></div>
+    <pre><code>let theAuthor = "isaac", "abraham"          // string * string
+let firstName, secondName = theAuthor       // deconstruct in one line
+
+let nameAndAge = "Jane", "Smith", 25
+let forename, surname, _ = nameAndAge       // _ discards what you don't need
+
+// deconstruct directly in the parameter list:
+let makeDoctor (_, sname) = "Dr", sname
+makeDoctor theAuthor</code></pre>
+    <div class="out">val theAuthor: string * string = ("isaac", "abraham")
+val makeDoctor: 'a * string -> string * string
+val it: string * string = ("Dr", "abraham")</div>
+    <div class="why">Type signatures write tuples as <code>string * string</code>. Use tuples for "two or three values traveling together for a moment" — returning multiple results, intermediate pairs. The moment the meaning of each slot isn't obvious, upgrade to a record.</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Bonus: out-parameters become tuples</b><button class="copy">Copy</button></div>
+    <pre><code>open System
+let parsed, theDate = DateTime.TryParse "03 Dec 2020"
+if parsed then printfn $"Day of week is {theDate.DayOfWeek}!"</code></pre>
+    <div class="why">Any .NET API with an <code>out</code> parameter — the whole <code>TryParse</code> family — is automatically exposed in F# as a tuple return. No <code>out var</code> dance.</div>
+  </div>
+
+  <h3><span class="tick"></span>Records: named, immutable, comparable</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Define, create, copy-and-update, compare</b><button class="copy">Copy</button></div>
+    <pre><code>type Address = {
+    Line1: string
+    Town: string
+    Postcode: string
+    Country: string
+}
+
+type Person = {
+    Name: string * string     // fields can be tuples, records, anything
+    Address: Address
+}
+
+let theAddress = {
+    Line1 = "1 Main Street"
+    Town = "London"
+    Postcode = "SW1 1AA"
+    Country = "UK"
+}
+
+// copy-and-update: a new record, sharing unchanged fields
+let addressInDE = {
+    theAddress with
+        Town = "Berlin"
+        Country = "DE"
+}
+
+// structural equality out of the box
+let isaacOne = { Name = "Isaac", "Abraham"; Address = theAddress }
+let isaacTwo = { Name = "Isaac", "Abraham"; Address = theAddress }
+isaacOne = isaacTwo</code></pre>
+    <div class="out">val addressInDE: Address = { Line1 = "1 Main Street"
+                             Town = "Berlin" ... }
+val it: bool = true</div>
+    <div class="why">Three big wins versus a C# class: <b>(1)</b> you must populate <i>every</i> field at creation — no half-initialized objects, ever; <b>(2)</b> <code>with</code> gives non-destructive updates; <b>(3)</b> <code>=</code> compares by value, deeply. The compiler infers which record type a <code>{ … }</code> literal builds from its field names; disambiguate with <code>{ Person.Name = … }</code> if two records share field names.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>C# 9 <code>record</code> types were directly inspired by this. Equivalent C#: <code>public record Address(string Line1, string Town, string Postcode, string Country);</code> plus <code>with</code> expressions. The F# versions predate them by a decade and remain stricter: no inheritance games, no mutable properties unless you ask, and exhaustive initialization is enforced at compile time rather than by nullable warnings.</p>
+  </aside>
+
+  <h3><span class="tick"></span>Anonymous records: shapes on the fly</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>For one-off shapes — JSON payloads, projections, test data</b><button class="copy">Copy</button></div>
+    <pre><code>let company = {|
+    Name = "My Company Inc."
+    Town = "The Town"
+    Country = "UK"
+    TaxNumber = 123456
+|}
+
+// extend on the fly — creates a *new, wider* anonymous type
+let companyWithBankDetails = {|
+    company with
+        AccountNumber = 123
+        SortCode = 456
+|}
+
+company.TaxNumber</code></pre>
+    <div class="out">val company: {| Country: string; Name: string; TaxNumber: int; Town: string |}
+val it: int = 123456</div>
+    <div class="why"><code>{| … |}</code> needs no type declaration at all, yet stays fully typed — note the inferred signature. Perfect for LINQ-style projections (chapter 05) and quick JSON (chapter 10). Unlike C# anonymous types, they can be returned from functions and even extended with <code>with</code>.</div>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — field order in definitions vs creation</span>
+    <p>When <i>creating</i> a record you can list fields in any order, but you must supply all of them. If you see <code>No assignment given for field 'X'</code>, you missed one — that's the point: adding a field to a record type instantly breaks every construction site until each one handles it. Cheap, compiler-enforced refactoring.</p>
+  </aside>
+
+  <aside class="tryit"><span class="tag">Try it — exercise 5.2</span>
+    <p>Write <code>buildPerson</code> taking <code>(forename, surname, age)</code> that returns a record with <code>Name</code> (full name string), <code>Age</code>, and <code>Description</code> ("child" under 18, else "adult").</p>
+  </aside>
+  <details class="deep"><summary>Show solution</summary><div class="body">
+    <div class="cmd"><div class="cmd-head"><span class="chip fsx">fsx</span><b>Solution</b><button class="copy">Copy</button></div>
+    <pre><code>type PersonWithDescription = {
+    Name: string
+    Age: int
+    Description: string
+}
+
+let buildPerson (forename: string, surname: string, age: int) = {
+    Name = $"{forename} {surname}"
+    Age = age
+    Description = if age &lt; 18 then "child" else "adult"
+}
+
+buildPerson ("Jane", "Smith", 17)</code></pre></div>
+    <p>The <code>if/else</code> sits directly in the field assignment — expressions everywhere.</p>
+  </div></details>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">Two record values of the same type with identical field values are compared with <code>=</code>. The result is…</div>
+    <div class="opts">
+      <button class="opt">false — they are different references</button>
+      <button class="opt" data-ok>true — records use structural (value-based) equality, recursively</button>
+      <button class="opt">a compile error — records don't support <code>=</code></button>
+    </div>
+    <div class="expl">Records (and tuples, and the unions you'll meet in chapter 07) compare by value all the way down. This makes testing and caching dramatically simpler than reference equality.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p2">← Expressions</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p3">Mark complete</button>
+    <button class="pfbtn next" data-nav="p4">Next: Functions &amp; pipelines →</button>
+  </div>
+</section>
+
+<!-- ============ 04 FUNCTIONS & PIPELINES ============ -->
+<section class="panel" id="p4" data-title="Functions currying pipelines and modules">
+  <span class="kicker">Chapter 04</span>
+  <h2>Functions, currying &amp; the pipeline</h2>
+  <p class="lede">Here's where F# clicks. Every function takes exactly one argument and returns one value — multi-argument functions are an illusion called currying. That illusion enables partial application, and partial application enables the operator you'll fall in love with: <code>|&gt;</code>.</p>
+
+  <h3><span class="tick"></span>Currying &amp; partial application</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 6.2 — supply some arguments now, the rest later</b><button class="copy">Copy</button></div>
+    <pre><code>let add (firstNumber: int) (secondNumber: int) = firstNumber + secondNumber
+
+let addFive = add 5        // partially applied: waiting for one more int
+let fifteen = addFive 10   // 15
+
+// real-world flavor: bake in configuration
+type LetterType = Welcome = 0 | PaymentOverdue = 1
+let sendEmailManyArgs sender letterType emailAddress postDate = ()
+let sendOfficeWelcome = sendEmailManyArgs "office@firm.com" LetterType.Welcome
+sendOfficeWelcome "fred@email.com" System.DateTime.UtcNow
+sendOfficeWelcome "joanne@email.com" (System.DateTime.UtcNow.AddDays 1.)</code></pre>
+    <div class="out">val add: firstNumber: int -> secondNumber: int -> int
+val addFive: (int -> int)
+val fifteen: int = 15</div>
+    <div class="why">Now the arrows in <code>int -&gt; int -&gt; int</code> make sense: <code>add</code> takes an int and returns <i>a function</i> <code>int -&gt; int</code>. Stop anywhere along the chain and you've created a specialized function — dependency injection without containers, configuration without builder classes.</div>
+  </div>
+
+  <h3><span class="tick"></span>The pipeline operator</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listings 6.3–6.5 — from inside-out nesting to top-down flow</b><button class="copy">Copy</button></div>
+    <pre><code>let multiply (a: int) (b: int) = a * b
+
+// Without pipelines: temp variables, or unreadable inside-out nesting
+let finalValueChained = multiply (add (add 5 10) 7) 2
+
+// With |&gt;: data flows left to right
+let pipelineCalc = 10 |&gt; add 5 |&gt; add 7 |&gt; multiply 2   // 44
+
+// This is how real F# programs read (stubs omitted — Listing 6.5):
+customerId
+|&gt; loadFromDb
+|&gt; reviewCustomer
+|&gt; createEmail EmailTemplate.Overdue
+|&gt; send</code></pre>
+    <div class="out">val pipelineCalc: int = 44</div>
+    <div class="why"><code>x |&gt; f</code> simply means <code>f x</code> — pass the left side as the <b>last</b> argument of the right side. It works precisely <i>because</i> of currying: <code>add 5</code> is already a one-argument function waiting for the piped value. Reading top to bottom you see load → review → create → send: the business process is the code.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>You already love this style — it's LINQ method chains and fluent builders. The difference: chaining in C# requires the API author to design a fluent interface (returning <code>this</code>, extension methods). <code>|&gt;</code> works with <b>every function ever written</b>, including yours from five minutes ago, because it's just function application.</p>
+  </aside>
+
+  <h3><span class="tick"></span>Organizing code: namespaces &amp; modules</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Modules are static classes that hold values, functions and types</b><button class="copy">Copy</button></div>
+    <pre><code>module FsInAction.MyMaths
+
+let add x y = x + y
+let subtract x y = x - y
+
+// nested module for the heavy machinery
+module Complicated =
+    let ten = 10
+    let addTogetherThenSubtractTen x y = add x y |&gt; subtract ten
+
+// elsewhere:  open FsInAction.MyMaths
+//             Complicated.addTogetherThenSubtractTen 4 5</code></pre>
+    <div class="why">A module compiles to a static class; <code>open</code> is <code>using static</code>. The idiomatic layout: a <code>type Customer = …</code> record, then a <code>module Customer</code> next to it containing every function operating on customers — data and behavior adjacent but separate. Remember file order matters: in an <code>.fsproj</code>, <code>Domain.fs</code> must sit above the files that use it.</div>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — parentheses are for grouping, not calling</span>
+    <p><code>sendOfficeWelcome "joanne@email.com" (DateTime.UtcNow.AddDays 1.)</code> — those parens don't "call with arguments", they group the inner expression so it's evaluated first. Without them, F# would read <code>DateTime.UtcNow.AddDays</code> and <code>1.</code> as two separate arguments. If you get a baffling type error with multiple arguments, look for a missing grouping paren first.</p>
+  </aside>
+
+  <aside class="tryit"><span class="tag">Try it — exercise 6.2</span>
+    <p>Take the <code>drive</code> function from chapter 02 (int distances). Reorder its parameters so it pipelines naturally, then drive three legs — 55, 26, 1 — starting from 100.0 gas, in a single pipeline.</p>
+  </aside>
+  <details class="deep"><summary>Show solution</summary><div class="body">
+    <div class="cmd"><div class="cmd-head"><span class="chip fsx">fsx</span><b>Solution</b><button class="copy">Copy</button></div>
+    <pre><code>let drive distance gas =     // gas LAST, so it can be piped in
+    if distance &gt; 50 then gas / 2.0
+    elif distance &gt; 25 then gas - 10.0
+    elif distance &gt; 0 then gas - 1.0
+    else gas
+
+100.0 |&gt; drive 55 |&gt; drive 26 |&gt; drive 1   // 39.0</code></pre></div>
+    <p>Parameter order is API design in F#: the "data" parameter goes last so partial application leaves a pipeline-ready function. Every <code>List.map</code>-style function in the standard library follows this convention.</p>
+  </div></details>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">What does <code>10 |&gt; add 5</code> literally evaluate?</div>
+    <div class="opts">
+      <button class="opt" data-ok><code>add 5 10</code> — the piped value becomes the last argument</button>
+      <button class="opt"><code>add 10 5</code> — the piped value becomes the first argument</button>
+      <button class="opt">It creates a lazy sequence of additions</button>
+    </div>
+    <div class="expl"><code>x |&gt; f</code> = <code>f x</code>. Since <code>add 5</code> is a partially-applied function of one int, <code>10 |&gt; add 5</code> is <code>(add 5) 10</code> = <code>add 5 10</code> = 15.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p3">← Tuples &amp; records</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p4">Mark complete</button>
+    <button class="pfbtn next" data-nav="p5">Next: Collections →</button>
+  </div>
+</section>
+
+<!-- ============ 05 COLLECTIONS ============ -->
+<section class="panel" id="p5" data-title="Collections lists arrays sequences and folds">
+  <span class="kicker">Chapter 05</span>
+  <h2>Collections: where pipelines pay rent</h2>
+  <p class="lede">F#'s collection modules are LINQ with the volume turned up: more combinators, immutable by default, and designed for the pipeline. This is the chapter where a page of imperative loops collapses into four honest lines.</p>
+
+  <h3><span class="tick"></span>The motivating refactor — Listing 7.2 vs 7.3</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Which team won the most away games?</b><button class="copy">Copy</button></div>
+    <pre><code>type Result = { HomeTeam: string; HomeGoals: int; AwayTeam: string; AwayGoals: int }
+let create home hg away ag = { HomeTeam = home; HomeGoals = hg; AwayTeam = away; AwayGoals = ag }
+
+let results = [
+    create "Messiville" 1 "Ronaldo City" 2
+    create "Messiville" 1 "Bale Town" 3
+    create "Ronaldo City" 2 "Bale Town" 3
+    create "Bale Town" 2 "Messiville" 1
+]
+
+// The imperative version (Listing 7.2) needs ~15 lines: a mutable
+// ResizeArray, nested for-loops, a found flag, and a mutable "best so far".
+
+// The functional version:
+let isAwayWin result = result.AwayGoals &gt; result.HomeGoals
+
+let wonAwayTheMost =
+    results
+    |&gt; List.filter isAwayWin
+    |&gt; List.countBy (fun result -&gt; result.AwayTeam)
+    |&gt; List.maxBy (fun (team, count) -&gt; count)</code></pre>
+    <div class="out">val wonAwayTheMost: string * int = ("Bale Town", 2)</div>
+    <div class="why">Filter the away wins, count occurrences per team, take the max by count. Each step is independently testable, there's no mutable state to corrupt, and the code reads like the requirement. <code>countBy</code> and <code>maxBy</code> have no direct LINQ equivalents — F# ships ~200 of these combinators.</div>
+  </div>
+
+  <h3><span class="tick"></span>Three collection types, one API surface</h3>
+  <table class="cmp">
+    <tr><th>Type</th><th>Syntax</th><th>Semantics</th><th>Reach for it when…</th></tr>
+    <tr><td><b>List</b></td><td><code>[ 1; 2; 3 ]</code> · <code>[ 1..10 ]</code></td><td>Immutable linked list; <code>@</code> concat, <code>::</code> prepend</td><td>Default choice — safe sharing, pattern matching</td></tr>
+    <tr><td><b>Array</b></td><td><code>[| 1..10 |]</code></td><td>Mutable, fixed-size, contiguous — the .NET array</td><td>Performance-critical code, interop</td></tr>
+    <tr><td><b>Seq</b></td><td><code>seq { 1..10 }</code></td><td>Lazy <code>IEnumerable&lt;T&gt;</code> — pull-based, possibly infinite</td><td>Streams, huge/endless data, interop with LINQ</td></tr>
+  </table>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Slicing, dictionaries, maps and sets — Listings 7.4–7.9</b><button class="copy">Copy</button></div>
+    <pre><code>let numbers = [ 1..10 ]
+let secondItem = numbers[1]
+let itemsOneToSix = numbers[1..6]      // slicing built in
+
+// immutable Map vs read-only dictionary
+let data = [ "Isaac", "F#"; "Fred", "C#"; "Sam", "F#"; "Jo", "PHP" ]
+let lookup = readOnlyDict data         // high-perf .NET dictionary, read-only
+let lookupMap = Map data               // immutable: adding returns a NEW map
+let newLookupMap = lookupMap |&gt; Map.add "Isaac" "Python"
+
+// sets: mathematical operations on unique values
+type Employee = { Name: string }
+let salesEmployees = Set [ { Name = "Isaac" }; { Name = "Brian" } ]
+let bonusEmployees = Set [ { Name = "Isaac" }; { Name = "Tanya" } ]
+let salesWithoutBonuses = salesEmployees - bonusEmployees</code></pre>
+    <div class="out">val salesWithoutBonuses: Set&lt;Employee&gt; = set [{ Name = "Brian" }]</div>
+    <div class="why">Note <code>-</code> on sets — set difference as an operator. And because records have structural equality (chapter 03), sets and maps of records "just work" without writing <code>IEqualityComparer</code>.</div>
+  </div>
+
+  <h3><span class="tick"></span>fold: the aggregation primitive</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Every loop-with-accumulator is a fold</b><button class="copy">Copy</button></div>
+    <pre><code>// imperative sum
+let sum inputs =
+    let mutable accumulator = 0
+    for input in inputs do
+        accumulator &lt;- accumulator + input
+    accumulator
+
+// the same shape, captured as a function
+let sumFunctional inputs =
+    inputs |&gt; Seq.fold (fun accumulator input -&gt; accumulator + input) 0
+
+sumFunctional [ 1..5 ]   // 15: 0+1 → 1+2 → 3+3 → 6+4 → 10+5</code></pre>
+    <div class="out">val sumFunctional: inputs: int seq -> int
+val it: int = 15</div>
+    <div class="why"><code>fold</code> takes a folder function <code>(state, item) → newState</code> and a starting state. <code>sum</code>, <code>max</code>, <code>countBy</code> — all folds in a costume. You'll rarely call <code>fold</code> directly (a named combinator usually exists) but recognizing the pattern unlocks reading any F# codebase.</div>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — seq is lazy, and re-runs every time</span>
+    <p>A <code>seq</code> pipeline does <b>nothing</b> until enumerated — and re-executes on <i>every</i> enumeration. If you iterate an expensive <code>Seq.map</code> twice, you compute twice. Materialize with <code>Seq.toList</code> / <code>Seq.toArray</code> once you're done transforming. Lists and arrays are eager; this trap is seq-only.</p>
+  </aside>
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>Mapping table: <code>Select</code> → <code>map</code>, <code>Where</code> → <code>filter</code>, <code>SelectMany</code> → <code>collect</code>, <code>Aggregate</code> → <code>fold</code>, <code>GroupBy</code> → <code>groupBy</code>, <code>OrderBy</code> → <code>sortBy</code>, <code>First</code> → <code>head</code>, <code>FirstOrDefault</code> → <code>tryHead</code> (returns an Option — no nulls!). Each exists in <code>List</code>, <code>Array</code> and <code>Seq</code> flavors that preserve the collection type.</p>
+  </aside>
+
+  <aside class="tryit"><span class="tag">Try it — exercise 7.3</span>
+    <p>Using <code>results</code> from above: find the team that scored the most goals overall, home <i>and</i> away combined. Hints: <code>List.collect</code> explodes each result into two <code>{| Team; Goals |}</code> rows; then <code>groupBy</code>, <code>sumBy</code>, <code>maxBy</code>.</p>
+  </aside>
+  <details class="deep"><summary>Show solution</summary><div class="body">
+    <div class="cmd"><div class="cmd-head"><span class="chip fsx">fsx</span><b>Solution</b><button class="copy">Copy</button></div>
+    <pre><code>results
+|&gt; List.collect (fun r -&gt; [
+    {| Team = r.HomeTeam; Goals = r.HomeGoals |}
+    {| Team = r.AwayTeam; Goals = r.AwayGoals |}
+])
+|&gt; List.groupBy (fun result -&gt; result.Team)
+|&gt; List.map (fun (team, games) -&gt; team, games |&gt; List.sumBy (fun game -&gt; game.Goals))
+|&gt; List.maxBy snd</code></pre>
+    <div class="out">val it: string * int = ("Bale Town", 8)</div></div>
+    <p>Anonymous records (chapter 03) shine here — a typed intermediate shape with zero ceremony. <code>snd</code> grabs the second item of a tuple.</p>
+  </div></details>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">You build a <code>seq</code> pipeline with an expensive <code>Seq.map</code> and enumerate it three times. How many times does the map run?</div>
+    <div class="opts">
+      <button class="opt">Once — sequences cache their results</button>
+      <button class="opt" data-ok>Three times — seq is lazy and re-evaluates on every enumeration</button>
+      <button class="opt">Zero — you must call <code>Seq.run</code> explicitly</button>
+    </div>
+    <div class="expl">Sequences are pull-based pipelines, not materialized data. Convert with <code>Seq.toArray</code> / <code>Seq.toList</code> when you want to compute once and reuse.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p4">← Functions</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p5">Mark complete</button>
+    <button class="pfbtn next" data-nav="p6">Next: Pattern matching →</button>
+  </div>
+</section>
+<!-- ============ 06 PATTERN MATCHING ============ -->
+<section class="panel" id="p6" data-title="Pattern matching match expressions and guards">
+  <span class="kicker">Chapter 06</span>
+  <h2>Pattern matching: switch with a brain</h2>
+  <p class="lede"><code>match</code> looks like C#'s switch expression, but it deconstructs data while it tests, nests arbitrarily deep, and — crucially — the compiler proves you handled <b>every case</b>. Forgotten branches become warnings at compile time, not bugs at 3 a.m.</p>
+
+  <h3><span class="tick"></span>Match on values, tuples, and shapes</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 8.2 — collapsing a truth table</b><button class="copy">Copy</button></div>
+    <pre><code>// (yearsAsCustomer, hasOverdraft) → may they take out a loan?
+let customerDetails = 2, true
+
+// every combination spelled out…
+let canTakeOutALoan =
+    match customerDetails with
+    | 0, true -&gt; false
+    | 0, false -&gt; false
+    | 1, true -&gt; false
+    | 1, false -&gt; true
+    | _ -&gt; true
+
+// …then simplified with wildcards and OR-patterns:
+let canTakeOutALoanV4 =
+    match customerDetails with
+    | 0, _
+    | 1, true -&gt; false
+    | _ -&gt; true</code></pre>
+    <div class="out">val canTakeOutALoanV4: bool = true</div>
+    <div class="why">Patterns are checked top to bottom; first match wins. <code>_</code> is "anything", and stacking patterns above a single arrow (<code>| A | B -&gt; …</code>) OR-combines them. The compiler warns on both <i>unreachable</i> rules and <i>missing</i> cases — try deleting the final <code>| _</code> and watch it tell you exactly which inputs are unhandled.</div>
+  </div>
+
+  <h3><span class="tick"></span>Matching records, with guards, recursively</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listings 8.3–8.6 — fields, when-guards, nested records</b><button class="copy">Copy</button></div>
+    <pre><code>type OverdraftDetails = { Approved: bool; MaxAmount: decimal; CurrentAmount: decimal }
+type CustomerWithOverdraft = { YearsOfHistory: int; Overdraft: OverdraftDetails; Country: string }
+
+let canApprove customer =
+    match customer with
+    | { YearsOfHistory = 0; Overdraft = { Approved = true } } -&gt; true
+    | { YearsOfHistory = 0 } -&gt; false
+    | { YearsOfHistory = 1; Overdraft = { Approved = true } } -&gt; true
+    | { YearsOfHistory = 1 } -&gt; false
+    | _ -&gt; true
+
+// 'when' guards for arbitrary logic, 'as'/binding to capture values
+let bindingExample customer =
+    match customer with
+    | { Overdraft = { Approved = true; CurrentAmount = amount } } -&gt;
+        printfn $"Approved; current overdraft is {amount}"
+    | { Overdraft = { Approved = false } as details } when customer.YearsOfHistory &gt; 1 -&gt;
+        printfn $"Long history but unapproved overdraft: {details}"
+    | _ -&gt; printfn "Declined"</code></pre>
+    <div class="why">Record patterns drill into nested structures in one visual shape — no <code>customer.Overdraft.Approved &amp;&amp; …</code> chains. Bind values mid-pattern (<code>CurrentAmount = amount</code>), capture a whole matched part (<code>as details</code>), and add <code>when</code> guards for what patterns can't express. One warning: guards reduce the compiler's exhaustiveness checking, so prefer plain patterns when possible.</div>
+  </div>
+
+  <h3><span class="tick"></span>Matching lists</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Collection patterns — heads, tails, exact shapes</b><button class="copy">Copy</button></div>
+    <pre><code>type LoanRequest = {
+    YearsOfHistory: int
+    HasOverdraft: bool
+    IsLargeRequest: bool
+}
+
+let summariseLoanRequests requests =
+    match requests with
+    | [] -&gt; "No requests made!"
+    | [ { IsLargeRequest = true } ] -&gt; "Single large request!"
+    | [ { IsLargeRequest = true }; { IsLargeRequest = true } ] -&gt; "Two large requests!"
+    | { IsLargeRequest = false } :: remainingItems -&gt;
+        $"Starts small; {List.length remainingItems} more follow."
+    | _ :: { HasOverdraft = true } :: _ -&gt; "Second item has an overdraft!"
+    | _ -&gt; "Anything else"</code></pre>
+    <div class="why"><code>[]</code> matches empty, <code>[ a; b ]</code> matches exactly-two, and <code>head :: rest</code> splits a list like the 50-year-old Lisp idiom it is — while <i>simultaneously</i> pattern-matching into the records inside. This is why List is the default F# collection: it pattern-matches; arrays and seqs mostly don't.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>C# 8+ has been importing this feature wholesale: switch expressions, property patterns (<code>{ Length: &gt; 0 }</code>), positional and list patterns. The remaining gaps: C# exhaustiveness checking is best-effort (you still need a discard arm to compile), and C# can't match into the discriminated unions you'll meet next chapter — which is where pattern matching goes from convenient to transformative.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — don't match booleans</span>
+    <p><code>match x with | true -&gt; … | false -&gt; …</code> compiles fine but is just a noisy <code>if/else</code>. Use <code>match</code> when there's structure to deconstruct or 3+ cases; use <code>if/then/else</code> for simple booleans. Idiomatic F# uses both.</p>
+  </aside>
+
+  <aside class="tryit"><span class="tag">Try it — exercise 8.1</span>
+    <p>Extend the loan logic: customers with 1 <i>or</i> 2 years of history and an overdraft are rejected when their overdraft exceeds <code>years × 250</code>. Use an OR-pattern with an <code>as</code> binding plus a <code>when</code> guard.</p>
+  </aside>
+  <details class="deep"><summary>Show solution</summary><div class="body">
+    <div class="cmd"><div class="cmd-head"><span class="chip fsx">fsx</span><b>Solution</b><button class="copy">Copy</button></div>
+    <pre><code>let canTakeOutALoanWithFunctionGuard customer =
+    let maxOverdraft yearsOfHistory = yearsOfHistory * 250
+
+    match customer with
+    | { YearsOfHistory = 0 } -&gt; false
+    | { YearsOfHistory = (1 | 2) as years; HasOverdraft = true }
+        when customer.Overdraft &gt; maxOverdraft years -&gt; false
+    | { YearsOfHistory = 1 | 2 } -&gt; true
+    | _ -&gt; true</code></pre></div>
+    <p><code>(1 | 2) as years</code> matches either value <i>and</i> captures whichever one matched into <code>years</code> for use in the guard.</p>
+  </div></details>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">What does the pattern <code>head :: rest</code> match?</div>
+    <div class="opts">
+      <button class="opt">Any collection type, splitting it in half</button>
+      <button class="opt" data-ok>Any non-empty list, binding the first element and the (possibly empty) remainder</button>
+      <button class="opt">Only lists with exactly two elements</button>
+    </div>
+    <div class="expl"><code>::</code> is the cons pattern: it matches a list with at least one element. <code>[ x ]</code> matches exactly one; <code>[]</code> matches empty. Together they cover every list, which the compiler verifies.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p5">← Collections</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p6">Mark complete</button>
+    <button class="pfbtn next" data-nav="p7">Next: Discriminated unions →</button>
+  </div>
+</section>
+
+<!-- ============ 07 DISCRIMINATED UNIONS ============ -->
+<section class="panel" id="p7" data-title="Discriminated unions and domain modeling">
+  <span class="kicker">Chapter 07</span>
+  <h2>Discriminated unions: F#'s superpower</h2>
+  <p class="lede">Records are "this AND that". Discriminated unions (DUs) are "this OR that" — a closed set of named cases, each carrying its own data. Combined with pattern matching, they let you make illegal states <i>unrepresentable</i>. This is the single feature C# developers miss most after learning F#.</p>
+
+  <h3><span class="tick"></span>Defining and consuming a DU</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listings 8.8–8.9 — a contact method is exactly one of three things</b><button class="copy">Copy</button></div>
+    <pre><code>type ContactMethod =
+    | Email of address: string
+    | Telephone of country: string * number: string
+    | Post of {| Line1: string; City: string; Country: string |}
+
+let isaacEmail = Email "isaac@myemailaddress.com"
+let isaacPhone = Telephone ("UK", "020-8123-4567")
+
+let describe contactMethod message =
+    match contactMethod with
+    | Email address -&gt; $"Emailing '{message}' to {address}."
+    | Telephone (country, number) -&gt; $"Calling {country}-{number}: '{message}'!"
+    | Post details -&gt; $"Posting '{message}' to {details.Line1}, {details.City}…"
+
+describe isaacPhone "DUs FTW"</code></pre>
+    <div class="out">val it: string = "Calling UK-020-8123-4567: 'DUs FTW'!"</div>
+    <div class="why">Each case has a name and <i>its own payload shape</i> — an email is a string, a phone number is two, a letter is an address record. Matching deconstructs the payload in the same gesture. Now add a case — <code>| Sms of TelephoneNumber</code> — and the compiler warns on <b>every match in the codebase</b> that doesn't handle it. That's exhaustive domain evolution, for free.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>The C# encoding of this is an abstract class with three subclasses, or an enum plus nullable fields that only sometimes apply — both let illegal states exist (what does <code>EmailAddress</code> mean when <code>Kind == Telephone</code>?). DUs are closed: no one can add a sneaky fourth subclass in another assembly, which is exactly what makes exhaustive matching sound. (C# union types remain a perennially-discussed proposal.)</p>
+  </aside>
+
+  <h3><span class="tick"></span>Single-case DUs: types instead of stringly-typed chaos</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 8.11 — wrap your primitives</b><button class="copy">Copy</button></div>
+    <pre><code>type PhoneNumber = PhoneNumber of string
+type CountryCode = CountryCode of string
+
+type TelephoneNumber =
+    | Local of PhoneNumber
+    | International of CountryCode * PhoneNumber
+
+// can no longer swap arguments by accident:
+let internationalNumber = International (CountryCode "+44", PhoneNumber "208-123-4567")
+
+// unwrap by pattern matching — even directly in a parameter:
+let dial (PhoneNumber number) = $"dialing {number}…"
+
+// enforce invariants with a validation pipeline:
+type Email = Email of address: string
+type ValidatedEmail = ValidatedEmail of Email
+
+let validateEmail (Email address) =
+    if address.Contains "@" then ValidatedEmail (Email address)
+    else failwith "Invalid email"
+
+let sendEmail (ValidatedEmail (Email address)) = ()   // can ONLY receive validated input</code></pre>
+    <div class="why">A <code>string</code> can be anything; a <code>PhoneNumber</code> can only be built deliberately. <code>sendEmail</code>'s signature makes "forgot to validate" a <i>compile error</i> — the type system carries the proof that validation ran. This costs three lines per type and eliminates entire test categories.</div>
+  </div>
+
+  <h3><span class="tick"></span>Modeling with the full toolkit</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Exercise 8.4 — replace primitives with words from the domain</b><button class="copy">Copy</button></div>
+    <pre><code>type YearsAsCustomer = LessThanAYear | OneYear | TwoYears | MoreThanTwoYears
+type OverdraftStatus = InCredit | Overdrawn
+type LoanDecision = LoanRejected | LoanAccepted
+
+let decideLoan customerDetails =
+    match customerDetails with
+    | LessThanAYear, _
+    | OneYear, InCredit -&gt; LoanRejected
+    | OneYear, Overdrawn -&gt; LoanAccepted
+    | TwoYears, _
+    | MoreThanTwoYears, _ -&gt; LoanAccepted</code></pre>
+    <div class="why">Compare with chapter 06's <code>(int, bool)</code> tuple: what did <code>2, true</code> mean again? Payload-less DU cases work like enums but match exhaustively and can't hold out-of-range values (no <code>(YearsAsCustomer) 47</code>). The business rules are now legible to a domain expert reading over your shoulder.</div>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — DUs are not enums</span>
+    <p>F# also has true enums (<code>type LetterType = Welcome = 0 | Overdue = 1</code>) for interop and flags. But enums are just named ints: <code>enum&lt;LetterType&gt; 999</code> compiles and matching them always needs a wildcard. Prefer DUs unless a .NET API demands an enum.</p>
+  </aside>
+
+  <aside class="tryit"><span class="tag">Try it</span>
+    <p>Model a guitar: <code>Brand</code> (single-case DU over string), <code>Strings</code> (Six | Seven | Eight | Twelve), and <code>Kind</code> = <code>Acoustic</code> or <code>Electric of Pickup list</code> where <code>Pickup</code> is <code>Single | Humbucker</code>. You'll reuse this exact model in chapter 10.</p>
+  </aside>
+  <details class="deep"><summary>Show solution</summary><div class="body">
+    <div class="cmd"><div class="cmd-head"><span class="chip fsx">fsx</span><b>Solution — Listing 10.2's domain</b><button class="copy">Copy</button></div>
+    <pre><code>type Brand = Brand of string
+type Strings = Six | Seven | Eight | Twelve
+
+[&lt;RequireQualifiedAccess&gt;]
+type Pickup = Single | Humbucker
+
+type Kind =
+    | Acoustic
+    | Electric of Pickup list
+
+type Guitar = { Brand: Brand; Strings: Strings; Kind: Kind }
+
+let ibanez = {
+    Brand = Brand "Ibanez"
+    Strings = Six
+    Kind = Electric [ Pickup.Humbucker; Pickup.Single; Pickup.Humbucker ]
+}</code></pre></div>
+    <p><code>[&lt;RequireQualifiedAccess&gt;]</code> forces <code>Pickup.Single</code> instead of bare <code>Single</code> — useful when case names would collide (here with <code>Strings.Six</code>-style readability or .NET's <code>Single</code>). An acoustic guitar <i>cannot</i> have pickups in this model: illegal state, unrepresentable.</p>
+  </div></details>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">You add a new case to a DU used across a large codebase. What happens at the next build?</div>
+    <div class="opts">
+      <button class="opt">Nothing — existing matches silently fall through to defaults</button>
+      <button class="opt">Runtime exceptions wherever the new case appears</button>
+      <button class="opt" data-ok>The compiler warns at every incomplete <code>match</code>, giving you a to-do list of exactly what to update</button>
+    </div>
+    <div class="expl">This is the DU + exhaustive matching workflow: extend the domain, then follow the warnings. Tip: avoid wildcard <code>| _</code> arms on DU matches precisely so this safety net stays intact (and turn warning FS0025 into an error in real projects).</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p6">← Pattern matching</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p7">Mark complete</button>
+    <button class="pfbtn next" data-nav="p8">Next: Options &amp; Results →</button>
+  </div>
+</section>
+
+<!-- ============ 08 OPTIONS & RESULTS ============ -->
+<section class="panel" id="p8" data-title="Options Results and error handling">
+  <span class="kicker">Chapter 08</span>
+  <h2>Options &amp; Results: the end of null</h2>
+  <p class="lede">F# types declared in F# can't be null. "Might be missing" becomes <code>Option&lt;'T&gt;</code>; "might fail, and here's why" becomes <code>Result&lt;'T,'Error&gt;</code>. Both are plain DUs from the previous chapter — the magic is that the compiler forces every caller to handle both branches.</p>
+
+  <h3><span class="tick"></span>Option: Some or None, no third state</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Absence you cannot forget to check</b><button class="copy">Copy</button></div>
+    <pre><code>let optionalNumber: int option = Some 10
+let missingNumber: int option = None
+
+// missingNumber + 5         // ✗ compile error — it's not an int!
+// missingNumber.CompareTo 55 // ✗ no such member on option
+
+let description =
+    match optionalNumber with
+    | Some number -&gt; $"The number is {number}"
+    | None -&gt; "There is no number"
+
+// transform without unwrapping: Option.map
+let tryGetFileContents filename =
+    if System.IO.File.Exists filename then Some (System.IO.File.ReadAllText filename)
+    else None
+
+let countWords (text: string) = text.Split ' ' |&gt; Array.length
+
+let countWordsInFile filename =
+    filename |&gt; tryGetFileContents |&gt; Option.map countWords
+    // Some text → Some count;  None → None, countWords never runs</code></pre>
+    <div class="out">val countWordsInFile: filename: string -> int option</div>
+    <div class="why">An <code>int option</code> is a different type from <code>int</code> — you physically cannot use it as a number until you pattern match (or map) it. <code>Option.map</code> applies a function inside the box: the happy path composes cleanly, and <code>None</code> short-circuits through the whole pipeline. <code>Option.bind</code> is the same but for functions that <i>themselves</i> return options — it flattens <code>option option</code> nesting.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>Nullable reference types (<code>string?</code>) were C#'s answer — but they're advisory warnings layered over a runtime where null still flows everywhere. <code>Option</code> is enforced: there is no <code>.Value</code>-without-checking that sneaks past the compiler in idiomatic code. For interop, F# gives you <code>Option.ofObj</code> (null → None) and <code>Option.ofNullable</code> at the boundary — convert once at the edges, then nulls don't exist inside your domain.</p>
+  </aside>
+
+  <h3><span class="tick"></span>Result: errors as data</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 9.2 — validation that returns instead of throws</b><button class="copy">Copy</button></div>
+    <pre><code>type CustomerId = CustomerId of int
+type Country = Domestic | Foreign of string
+
+let validateCustomerId (raw: string) =
+    if raw.StartsWith "C" then Ok (CustomerId (int raw[1..]))
+    else Error $"Invalid Customer Id '{raw}'."
+
+let validateCountry raw =
+    match raw with
+    | "" -&gt; Error "No country supplied"
+    | "USA" -&gt; Ok Domestic
+    | other -&gt; Ok (Foreign other)
+
+// combine: only build the customer if BOTH succeeded
+let validateCustomer rawId rawCountry =
+    match validateCustomerId rawId, validateCountry rawCountry with
+    | Ok customerId, Ok country -&gt; Ok {| Id = customerId; Country = country |}
+    | Error err, _ | _, Error err -&gt; Error err
+
+validateCustomer "C123" "USA"
+validateCustomer "123" "USA"</code></pre>
+    <div class="out">val it: Result&lt;{| Country: Country; Id: CustomerId |}, string&gt; =
+  Ok { Country = Domestic; Id = CustomerId 123 }
+val it: ... = Error "Invalid Customer Id '123'."</div>
+    <div class="why"><code>Result&lt;'T,'Error&gt;</code> is just <code>Ok of 'T | Error of 'Error</code>. Failure is in the signature, so callers must decide what an error means <i>at the call site</i> — no invisible exception paths, no <code>catch (Exception)</code> guessing games. Matching the two results as a tuple is the manual way to combine validations; chapter 09 automates it.</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Level up: strongly-typed errors + exceptions at the boundary</b><button class="copy">Copy</button></div>
+    <pre><code>// errors as a DU — callers can match on the KIND of failure
+type CustomerValidationError =
+    | InvalidCustomerId of string
+    | InvalidCountry of string
+
+// wrap exception-throwing .NET code into Results at the edge:
+let handleException func arg =
+    try func arg |&gt; Ok
+    with ex -&gt; Error ex
+
+let divide (a, b) = a / b
+let divideSafe = handleException divide
+divideSafe (2, 0)</code></pre>
+    <div class="out">val divideSafe: (int * int -> Result&lt;int, exn&gt;)
+val it: Result&lt;int, exn&gt; = Error System.DivideByZeroException: …</div>
+    <div class="why">Rule of thumb from the book: use <b>Result</b> for failures you expect and want callers to reason about (validation, lookups, business rules); let <b>exceptions</b> handle the truly exceptional (disk died, network gone) and convert at boundaries. Note how <code>handleException</code> is a higher-order function that makes <i>any</i> unsafe function safe.</div>
+  </div>
+
+  <aside class="gotcha"><span class="tag">Gotcha — don't reach for <code>.Value</code></span>
+    <p><code>Option.get</code>, <code>.Value</code> and friends unwrap without checking and throw on <code>None</code> — they reintroduce the NullReferenceException with extra steps. If you "know" it's Some, encode <i>why</i> with a match and a meaningful error. In tests, fine; in domain code, treat <code>.Value</code> as a code smell.</p>
+  </aside>
+
+  <aside class="tryit"><span class="tag">Try it — exercise 9.1</span>
+    <p>You already wrote <code>countWordsInFile</code> above. Now write its consumer: a function that prints either <code>"File has N words"</code> or <code>"File not found"</code>. Which Option function fits — <code>map</code>, <code>bind</code>, or a plain <code>match</code>?</p>
+  </aside>
+  <details class="deep"><summary>Show solution</summary><div class="body">
+    <div class="cmd"><div class="cmd-head"><span class="chip fsx">fsx</span><b>Solution</b><button class="copy">Copy</button></div>
+    <pre><code>let report filename =
+    match countWordsInFile filename with
+    | Some count -&gt; printfn $"File has {count} words"
+    | None -&gt; printfn "File not found"</code></pre></div>
+    <p>A plain <code>match</code> — because you're <i>leaving</i> the Option world to perform an effect. <code>map</code>/<code>bind</code> are for staying inside it while you transform.</p>
+  </div></details>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">When should you prefer <code>Result</code> over throwing an exception?</div>
+    <div class="opts">
+      <button class="opt">Always — exceptions are banned in functional code</button>
+      <button class="opt" data-ok>For expected, business-meaningful failures the caller should handle — validation, not-found, rule violations</button>
+      <button class="opt">Only for I/O operations</button>
+    </div>
+    <div class="expl">Results put expected failure into the type signature, forcing explicit handling. Exceptions stay the right tool for unexpected, unrecoverable situations — and you convert between worlds at the boundary with helpers like <code>handleException</code>.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p7">← Discriminated unions</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p8">Mark complete</button>
+    <button class="pfbtn next" data-nav="p9">Next: Computation expressions →</button>
+  </div>
+</section>
+
+<!-- ============ 09 COMPUTATION EXPRESSIONS ============ -->
+<section class="panel" id="p9" data-title="Computation expressions option result validation blocks">
+  <span class="kicker">Chapter 09</span>
+  <h2>Computation expressions: taming the boxes</h2>
+  <p class="lede">Once everything returns Options and Results, combining them gets noisy — match inside match inside match. Computation expressions (CEs) flatten that nesting: <code>let!</code> unwraps a boxed value or exits early, automatically. You've used this before — it's <code>await</code>, generalized to any container.</p>
+
+  <h3><span class="tick"></span>The problem, then the cure</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 9.6 — combining three parses, manually vs with option { }</b><button class="copy">Copy</button></div>
+    <pre><code>open System
+let calc (a: int) (b: int) (c: int) : int = a + b * c
+
+let tryParseNumber (s: string) =
+    match Int32.TryParse s with
+    | true, number -&gt; Some number
+    | false, _ -&gt; None
+
+// manual combination — already clumsy with 3, unbearable with 5:
+let calcResult =
+    match tryParseNumber "1", tryParseNumber "2", tryParseNumber "3" with
+    | Some a, Some b, Some c -&gt; Some (calc a b c)
+    | _ -&gt; None
+
+// the computation expression version:
+#r "nuget: FsToolkit.ErrorHandling"
+open FsToolkit.ErrorHandling
+
+let myMaybeData = option {
+    let! numberOne   = tryParseNumber "1"
+    let! numberTwo   = tryParseNumber "2"
+    let! numberThree = tryParseNumber "3"
+    return calc numberOne numberTwo numberThree
+}</code></pre>
+    <div class="out">val myMaybeData: int option = Some 7</div>
+    <div class="why">Inside <code>option { }</code>, <code>let!</code> means "unwrap the Some, or if it's None, <b>stop here and return None</b>". The early-exit plumbing you'd write by hand is generated by the builder. <code>return</code> wraps the final value back into the container. Change <code>"2"</code> to <code>"two"</code> and the whole block evaluates to <code>None</code> — no exceptions, no nesting. The <code>#r "nuget:…"</code> line pulls a NuGet package straight into a script.</div>
+  </div>
+
+  <h3><span class="tick"></span>result { } and validation { } — fail fast vs collect-all</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Exercise 9.2 — accumulate every validation error with and!</b><button class="copy">Copy</button></div>
+    <pre><code>// result { } short-circuits on the FIRST Error.
+// validation { } with and! runs ALL checks and collects every Error:
+
+let validateCustomerCe rawId rawCountry rawName = validation {
+    let! customerId = validateCustomerId rawId
+    and! country    = validateCountry rawCountry
+    and! name       = validateName rawName
+    return {| Id = customerId; Country = country; Name = name |}
+}
+
+validateCustomerCe "123" "" "Isaac the Great Abraham"
+// Error [ InvalidIdFormat "123"; NoCountrySupplied; TooManyParts ]</code></pre>
+    <div class="why"><code>let! … and! …</code> declares the steps as <i>independent</i>, so the builder can evaluate all of them and merge failures — exactly what a web form needs ("here are all 3 problems", not one-at-a-time). The same body with <code>let!</code> everywhere would stop at the first error. One keyword changes the strategy; the business code is untouched.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p><code>async/await</code> is a computation expression that C# hard-wired for exactly one container (<code>Task</code>). LINQ query syntax is another, hard-wired for <code>IEnumerable</code>. F# exposes the mechanism: <code>option { }</code>, <code>result { }</code>, <code>task { }</code> (chapter 12), <code>seq { }</code>, and ones you define yourself. Same <code>let!</code> keyword, different "awaitable" semantics per builder.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — know your keywords</span>
+    <p>Inside a CE: <code>let!</code> unwraps a container; plain <code>let</code> binds a normal value (no unwrapping); <code>return</code> wraps a value into the container; <code>return!</code> passes an already-wrapped value through; <code>do!</code> is <code>let!</code> for unit-returning operations. Mixing up <code>let</code> and <code>let!</code> is the #1 beginner CE error — the compiler message will mention unexpected <code>'a option</code>-style types.</p>
+  </aside>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">In <code>option { let! x = f () … }</code>, what happens when <code>f ()</code> returns <code>None</code>?</div>
+    <div class="opts">
+      <button class="opt">An exception is thrown</button>
+      <button class="opt"><code>x</code> is bound to a default value and execution continues</button>
+      <button class="opt" data-ok>The block exits immediately and evaluates to <code>None</code></button>
+    </div>
+    <div class="expl">That early exit is the whole point: <code>let!</code> encodes "unwrap or bail" so the happy path reads linearly while the failure path is handled by the builder.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p8">← Options &amp; Results</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p9">Mark complete</button>
+    <button class="pfbtn next" data-nav="p10">Next: JSON &amp; type providers →</button>
+  </div>
+</section>
+<!-- ============ 10 DATA ============ -->
+<section class="panel" id="p10" data-title="JSON serialization and type providers">
+  <span class="kicker">Chapter 10</span>
+  <h2>Working with data: JSON &amp; type providers</h2>
+  <p class="lede">Real systems live on messy external data. The F# pattern: deserialize into a dumb "raw" type, then validate into your rich domain with Results. And for exploration, type providers generate types from live data sources <i>at edit time</i> — IntelliSense against a JSON file or a Wikipedia page.</p>
+
+  <h3><span class="tick"></span>The two-stage deserialization pattern</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 10.3 — raw type in, validated domain out</b><button class="copy">Copy</button></div>
+    <pre><code>open System.Text.Json
+#r "nuget: FsToolkit.ErrorHandling"
+open FsToolkit.ErrorHandling
+
+// 1. a dumb shape that matches the JSON exactly
+type RawGuitar = { Brand: string; Strings: string; Pickups: string list }
+
+// 2. elevate it into the rich domain from chapter 07
+let tryAsFullGuitar (raw: RawGuitar) = result {
+    let! brand =
+        if System.String.IsNullOrWhiteSpace raw.Brand then Error "Brand is mandatory"
+        else Ok (Brand raw.Brand)
+
+    let! strings =
+        match raw.Strings with
+        | "6" -&gt; Ok Six | "7" -&gt; Ok Seven | "8" -&gt; Ok Eight | "12" -&gt; Ok Twelve
+        | value -&gt; Error $"Invalid value '{value}'"
+
+    let! pickups =
+        raw.Pickups
+        |&gt; List.traverseResultM (fun p -&gt;
+            match p with
+            | "S" -&gt; Ok Pickup.Single
+            | "H" -&gt; Ok Pickup.Humbucker
+            | value -&gt; Error $"Invalid value {value}")
+
+    return {
+        Brand = brand
+        Strings = strings
+        Kind = match pickups with [] -&gt; Acoustic | pickups -&gt; Electric pickups
+    }
+}
+
+"""{ "Brand": "Ibanez", "Strings": "6", "Pickups": [ "H", "S", "H" ] }"""
+|&gt; JsonSerializer.Deserialize
+|&gt; tryAsFullGuitar</code></pre>
+    <div class="out">val it: Result&lt;Guitar, string&gt; =
+  Ok { Brand = Brand "Ibanez"
+       Strings = Six
+       Kind = Electric [Humbucker; Single; Humbucker] }</div>
+    <div class="why">Serializers and rich F# types (DUs, single-case wrappers) don't mix well — so don't fight it. Deserialize into primitives, then run one honest validation pass that returns <code>Result</code>. <code>traverseResultM</code> turns a <code>list of results</code> into a <code>result of list</code> — "all pickups valid, or the first error". Bonus: serializing <i>out</i> is easy — project into an anonymous record and <code>JsonSerializer.Serialize</code> it.</div>
+  </div>
+
+  <h3><span class="tick"></span>Type providers: types generated from data</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 10.4 — JsonProvider over a live URL</b><button class="copy">Copy</button></div>
+    <pre><code>#r "nuget: FSharp.Data"
+open FSharp.Data
+
+[&lt;Literal&gt;]
+let SampleJson = """{ "Brand": "Ibanez", "Strings": "7", "Pickups": [ "H", "S", "H" ] }"""
+
+type GuitarJson = JsonProvider&lt;SampleJson&gt;
+let sample = GuitarJson.GetSample()
+$"{sample.Brand} has {sample.Strings} strings."   // .Brand and .Strings are TYPED members!
+
+// point it at a URL — schema inferred from the real payload:
+type ManyGuitars =
+    JsonProvider&lt;"https://raw.githubusercontent.com/isaacabraham/fsharp-in-action/main/sample-guitars.json"&gt;
+
+let inventory = ManyGuitars.GetSamples()
+$"You have {inventory.Length} guitars in stock."</code></pre>
+    <div class="why">Read that again: the <code>GuitarJson</code> type — with an <code>int</code>-typed <code>Strings</code> property, inferred from the sample — was generated <i>by the compiler while you typed</i>. No DTO classes, no codegen step, no <code>JObject</code> dynamic guessing. Change the sample and the downstream code that no longer fits turns red immediately.</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 10.5 — HtmlProvider: IntelliSense over Wikipedia</b><button class="copy">Copy</button></div>
+    <pre><code>open FSharp.Data
+
+type LondonBoroughs = HtmlProvider&lt;"https://en.wikipedia.org/wiki/List_of_London_boroughs"&gt;
+
+let boroughs =
+    LondonBoroughs.GetSample().Tables.``List of boroughs and local authorities``
+
+boroughs.Rows |&gt; Array.map (fun row -&gt; row.Borough)</code></pre>
+    <div class="out">val it: string[] =
+  [|"Barking and Dagenham"; "Barnet"; "Bexley"; "Brent"; …|]</div>
+    <div class="why">The provider parsed the page's HTML tables and exposed each as a typed property — <code>row.Borough</code> is a string, population columns come back numeric. The double-backtick syntax lets identifiers contain spaces. Ideal for exploration and one-off data wrangling; for production pipelines, prefer the explicit raw-type + validation pattern above.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>The C# workflow: paste sample JSON into a class generator (or hand-write DTOs), add <code>[JsonPropertyName]</code> attributes, hope the sample was representative. Type providers collapse that loop to zero steps and re-check on every build. There is no C# equivalent — this is compiler-extensibility territory.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — providers need representative samples</span>
+    <p>A type provider infers from the sample you give it. If the sample's optional fields happen to all be present, the inferred type won't be optional — and a real payload with a missing field fails at runtime. Feed providers samples that include the edge cases (nulls, missing fields, both record variants), or pin schemas with a local sample file checked into the repo.</p>
+  </aside>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">Why deserialize into a "raw" record before building your domain type?</div>
+    <div class="opts">
+      <button class="opt">Serializers can't handle records at all</button>
+      <button class="opt" data-ok>It separates parsing from validation, so rich types (DUs, wrappers) stay pure and every bad input becomes a typed Error</button>
+      <button class="opt">It's faster at runtime</button>
+    </div>
+    <div class="expl">JSON is stringly-typed; your domain isn't. The raw type absorbs the mess 1:1, then one function — returning <code>Result</code> — owns the translation. Invalid data can't leak past it.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p9">← Computation expressions</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p10">Mark complete</button>
+    <button class="pfbtn next" data-nav="p11">Next: C# interop →</button>
+  </div>
+</section>
+
+<!-- ============ 11 C# INTEROP ============ -->
+<section class="panel" id="p11" data-title="Interoperating with CSharp and dotnet">
+  <span class="kicker">Chapter 11</span>
+  <h2>C# interop: one runtime, two dialects</h2>
+  <p class="lede">F# consumes any .NET library — and C# can consume your F#. Records become classes with constructors, modules become static classes. The skills here: calling OO APIs idiomatically, implementing interfaces, and the F#-only trick of object expressions.</p>
+
+  <h3><span class="tick"></span>Consuming .NET classes</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 11.1 — the BCL feels native</b><button class="copy">Copy</button></div>
+    <pre><code>open System.IO
+
+let fileInfo = FileInfo $"{__SOURCE_DIRECTORY__}/notes.txt"
+let directoryInfo = fileInfo.Directory
+let files = directoryInfo.GetFiles()
+
+let scriptFiles =
+    files
+    |&gt; Seq.where (fun f -&gt; Path.GetExtension f.Name = ".fsx")
+    |&gt; Seq.map (fun f -&gt; f.Name)
+
+// constructors are just functions; 'new' is optional…
+let ctorSuccinct = FileInfo "test.txt"
+// …except for IDisposable types, where 'new' signals "remember to dispose":
+let ctorVerbose = new FileStream ("test.txt", FileMode.Open)
+
+// 'use' = C# using declaration
+let readFirstLine () =
+    use stream = new StreamReader "test.txt"
+    stream.ReadLine()</code></pre>
+    <div class="why">Mutable .NET objects, LINQ extension methods, even C# fluent builders — all callable. Note <code>Seq.where</code> alongside <code>Seq.filter</code>: aliases exist to ease the LINQ transition. <code>use</code> disposes at scope exit, exactly like a C# <code>using</code> declaration.</div>
+  </div>
+
+  <h3><span class="tick"></span>Interfaces &amp; object expressions</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 11.2 — implement an interface without declaring a class</b><button class="copy">Copy</button></div>
+    <pre><code>type MyInterface =
+    abstract Capitalize: string -&gt; string
+    abstract Add: int -&gt; int
+
+// classic: a class implementing it
+type MyImplementation () =
+    interface MyInterface with
+        member _.Capitalize text = text.ToUpper()
+        member _.Add number = number + 1
+
+// F# interface implementations are EXPLICIT — cast to use:
+let viaClass: MyInterface = MyImplementation ()
+
+// object expression: an anonymous, inline implementation. No class!
+let viaObjectExpression =
+    { new MyInterface with
+        member _.Capitalize text = text.ToUpper()
+        member _.Add number = number + 1
+    }
+
+viaObjectExpression.Capitalize "test"</code></pre>
+    <div class="out">val it: string = "TEST"</div>
+    <div class="why">Object expressions create one-off implementations inline — perfect for test doubles, adapters around <code>ILogger</code>, or wrapping a lambda as a single-method interface. The factory pattern is lovely: <code>let makeDisplay f = { new IDisplayTime with member _.Display d = f d }</code> turns any function into an interface instance.</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Smoothing C# idioms: TryParse, fluent chains, NuGet</b><button class="copy">Copy</button></div>
+    <pre><code>// generic adapter: turn any TryParse-style API into an Option factory
+let parseOption parser (value: string) =
+    match parser value with
+    | true, v -&gt; Some v
+    | false, _ -&gt; None
+
+let parseIntOption = parseOption System.Int32.TryParse
+parseIntOption "123"     // Some 123
+parseIntOption "123S"    // None
+
+// fluent APIs: discard the returned 'this' explicitly
+let setUpWebApp (framework: WebFramework) =
+    framework.AddAuthentication().AddCors().AddCaching() |&gt; ignore</code></pre>
+    <div class="why">Two lines of adapter and an entire family of awkward C# APIs becomes functional and composable. Going the other direction — exposing F# to C# — works out of the box: records appear as immutable classes with constructors and value equality; prefer namespaces over modules at public boundaries and avoid exposing F#-only types (options, DUs) on public APIs C# teams consume.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>Mixed solutions are routine: keep your C# ASP.NET host and write the domain layer in F#, or vice versa. One rule has no workaround: <b>a single project is one language</b> — you mix at assembly granularity, and your <code>.sln</code> happily holds both. C# sees an F# record as a sealed class with a constructor, <code>IEquatable</code>, and readonly properties.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — F# functions are not .NET delegates</span>
+    <p>An F# lambda is an <code>FSharpFunc</code>, not a <code>Func&lt;,&gt;</code>/<code>Action</code>. Passing lambdas to C# APIs usually converts automatically, but when overload resolution gets confused, construct explicitly: <code>System.Func&lt;_,_&gt;(fun x -&gt; …)</code>. Symmetrically, C# devs calling your F# get a nicer time if public APIs take BCL delegate types.</p>
+  </aside>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">What's the idiomatic F# tool for a one-off <code>ILogger</code> stub in a test?</div>
+    <div class="opts">
+      <button class="opt">A new class file implementing the interface</button>
+      <button class="opt" data-ok>An object expression: <code>{ new ILogger with member … }</code></button>
+      <button class="opt">A mocking framework — there's no other way</button>
+    </div>
+    <div class="expl">Object expressions implement interfaces inline with zero ceremony, which removes most of the need for mocking libraries in F# test suites (chapter 14 pushes this further with plain function injection).</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p10">← JSON &amp; type providers</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p11">Mark complete</button>
+    <button class="pfbtn next" data-nav="p12">Next: Async &amp; tasks →</button>
+  </div>
+</section>
+
+<!-- ============ 12 ASYNC ============ -->
+<section class="panel" id="p12" data-title="Asynchronous programming tasks and async blocks">
+  <span class="kicker">Chapter 12</span>
+  <h2>Async &amp; tasks: await, the F# way</h2>
+  <p class="lede">Asynchrony in F# is the <code>task { }</code> computation expression — same TPL machinery as C#, same performance, but <code>let!</code> instead of <code>await</code>. If you know async/await, you already know 90% of this chapter; the rest is composing tasks with collections and Results.</p>
+
+  <h3><span class="tick"></span>task { } basics</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 12.1 — let! is await, do! is await-for-unit</b><button class="copy">Copy</button></div>
+    <pre><code>open System.IO
+open System.Threading.Tasks
+
+let writeToFileAsync fileName data = task {
+    do! File.AppendAllTextAsync (fileName, data)     // await a Task (no result)
+    let! contents = File.ReadAllTextAsync fileName   // await a Task&lt;string&gt;
+    return contents.Length                           // → Task&lt;int&gt;
+}
+
+let totalTask = writeToFileAsync "sample.txt" "foo"
+totalTask.Result   // blocking .Result is fine in FSI / scripts only!</code></pre>
+    <div class="out">val writeToFileAsync: fileName: string -> data: string -> Task&lt;int&gt;
+val it: int = 3</div>
+    <div class="why">Mapping: <code>task { }</code> opens an async method body, <code>let!</code> = <code>await</code> with a result, <code>do!</code> = <code>await</code> without one, <code>return</code> sets the task's value. The function's inferred type is an honest <code>Task&lt;int&gt;</code> — directly consumable from C#, ASP.NET, anywhere.</div>
+  </div>
+
+  <h3><span class="tick"></span>Sequential vs parallel composition</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listings 12.2–12.3 — three files, two strategies</b><button class="copy">Copy</button></div>
+    <pre><code>// sequential: each let! awaits before the next starts
+let filesComposed = task {
+    let! file1 = File.ReadAllTextAsync "file1.txt"
+    let! file2 = File.ReadAllTextAsync "file2.txt"
+    let! file3 = File.ReadAllTextAsync "file3.txt"
+    return $"{file1} {file2} {file3}"
+}
+
+// parallel: kick all off, await them together
+let filesParallel = task {
+    let! allFiles =
+        [ "file1.txt"; "file2.txt"; "file3.txt" ]
+        |&gt; List.map File.ReadAllTextAsync     // a list of running Task&lt;string&gt;
+        |&gt; Task.WhenAll                       // → Task&lt;string[]&gt;
+    return allFiles |&gt; Array.reduce (sprintf "%s %s")
+}</code></pre>
+    <div class="why">The parallel version is a pipeline: map the file names into <i>already-started</i> tasks, then <code>Task.WhenAll</code> gathers them. Collections + tasks compose with the same combinators you learned in chapter 05 — no <code>Select(async x =&gt; …)</code> contortions.</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Listing 12.7 — tasks + Results: the full honesty stack</b><button class="copy">Copy</button></div>
+    <pre><code>open System.Text.Json
+let loadCustomerFromDbAsync customerId = task { return {| Name = "Isaac"; Balance = 0 |} }
+
+let tryGetCustomerAsync customerId = task {
+    let! customer = loadCustomerFromDbAsync customerId
+    return
+        if customer.Balance &lt;= 0 then Error "Customer is in debt!"
+        else Ok customer
+}
+
+let handleRequestAsync (json: string) = task {
+    let request: {| CustomerId: int |} = JsonSerializer.Deserialize json
+    let! response = tryGetCustomerAsync request.CustomerId
+    return
+        match response with
+        | Ok c -&gt; {| CustomerName = c.Name.ToUpper() |}
+        | Error msg -&gt; failwith $"Bad request: {msg}"
+}</code></pre>
+    <div class="why">Signature: <code>Task&lt;Result&lt;Customer, string&gt;&gt;</code> — "this is slow, AND it can fail, and here's how". Awaiting unwraps the task layer; matching unwraps the result layer. When the double-unwrapping gets tedious, <code>FsToolkit.ErrorHandling</code>'s <code>taskResult { }</code> CE unwraps both in one <code>let!</code> — you'll see it in the Giraffe chapter next.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>F# also has an older <code>async { }</code> block (it pioneered async — C# borrowed the idea for await). Differences: F# <code>async</code> is <i>cold</i> (a recipe that runs when you ask, composable and restartable) whereas <code>Task</code> is <i>hot</i> (already running when created). For mainstream .NET work, the book's advice is simple: <b>default to <code>task { }</code></b> — it's faster with Task-based APIs and frictionless with the ecosystem. Reach for <code>async</code> when you need cold semantics; bridge with <code>Async.AwaitTask</code>.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — code before the task block runs synchronously</span>
+    <p>In Listing 12.4 the book shows a function that prints, blocks a second, <i>then</i> opens <code>task { }</code>: everything before the block executes synchronously on the caller's thread when the function is called. Same rule as C# async methods before the first await — keep slow synchronous work out of async functions' preambles.</p>
+  </aside>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">Inside <code>task { }</code>, what's the difference between <code>let!</code> and <code>do!</code>?</div>
+    <div class="opts">
+      <button class="opt" data-ok><code>let!</code> awaits a <code>Task&lt;'T&gt;</code> and binds the result; <code>do!</code> awaits a plain <code>Task</code> with no result</button>
+      <button class="opt"><code>do!</code> runs the task on a background thread, <code>let!</code> doesn't</button>
+      <button class="opt">They're interchangeable</button>
+    </div>
+    <div class="expl">Both await. <code>let! x = …</code> is <code>var x = await …</code>; <code>do! …</code> is <code>await …;</code> for unit/void-style tasks, like <code>Task.Delay</code> or appending to a file.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p11">← C# interop</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p12">Mark complete</button>
+    <button class="pfbtn next" data-nav="p13">Next: Web apps with Giraffe →</button>
+  </div>
+</section>
+<!-- ============ 13 WEB / GIRAFFE ============ -->
+<section class="panel" id="p13" data-title="Web programming with Giraffe ASP.NET">
+  <span class="kicker">Chapter 13</span>
+  <h2>Web apps with Giraffe</h2>
+  <p class="lede">Giraffe is a thin functional layer over ASP.NET Core: same Kestrel, same middleware, same performance — but your endpoints are <i>functions composed with combinators</i> instead of attribute-decorated controller classes. A whole API becomes one readable expression.</p>
+
+  <h3><span class="tick"></span>HttpHandler: the one abstraction</h3>
+  <div class="cmd" data-kind="shell">
+    <div class="cmd-head"><span class="chip sh">Terminal</span><b>Bootstrap a Giraffe app</b><button class="copy">Copy</button></div>
+    <pre><code data-nohl><span class="p">$</span> dotnet new console -lang F# -o MyGiraffeApp &amp;&amp; cd MyGiraffeApp
+<span class="p">$</span> dotnet add package Giraffe
+<span class="p">$</span> dotnet add package FsToolkit.ErrorHandling.TaskResult
+<span class="p">$</span> dotnet run     <span class="c"># http://localhost:5000</span></code></pre>
+    <div class="why">No template magic required — a Giraffe app is a console app with a package reference and ~6 lines of bootstrap (below).</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">Program.fs</span><b>Listings 13.4–13.5 — compose routes with &gt;=&gt; and choose</b><button class="copy">Copy</button></div>
+    <pre><code>open Microsoft.AspNetCore.Builder
+open Giraffe
+
+// the simplest possible handler:
+let giraffeApp: HttpHandler = text "Hello, world!"
+
+// combinators chain with the "fish" operator &gt;=&gt; …
+let appV2: HttpHandler =
+    GET &gt;=&gt; route "/device/status" &gt;=&gt; text "device is operating correctly"
+
+// …and choose [] tries handlers top to bottom until one responds:
+let fullApi: HttpHandler =
+    choose [
+        GET  &gt;=&gt; route "/device/status"  &gt;=&gt; text "device is operating correctly"
+        POST &gt;=&gt; route "/device/execute" &gt;=&gt; text "executed a command!"
+    ]
+
+let builder = WebApplication.CreateBuilder()
+builder.Services.AddGiraffe() |&gt; ignore
+let app = builder.Build()
+app.UseGiraffe fullApi
+app.Run()</code></pre>
+    <div class="why">An <code>HttpHandler</code> is (conceptually) <code>HttpContext → maybe a response</code>. <code>GET</code>, <code>route</code>, <code>text</code>, <code>json</code> are all just handlers; <code>&gt;=&gt;</code> glues them ("if this succeeds, continue to that"), <code>choose</code> is routing. Your entire URL space is one expression you can read top to bottom — no attribute scanning, no reflection magic.</div>
+  </div>
+
+  <h3><span class="tick"></span>Real handlers: query strings, JSON bodies, validation</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">Program.fs</span><b>Listings 13.6–13.7 — a validated endpoint with taskResult</b><button class="copy">Copy</button></div>
+    <pre><code>open Microsoft.AspNetCore.Http
+open FsToolkit.ErrorHandling
+
+type DeviceStatusError =
+    | NoDeviceIdSupplied
+    | InvalidDeviceId of string
+    | NoSuchDeviceId of int
+
+module Db =
+    let tryFindDeviceStatus (deviceId: int) = task {
+        if deviceId &lt; 50 then return Some "ACTIVE"
+        elif deviceId &lt; 100 then return Some "IDLE"
+        else return None
+    }
+
+// async + validation in one readable block (chapter 12's promise!)
+let tryGetDeviceStatus maybeDeviceId = taskResult {
+    let! (rawId: string) = maybeDeviceId |&gt; Result.requireSome NoDeviceIdSupplied
+    let! deviceId = Option.tryParse rawId |&gt; Result.requireSome (InvalidDeviceId rawId)
+    let! status = Db.tryFindDeviceStatus deviceId
+    let! status = status |&gt; Result.requireSome (NoSuchDeviceId deviceId)
+    return {| DeviceId = deviceId; Status = status |}
+}
+
+let warehouseApi next (ctx: HttpContext) = task {
+    let! deviceStatus = tryGetDeviceStatus (ctx.TryGetQueryStringValue "deviceId")
+    match deviceStatus with
+    | Ok info -&gt; return! json info next ctx
+    | Error err -&gt; return! RequestErrors.BAD_REQUEST $"{err}" next ctx
+}
+
+let api: HttpHandler = GET &gt;=&gt; route "/device/status" &gt;=&gt; warehouseApi
+// GET /device/status?deviceId=12  → 200 {"deviceId":12,"status":"ACTIVE"}
+// GET /device/status?deviceId=152 → 400 NoSuchDeviceId 152</code></pre>
+    <div class="why">Look how the layers stack: a DU for every way the request can fail (chapter 07), <code>taskResult { }</code> to unwrap async + Result in single <code>let!</code> steps (chapters 09+12), and a thin handler that maps Ok/Error to HTTP codes. <code>routef "/device/status/%i"</code> gives type-checked URL parameters; <code>ctx.BindModelAsync&lt;'T&gt;()</code> binds JSON bodies.</div>
+  </div>
+
+  <h3><span class="tick"></span>HTML without templates: the view engine</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">Program.fs</span><b>Listing 13.8 — views are F# expressions too</b><button class="copy">Copy</button></div>
+    <pre><code>open Giraffe.ViewEngine
+
+let deviceReport deviceStatus =
+    html [] [
+        body [] [
+            h1 [] [ str "Device report" ]
+            match deviceStatus with
+            | Error err -&gt; str $"Error: {err}"
+            | Ok info -&gt; str $"Device {info.DeviceId} is {info.Status}"
+        ]
+    ]
+// serve it:  htmlView (deviceReport status)</code></pre>
+    <div class="why">No Razor, no template language, no stringly-typed placeholders: HTML is F# lists, so a <code>match</code> or a <code>for</code> drops straight into the markup and the compiler checks all of it. The same idea scales to the SAFE stack, where Fable compiles your F# to JavaScript for the front end and you share domain types end to end.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>Mental mapping from MVC/minimal APIs: controller + <code>[HttpGet("…")]</code> → <code>GET &gt;=&gt; route "…"</code>; model binding → <code>BindModelAsync</code> / <code>routef</code>; <code>IResult</code>s → handlers like <code>json</code>, <code>text</code>, <code>RequestErrors.*</code>; middleware pipeline → unchanged, it's still ASP.NET Core underneath. Dependency injection still exists, but most "services" become plain function parameters.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — handler order matters in choose</span>
+    <p><code>choose</code> evaluates top to bottom and takes the first handler that produces a response. Put your most specific routes first and catch-alls (404 handlers) last — a leading wildcard route will eat every request, and nothing will look "wrong" except that other routes never fire.</p>
+  </aside>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">What does <code>GET &gt;=&gt; route "/x" &gt;=&gt; text "hi"</code> express?</div>
+    <div class="opts">
+      <button class="opt">Three middleware classes registered in DI</button>
+      <button class="opt" data-ok>A composed handler: if the request is a GET <i>and</i> path is /x, respond with "hi" — otherwise let other handlers try</button>
+      <button class="opt">A background task pipeline</button>
+    </div>
+    <div class="expl">Each piece is an <code>HttpHandler</code>; <code>&gt;=&gt;</code> (Kleisli composition) chains them so each gets a chance to continue or bail. Routing, verbs and responses are all the same abstraction.</div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p12">← Async &amp; tasks</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p13">Mark complete</button>
+    <button class="pfbtn next" data-nav="p14">Next: Testing →</button>
+  </div>
+</section>
+
+<!-- ============ 14 TESTING ============ -->
+<section class="panel" id="p14" data-title="Testing types Expecto and property based testing">
+  <span class="kicker">Chapter 14</span>
+  <h2>Testing F#: types first, then tests</h2>
+  <p class="lede">F# flips the testing pyramid: the compiler already proves what a third of your C# unit tests used to check (nulls, missing cases, invalid states). What's left gets tested with less ceremony — tests as values, dependencies as functions, and FsCheck generating thousands of inputs you didn't think of.</p>
+
+  <h3><span class="tick"></span>Your first line of defense is the type system</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Tests you no longer need to write</b><button class="copy">Copy</button></div>
+    <pre><code>// private constructor: invalid emails cannot exist, anywhere, ever
+type ValidatedEmail =
+    private | ValidatedEmail of string
+
+    member this.Value = match this with ValidatedEmail e -&gt; e
+
+    static member TryCreate (raw: string) =
+        if raw.Contains "@" then Ok (ValidatedEmail raw)
+        else Error "Invalid email!"
+
+let sendEmailSafe message (email: ValidatedEmail) = Ok "Sent message"
+
+// let direct = ValidatedEmail "anything"        // ✗ won't compile — private
+ValidatedEmail.TryCreate "isaac@email.com"
+|&gt; Result.bind (sendEmailSafe "Welcome!")</code></pre>
+    <div class="why">"Null email", "unvalidated email reaches sender", "wrong argument order" — entire test classes from your C# suites are now compile errors. Combine with exhaustive matching (delete a DU case handler and the build warns) and the tests you still write are about <i>behavior</i>, not plumbing.</div>
+  </div>
+
+  <h3><span class="tick"></span>Expecto: tests are just values</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">Program.fs</span><b>Listings 14.3–14.4 — a test list, including generated tests</b><button class="copy">Copy</button></div>
+    <pre><code>open Expecto
+
+let musicTests =
+    testList "Music tests" [
+        test "My guitar gently weeps" {
+            let output = play Guitar
+            Expect.equal output "Wah wah" "Guitar sound is incorrect"
+        }
+        // tests are DATA — so generate them:
+        if System.Environment.GetEnvironmentVariable "CI_SERVER" &lt;&gt; null then
+            test "CI Only Test" { Expect.equal (add 1 2) 3 "Broken!" }
+        for line in System.IO.File.ReadAllLines "testData.txt" do
+            test $"Addition test: {line}" {
+                match line.Split ',' with
+                | [| a; b; expected |] -&gt;
+                    Expect.equal (add (int a) (int b)) (int expected) "Calculator is broken"
+                | _ -&gt; failwith $"Bad test data: {line}"
+            }
+    ]
+
+[&lt;EntryPoint&gt;]
+let main args = runTestsWithCLIArgs [] args musicTests</code></pre>
+    <div class="why">No <code>[Test]</code> attributes, no fixture classes: a test is a value, a suite is a list, and the test project is a console app you <code>dotnet run</code>. Because they're values, you can build them with <code>if</code>s and <code>for</code>s — data-driven tests with zero framework features. (Prefer staying mainstream? xUnit + FsUnit work fine in F# too.)</div>
+  </div>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Dependency injection, functional style</b><button class="copy">Copy</button></div>
+    <pre><code>// production code depends on a FUNCTION, not an interface + container
+let createInvoiceTestable save customer order = result {
+    do! validateCustomer customer
+    save customer order              // injected effect
+    return calculatePrice customer order
+}
+
+let invoiceTest = test "Create Invoice" {
+    let fakeSave customer order = ()   // a stub is… a lambda
+    let price = createInvoiceTestable fakeSave "Bob" "Guitar"
+    Expect.equal price (Ok 100M) "Invoice is wrong"
+}</code></pre>
+    <div class="why">Where C# injects <code>IInvoiceSaver</code> through a container and mocks it with Moq, F# passes the function in. Higher-order functions (chapter 04) + object expressions (chapter 11) cover nearly every test-double scenario without a mocking library.</div>
+  </div>
+
+  <h3><span class="tick"></span>FsCheck: properties, not examples</h3>
+  <div class="cmd">
+    <div class="cmd-head"><span class="chip fsx">fsx</span><b>Property-based testing — let the machine find your edge cases</b><button class="copy">Copy</button></div>
+    <pre><code>#r "nuget: FsCheck"
+open System
+open FsCheck
+
+let flipCase (text: string) =
+    text
+    |&gt; Seq.map (fun c -&gt; if Char.IsUpper c then Char.ToLower c else Char.ToUpper c)
+    |&gt; Seq.toArray
+    |&gt; String
+
+// custom generator: only letters and spaces, never empty
+type Word = Word of string
+type Arbitraries =
+    static member Word () =
+        { new Arbitrary&lt;Word&gt;() with
+            override _.Generator =
+                Gen.elements ([ 'a' .. 'z' ] @ [ 'A' .. 'Z' ] @ [ ' ' ])
+                |&gt; Gen.arrayOf
+                |&gt; Gen.filter (Array.isEmpty &gt;&gt; not)
+                |&gt; Gen.map (String &gt;&gt; Word)
+        }
+
+// instead of asserting examples, assert LAWS that must hold for ALL inputs:
+type Properties =
+    static member sameNumberOfLetters (Word original) =
+        (flipCase original).Length = original.Length
+
+    static member changesCase (Word original) =
+        Seq.zip (flipCase original) original
+        |&gt; Seq.forall (fun (a, b) -&gt;
+            if Char.IsLetter a then Char.IsUpper a &lt;&gt; Char.IsUpper b else true)
+
+    static member doesNotChangeText (Word original) =
+        String.Compare (flipCase original, original, StringComparison.OrdinalIgnoreCase) = 0
+
+let configuration = { Config.Quick with Arbitrary = [ typeof&lt;Arbitraries&gt; ] }
+Check.All&lt;Properties&gt; configuration   // runs 100 random inputs per property</code></pre>
+    <div class="out">Properties.sameNumberOfLetters – Ok, passed 100 tests.
+Properties.changesCase – Ok, passed 100 tests.
+Properties.doesNotChangeText – Ok, passed 100 tests.</div>
+    <div class="why">FsCheck generates randomized inputs (here via a custom <code>Word</code> generator limited to letters and spaces — see the book's <code>Arbitraries</code> type) and, on failure, <b>shrinks</b> to the minimal counterexample. Break <code>flipCase</code> so it skips the letter 'e' and FsCheck hands you the failing input <code>"e"</code> — not a 40-character random string. Properties + types + a few example tests: that's the F# testing stack.</div>
+  </div>
+
+  <aside class="csharp"><span class="tag">C# lens</span>
+    <p>Everything here exists for C# (FsCheck works there; so do xUnit theories) but fights the grain: stub lambdas need delegate types, generated tests need special framework support, and the type system can't carry as much proof. In F# the language itself is the test framework's biggest feature.</p>
+  </aside>
+  <aside class="gotcha"><span class="tag">Gotcha — don't test the compiler</span>
+    <p>Arriving from C#, you'll instinctively write null-checks tests, "throws when invalid" tests, and case-coverage tests. Pause first: can a type make that test impossible instead? A test you never write is cheaper than a passing one — spend the saved budget on property tests for actual logic.</p>
+  </aside>
+
+  <div class="quiz">
+    <div class="qhead">Checkpoint</div>
+    <div class="q">An FsCheck property fails. What does "shrinking" give you?</div>
+    <div class="opts">
+      <button class="opt">A stack trace of the generator</button>
+      <button class="opt" data-ok>The smallest input FsCheck could find that still fails — a minimal reproducible counterexample</button>
+      <button class="opt">A re-run with more test cases</button>
+    </div>
+    <div class="expl">Shrinking repeatedly simplifies the failing input while the property keeps failing, so instead of debugging <code>"xKpQ zzT e9"</code> you debug <code>"e"</code>. It's the feature that makes property testing practical.</div>
+  </div>
+
+  <h3><span class="tick"></span>Where next?</h3>
+  <div class="roadmap">
+    <div class="road"><h4>Build</h4><ul>
+      <li>Re-do a small C# service in F# end to end</li>
+      <li>SAFE stack — full-stack F#, sharing types client/server</li>
+      <li>Fable — compile F# to JavaScript</li>
+    </ul></div>
+    <div class="road"><h4>Read</h4><ul>
+      <li><i>F# in Action</i> — the book this manual walks through</li>
+      <li>fsharp.org + the F# Software Foundation</li>
+      <li><i>Domain Modeling Made Functional</i> (Wlaschin)</li>
+    </ul></div>
+    <div class="road"><h4>Join</h4><ul>
+      <li>F# Slack / Discord communities</li>
+      <li>#fsharp on social — small, friendly, helpful</li>
+      <li>Advent of Code in F# — the annual rite</li>
+    </ul></div>
+  </div>
+
+  <div class="panelfoot">
+    <button class="pfbtn" data-nav="p13">← Web apps</button>
+    <span class="spacer"></span>
+    <button class="pfbtn donebtn" data-done="p14">Mark complete</button>
+    <button class="pfbtn next" data-nav="p0">Back to start ↺</button>
+  </div>
+</section>
+</main>
+</div>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- F# syntax highlighter (runs over non-shell code blocks) ---------- */
+  var KEYWORDS = ["let","mutable","rec","type","module","namespace","open","match","with","when","function","fun","if","then","elif","else","for","in","do","while","return","yield","use","new","member","static","abstract","interface","of","and","not","try","finally","exception","struct","private","internal","public","inherit","override","true","false","null","unit","begin","end","as"];
+  var KW = new RegExp("^(?:" + KEYWORDS.join("|") + ")$");
+  function esc(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function highlight(codeEl){
+    var src = codeEl.textContent;
+    var re = /(\(\*[\s\S]*?\*\))|(\/\/[^\n]*)|("""[\s\S]*?""")|(\$?"(?:[^"\\\n]|\\.)*")|([A-Za-z_][A-Za-z0-9_]*!?)|(\b\d[\d_]*(?:\.\d+)?[mMfL]?\b)/g;
+    var out = "", last = 0, m;
+    while ((m = re.exec(src)) !== null){
+      out += esc(src.slice(last, m.index));
+      var tok = m[0];
+      if (m[1] || m[2]) out += '<span class="c">' + esc(tok) + '</span>';
+      else if (m[3] || m[4]) out += '<span class="s">' + esc(tok) + '</span>';
+      else if (m[5]) {
+        var bare = tok.replace(/!$/,"");
+        if (KW.test(bare)) out += '<span class="k">' + esc(tok) + '</span>';
+        else out += esc(tok);
+      }
+      else if (m[6]) out += '<span class="n">' + esc(tok) + '</span>';
+      else out += esc(tok);
+      last = m.index + tok.length;
+    }
+    out += esc(src.slice(last));
+    codeEl.innerHTML = out;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".cmd pre code:not([data-nohl])"), highlight);
+
+  /* ---------- tabs ---------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.rail a"));
+  var panels = Array.prototype.slice.call(document.querySelectorAll(".panel"));
+  var order = panels.map(function(p){ return p.id; });
+  function activate(id, scroll){
+    panels.forEach(function(p){ p.classList.toggle("active", p.id === id); });
+    links.forEach(function(a){ a.classList.toggle("active", a.getAttribute("href") === "#"+id); });
+    if (scroll !== false) window.scrollTo({top:0});
+  }
+  function currentId(){
+    var p = document.querySelector(".panel.active");
+    return p ? p.id : "p0";
+  }
+  links.forEach(function(a){
+    a.addEventListener("click", function(e){
+      e.preventDefault();
+      activate(a.getAttribute("href").slice(1));
+      try{ history.replaceState(null,"",a.getAttribute("href")); }catch(_){}
+    });
+  });
+  if (location.hash && document.querySelector(".panel"+location.hash)) activate(location.hash.slice(1), false);
+
+  /* footer nav buttons */
+  document.addEventListener("click", function(e){
+    var nav = e.target.closest("[data-nav]");
+    if (nav){ activate(nav.getAttribute("data-nav")); try{ history.replaceState(null,"","#"+nav.getAttribute("data-nav")); }catch(_){} }
+  });
+
+  /* ---------- lens switch ---------- */
+  var body = document.body;
+  document.getElementById("btnCS").addEventListener("click", function(){ body.setAttribute("data-lens","cs"); });
+  document.getElementById("btnFS").addEventListener("click", function(){ body.setAttribute("data-lens","fs"); });
+
+  /* ---------- copy buttons ---------- */
+  function codeText(pre){
+    return pre.textContent.replace(/^\$\s?/gm,"").replace(/\n{3,}/g,"\n\n").trim();
+  }
+  document.addEventListener("click", function(e){
+    var btn = e.target.closest(".copy");
+    if(!btn) return;
+    var pre = btn.closest(".cmd").querySelector("pre");
+    var text = codeText(pre);
+    function done(ok){
+      btn.textContent = ok ? "Copied" : "Select+Ctrl C";
+      btn.classList.toggle("ok", ok);
+      setTimeout(function(){ btn.textContent="Copy"; btn.classList.remove("ok"); }, 1600);
+    }
+    function fallback(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+        document.body.appendChild(ta); ta.select();
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta); done(ok);
+      }catch(_){ done(false); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){done(true);}, function(){ fallback(); });
+    } else fallback();
+  });
+
+  /* ---------- quizzes ---------- */
+  document.addEventListener("click", function(e){
+    var opt = e.target.closest(".quiz .opt");
+    if (!opt) return;
+    var quiz = opt.closest(".quiz");
+    if (quiz.classList.contains("answered")) return;
+    quiz.classList.add("answered");
+    if (!opt.hasAttribute("data-ok")) opt.classList.add("wrong");
+  });
+
+  /* ---------- progress (localStorage, fails gracefully) ---------- */
+  var PKEY = "fsharp-manual-progress";
+  function loadProgress(){
+    try { return JSON.parse(localStorage.getItem(PKEY)) || {}; } catch(_) { return {}; }
+  }
+  function saveProgress(p){
+    try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch(_) {}
+  }
+  var progress = loadProgress();
+  function renderProgress(){
+    var total = order.length, done = 0;
+    order.forEach(function(id){
+      var isDone = !!progress[id];
+      if (isDone) done++;
+      links.forEach(function(a){
+        if (a.getAttribute("href") === "#"+id) a.classList.toggle("done", isDone);
+      });
+      var btn = document.querySelector('.donebtn[data-done="'+id+'"]');
+      if (btn){
+        btn.classList.toggle("is-done", isDone);
+        btn.textContent = isDone ? "✓ Completed" : "Mark complete";
+      }
+    });
+    var bar = document.getElementById("progressline");
+    if (bar) bar.style.width = (100 * done / total) + "%";
+  }
+  document.addEventListener("click", function(e){
+    var btn = e.target.closest(".donebtn");
+    if (!btn) return;
+    var id = btn.getAttribute("data-done");
+    progress[id] = !progress[id];
+    saveProgress(progress);
+    renderProgress();
+  });
+  renderProgress();
+
+  /* ---------- search ---------- */
+  var index = [];
+  panels.forEach(function(p){
+    var ptitle = p.getAttribute("data-title") || p.querySelector("h2").textContent;
+    Array.prototype.forEach.call(p.querySelectorAll(".cmd"), function(c){
+      var t = c.querySelector(".cmd-head b");
+      var code = c.querySelector("pre") ? c.querySelector("pre").textContent : "";
+      if (t) index.push({label:t.textContent, where:ptitle, panel:p.id, hay:(t.textContent+" "+code).toLowerCase(), el:c});
+    });
+    Array.prototype.forEach.call(p.querySelectorAll("h3"), function(h){
+      index.push({label:h.textContent, where:ptitle, panel:p.id, hay:h.textContent.toLowerCase(), el:h});
+    });
+    index.push({label:ptitle, where:"Open chapter", panel:p.id, hay:ptitle.toLowerCase(), el:null});
+  });
+  var input = document.getElementById("search");
+  var resBox = document.getElementById("searchResults");
+  function closeResults(){ resBox.classList.remove("open"); resBox.innerHTML=""; }
+  function runSearch(){
+    var q = input.value.trim().toLowerCase();
+    if (q.length < 2){ closeResults(); return; }
+    var hits = index.filter(function(i){ return i.hay.indexOf(q) !== -1; }).slice(0,12);
+    resBox.innerHTML = "";
+    if (!hits.length){
+      var d=document.createElement("div"); d.className="none"; d.textContent="No matches — try map, record, match, task, Result…";
+      resBox.appendChild(d);
+    } else {
+      hits.forEach(function(h){
+        var b=document.createElement("button");
+        var w=document.createElement("span"); w.className="where"; w.textContent=h.where;
+        b.appendChild(w); b.appendChild(document.createTextNode(h.label));
+        b.addEventListener("click", function(){
+          activate(h.panel);
+          closeResults(); input.value="";
+          if (h.el){
+            h.el.scrollIntoView({block:"center"});
+            h.el.style.outline="3px solid var(--fs-purple)"; h.el.style.outlineOffset="3px";
+            setTimeout(function(){ h.el.style.outline=""; h.el.style.outlineOffset=""; }, 1800);
+          }
+        });
+        resBox.appendChild(b);
+      });
+    }
+    resBox.classList.add("open");
+  }
+  input.addEventListener("input", runSearch);
+  input.addEventListener("focus", runSearch);
+  document.addEventListener("click", function(e){
+    if (!e.target.closest(".searchwrap")) closeResults();
+  });
+  input.addEventListener("keydown", function(e){
+    if (e.key === "Escape"){ closeResults(); input.blur(); }
+    if (e.key === "Enter"){
+      var first = resBox.querySelector("button");
+      if (first) first.click();
+    }
+  });
+
+  /* ---------- keyboard navigation ---------- */
+  document.addEventListener("keydown", function(e){
+    if (e.target.closest("input, textarea") || e.metaKey || e.ctrlKey || e.altKey) {
+      return;
+    }
+    if (e.key === "/"){
+      e.preventDefault(); input.focus(); return;
+    }
+    var idx = order.indexOf(currentId());
+    if (e.key === "ArrowRight" && idx < order.length - 1){
+      activate(order[idx+1]);
+      try{ history.replaceState(null,"","#"+order[idx+1]); }catch(_){}
+    }
+    if (e.key === "ArrowLeft" && idx > 0){
+      activate(order[idx-1]);
+      try{ history.replaceState(null,"","#"+order[idx-1]); }catch(_){}
+    }
+  });
+})();
+</script>
+</body>
+</html>
