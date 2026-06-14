@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle End-to-End Field Guide — Architecture · Data Movement · 26ai · 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0C0F14; --bg-2:#12161D; --bg-3:#161B23; --bg-4:#1C222B;
+    --line:#252C37; --line-2:#313A47; --text:#E9ECF1; --dim:#A4AEBC; --faint:#7B8694;
+    --proof:#4FE0A0; --proof-bg:rgba(79,224,160,.10); --proof-ln:rgba(79,224,160,.38);
+    --gap:#E8A95C; --gap-bg:rgba(232,169,92,.10); --gap-ln:rgba(232,169,92,.38);
+    --steel:#7E97FF; --steel-bg:rgba(126,151,255,.10); --steel-ln:rgba(126,151,255,.38);
+    --violet:#C08CF0; --violet-bg:rgba(192,140,240,.10); --violet-ln:rgba(192,140,240,.38);
+    --crimson:#F0727E;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --disp:'Archivo',system-ui,sans-serif; --body:'Hanken Grotesk',system-ui,sans-serif;
+    --maxw:1020px;
+  }
+  html { scroll-behavior:smooth; }
+  body {
+    background:var(--bg); color:var(--text); font-family:var(--body); font-size:16px; line-height:1.62;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    background-image:
+      radial-gradient(1000px 560px at 88% -8%, rgba(240,114,126,.05), transparent 60%),
+      radial-gradient(820px 520px at 4% 3%, rgba(79,224,160,.045), transparent 55%),
+      radial-gradient(680px 480px at 100% 42%, rgba(192,140,240,.04), transparent 55%);
+    background-attachment:fixed;
+  }
+  .app-header { position:sticky; top:0; z-index:30; background:rgba(12,15,20,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .app-header-inner { max-width:var(--maxw); margin:0 auto; padding:16px clamp(18px,5vw,40px) 0; }
+  .brand { display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .brand-eye { font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); }
+  .brand-name { font-family:var(--disp); font-weight:800; font-size:clamp(17px,2.4vw,21px); letter-spacing:-.02em; }
+  .brand-name .dot { color:var(--crimson); }
+  .brand-tag { font-family:var(--mono); font-size:11px; color:var(--faint); white-space:nowrap; }
+  .tabbar { max-width:var(--maxw); margin:0 auto; padding:12px clamp(18px,5vw,40px) 0; display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; }
+  .tabbar::-webkit-scrollbar { display:none; }
+  .tab { appearance:none; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--faint); font-family:var(--mono); font-size:13px; font-weight:500; padding:9px 13px 12px; cursor:pointer; white-space:nowrap; transition:color .15s,border-color .15s; }
+  .tab:hover { color:var(--dim); }
+  .tab[aria-selected="true"] { color:var(--text); border-bottom-color:var(--crimson); }
+  .tab:focus-visible { outline:2px solid var(--steel); outline-offset:-2px; border-radius:4px; }
+  .panels { max-width:var(--maxw); margin:0 auto; padding:clamp(34px,5vw,60px) clamp(18px,5vw,40px) 100px; }
+  [role="tabpanel"] { animation:fade .4s ease; }
+  [role="tabpanel"][hidden] { display:none; }
+  @keyframes fade { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:none; } }
+  .eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint); display:flex; align-items:center; gap:12px; }
+  .eyebrow::after { content:''; height:1px; flex:1; background:linear-gradient(90deg,var(--line-2),transparent); }
+  h1.title { font-family:var(--disp); font-weight:800; font-size:clamp(28px,5.2vw,44px); line-height:1.06; letter-spacing:-.025em; margin:22px 0 20px; max-width:22ch; }
+  h1.title .q { color:var(--proof); } h1.title .g { color:var(--gap); } h1.title .v { color:var(--violet); } h1.title .c { color:var(--crimson); }
+  h2.sec { font-family:var(--disp); font-weight:700; font-size:clamp(21px,3.2vw,28px); letter-spacing:-.02em; margin:56px 0 8px; }
+  h2.sec:first-of-type { margin-top:40px; }
+  h3.sub { font-family:var(--disp); font-weight:700; font-size:clamp(17px,2.4vw,20px); letter-spacing:-.015em; margin:34px 0 12px; }
+  .lede { font-size:clamp(16px,2.1vw,18px); color:var(--dim); max-width:68ch; }
+  p.body { color:var(--dim); max-width:72ch; margin:14px 0; }
+  p.body strong { color:var(--text); font-weight:600; }
+  .note-line { font-family:var(--mono); font-size:12px; color:var(--faint); margin-top:14px; }
+  a { color:var(--steel); text-decoration:none; } a:hover { text-decoration:underline; }
+  code { font-family:var(--mono); font-size:.88em; background:var(--bg-2); border:1px solid var(--line); border-radius:5px; padding:1px 6px; color:#cdd6e3; }
+  /* pipeline loop */
+  .loop-scroll { overflow-x:auto; scrollbar-width:thin; margin:24px 0 6px; }
+  .loop { display:flex; align-items:stretch; min-width:820px; }
+  .loop-step { flex:1; background:var(--bg-3); border:1px solid var(--line); border-radius:12px; padding:14px 15px; position:relative; }
+  .loop-step + .loop-step { margin-left:26px; }
+  .loop-step + .loop-step::before { content:'▸'; position:absolute; left:-20px; top:50%; transform:translateY(-50%); color:var(--faint); font-size:14px; }
+  .loop-num { font-family:var(--mono); font-size:10.5px; color:var(--bg); padding:2px 7px; border-radius:5px; font-weight:600; }
+  .ls-a .loop-num{background:var(--crimson);} .ls-b .loop-num{background:var(--steel);} .ls-c .loop-num{background:var(--gap);} .ls-d .loop-num{background:var(--steel);} .ls-e .loop-num{background:var(--proof);} .ls-f .loop-num{background:var(--violet);}
+  .loop-name { font-family:var(--mono); font-size:13px; font-weight:600; margin:9px 0 5px; }
+  .loop-txt { font-size:12px; color:var(--dim); line-height:1.45; }
+  .loop-tool { font-family:var(--mono); font-size:10.5px; color:var(--faint); margin-top:7px; }
+  /* hits */
+  .hits { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px; margin:18px 0; }
+  .hit { background:var(--bg-3); border:1px solid var(--line); border-radius:11px; padding:14px 15px; border-left:2px solid var(--proof-ln); }
+  .hit.warn { border-left-color:var(--gap-ln); } .hit.ai { border-left-color:var(--violet-ln); }
+  .hit .ht { font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text); margin-bottom:5px; }
+  .hit .hx { font-size:12.5px; color:var(--dim); line-height:1.45; }
+  .hit .hx em { color:var(--gap); font-style:normal; } .hit .hx b { color:var(--proof); font-weight:600; }
+  /* cards */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(258px,1fr)); gap:14px; margin:16px 0; }
+  .card { background:var(--bg-3); border:1px solid var(--line); border-radius:13px; padding:17px 18px; }
+  .card-h { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:9px; }
+  .card-name { font-family:var(--mono); font-size:14.5px; font-weight:600; }
+  .tag { font-family:var(--mono); font-size:10px; letter-spacing:.04em; text-transform:uppercase; color:var(--faint); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+  .tag .d { width:6px; height:6px; border-radius:50%; background:var(--faint); }
+  .tag.ga .d{background:var(--proof);} .tag.warn .d{background:var(--gap);} .tag.core .d{background:var(--steel);} .tag.ai .d{background:var(--violet);}
+  .card-what { font-size:13.5px; color:var(--dim); line-height:1.5; } .card-what strong { color:var(--text); font-weight:600; }
+  .card ul { margin:9px 0 0; padding-left:16px; }
+  .card li { font-size:12.5px; color:var(--dim); line-height:1.5; margin-bottom:3px; } .card li::marker { color:var(--faint); }
+  .family-h { font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--steel); margin:34px 0 4px; display:flex; align-items:center; gap:10px; }
+  .family-h.ai { color:var(--violet); }
+  .family-h::after { content:''; height:1px; flex:1; background:var(--line); }
+  /* nest (storage hierarchy / cdb-pdb) */
+  .nest { margin:18px 0; }
+  .nest-row { display:flex; align-items:center; gap:12px; padding:11px 16px; border:1px solid var(--line); border-radius:10px; background:var(--bg-3); margin-bottom:8px; }
+  .nest-row .nk { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--text); min-width:120px; }
+  .nest-row .nx { font-size:13px; color:var(--dim); }
+  .nest-1{margin-left:0;} .nest-2{margin-left:24px; border-left:2px solid var(--steel-ln);} .nest-3{margin-left:48px; border-left:2px solid var(--proof-ln);} .nest-4{margin-left:72px; border-left:2px solid var(--gap-ln);}
+  /* tables */
+  .table-wrap { border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--bg-2); margin:16px 0; }
+  .table-scroll { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; min-width:640px; }
+  th, td { text-align:left; padding:13px 16px; border-bottom:1px solid var(--line); vertical-align:top; font-size:13.5px; }
+  tbody tr:last-child td { border-bottom:none; }
+  thead th { font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text); background:var(--bg-3); white-space:nowrap; }
+  thead th:first-child { color:var(--faint); font-weight:500; }
+  td { color:var(--dim); } td strong { color:var(--text); font-weight:600; }
+  td.k { font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--faint); white-space:nowrap; }
+  .pr { color:var(--proof); } .am { color:var(--gap); } .st { color:var(--steel); } .vi { color:var(--violet); }
+  /* two col */
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0; }
+  .anti { background:var(--bg-3); border:1px solid var(--line); border-radius:13px; padding:18px; }
+  .anti h4 { font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--gap); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .anti.good h4 { color:var(--proof); }
+  .anti ul { padding-left:17px; margin:0; }
+  .anti li { font-size:13px; color:var(--dim); line-height:1.5; margin-bottom:8px; } .anti li::marker { color:var(--gap-ln); }
+  .anti.good li::marker { color:var(--proof-ln); }
+  .anti li b { color:var(--text); font-weight:600; }
+  .dot6 { width:6px; height:6px; border-radius:50%; display:inline-block; }
+  /* callout */
+  .callout { border:1px solid var(--line-2); border-left:3px solid var(--proof-ln); background:var(--bg-2); border-radius:0 12px 12px 0; padding:16px 20px; margin:18px 0; }
+  .callout.warn { border-left-color:var(--gap-ln); } .callout.ai { border-left-color:var(--violet-ln); }
+  .callout .ct-lab { font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--proof); margin-bottom:7px; }
+  .callout.warn .ct-lab { color:var(--gap); } .callout.ai .ct-lab { color:var(--violet); }
+  .callout p { font-size:14.5px; color:var(--dim); } .callout p strong { color:var(--text); }
+  pre { background:var(--bg-2); border:1px solid var(--line); border-radius:11px; padding:15px 17px; overflow-x:auto; margin:14px 0; }
+  pre code { background:none; border:none; padding:0; font-size:12.5px; color:#cdd6e3; line-height:1.65; }
+  .cmt { color:var(--faint); } .kw { color:var(--steel); } .str { color:var(--proof); } .fn { color:var(--violet); }
+  /* sources */
+  .src-group { margin:26px 0; }
+  .src-group h3 { font-family:var(--mono); font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--steel); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+  .src-list { list-style:none; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:8px 22px; }
+  .src-list li { font-size:13.5px; color:var(--dim); padding-left:16px; position:relative; line-height:1.5; }
+  .src-list li::before { content:'→'; position:absolute; left:0; color:var(--faint); }
+  .src-list .nm { color:var(--text); font-weight:600; }
+  footer { max-width:var(--maxw); margin:0 auto; padding:28px clamp(18px,5vw,40px) 60px; border-top:1px solid var(--line); font-family:var(--mono); font-size:12px; color:var(--faint); line-height:1.7; }
+  .legend { display:flex; flex-wrap:wrap; gap:18px; margin-bottom:12px; }
+  .lg { display:inline-flex; align-items:center; gap:8px; } .sw { width:9px; height:9px; border-radius:2px; }
+  @media (max-width:760px){ .two{grid-template-columns:1fr;} }
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} [role="tabpanel"]{animation:none;} }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-header-inner">
+    <div class="brand">
+      <div>
+        <div class="brand-eye">Field reference · oracle end-to-end</div>
+        <div class="brand-name">Source → Stream → Land<span class="dot">.</span></div>
+      </div>
+      <div class="brand-tag">Oracle AI Database 26ai · data engineering · SOTA Jun 2026</div>
+    </div>
+  </div>
+  <div class="tabbar" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="t-overview" aria-controls="p-overview" aria-selected="true">Overview</button>
+    <button class="tab" role="tab" id="t-arch"     aria-controls="p-arch"     aria-selected="false">Architecture</button>
+    <button class="tab" role="tab" id="t-sql"      aria-controls="p-sql"      aria-selected="false">SQL &amp; Modeling</button>
+    <button class="tab" role="tab" id="t-perf"     aria-controls="p-perf"     aria-selected="false">Performance &amp; Ops</button>
+    <button class="tab" role="tab" id="t-move"     aria-controls="p-move"     aria-selected="false">Data Movement</button>
+    <button class="tab" role="tab" id="t-ai"       aria-controls="p-ai"       aria-selected="false">26ai &amp; AI</button>
+    <button class="tab" role="tab" id="t-patterns" aria-controls="p-patterns" aria-selected="false">Patterns</button>
+    <button class="tab" role="tab" id="t-sources"  aria-controls="p-sources"  aria-selected="false">Sources</button>
+  </div>
+</header>
+
+<main class="panels">
+
+  <!-- ================================================= OVERVIEW -->
+  <section role="tabpanel" id="p-overview" aria-labelledby="t-overview">
+    <div class="eyebrow">Overview · the whole journey</div>
+    <h1 class="title">Oracle is the <span class="c">system of record</span> — and the <span class="q">source</span> your pipeline drinks from.</h1>
+    <p class="lede">Oracle does two jobs at once: it's the transactional core where business truth is written, and it's the upstream source feeding analytics, search, and AI. This guide runs the full span — from how the engine actually works, through SQL and tuning, to getting billions of rows <em>out</em> cleanly (bulk + change data capture) and landing them in Parquet/DuckDB/Elasticsearch — and the modern AI-native surface of <strong>Oracle AI Database 26ai</strong>. It's written for an architect and data engineer, with a deliberate bias toward the movement path.</p>
+
+    <h2 class="sec">The end-to-end path</h2>
+    <p class="body">Everything in this guide is a stop on one path: Oracle holds the truth; you read it in bulk for the first load, capture every change after that, stream it, land it in your lake/search engine, and increasingly serve AI directly from the same database.</p>
+    <div class="loop-scroll">
+      <div class="loop">
+        <div class="loop-step ls-a"><span class="loop-num">01</span><div class="loop-name">Source</div><div class="loop-txt">OLTP tables, partitioned, consistent. The authoritative state, written by the business.</div><div class="loop-tool">Oracle 26ai · CDB/PDB</div></div>
+        <div class="loop-step ls-b"><span class="loop-num">02</span><div class="loop-name">Bulk extract</div><div class="loop-txt">The first full load: large array fetches, partition-wise parallelism, direct-to-Arrow.</div><div class="loop-tool">python-oracledb · Data Pump</div></div>
+        <div class="loop-step ls-c"><span class="loop-num">03</span><div class="loop-name">Capture (CDC)</div><div class="loop-txt">After the snapshot, capture every insert/update/delete from the redo logs.</div><div class="loop-tool">LogMiner · GoldenGate · OLR</div></div>
+        <div class="loop-step ls-d"><span class="loop-num">04</span><div class="loop-name">Stream</div><div class="loop-txt">Change events flow as an ordered log, keyed and schema-tracked.</div><div class="loop-tool">Kafka · Debezium</div></div>
+        <div class="loop-step ls-e"><span class="loop-num">05</span><div class="loop-name">Land</div><div class="loop-txt">Materialize into columnar files and search/analytic stores, idempotently.</div><div class="loop-tool">Parquet · DuckDB · Elasticsearch</div></div>
+        <div class="loop-step ls-f"><span class="loop-num">06</span><div class="loop-name">Serve AI</div><div class="loop-txt">Or skip the trip: vectors, RAG, and agents run inside the database itself.</div><div class="loop-tool">AI Vector Search · MCP</div></div>
+      </div>
+    </div>
+
+    <h2 class="sec">What's state-of-the-art in 2026</h2>
+    <div class="hits">
+      <div class="hit"><div class="ht">It's "26ai" now</div><div class="hx"><b>Oracle AI Database 26ai</b> replaces 23ai — same 23.x code line, delivered as a release update. On-prem GA (Linux x86-64) Jan 2026, version <code>23.26.1</code>.</div></div>
+      <div class="hit ai"><div class="ht">AI Vector Search, in-DB</div><div class="hx">Native <code>VECTOR</code> type, HNSW/IVF/Hybrid indexes, in-database ONNX embeddings — similarity search and RAG in plain SQL, next to your business data.</div></div>
+      <div class="hit ai"><div class="ht">Oracle speaks MCP</div><div class="hx">The <b>SQLcl MCP Server</b> (local) and <b>OCI Managed MCP</b> (cloud) connect AI agents to Oracle over the Model Context Protocol — agentic SQL with approval.</div></div>
+      <div class="hit"><div class="ht">Direct-to-Arrow extraction</div><div class="hx"><b>python-oracledb</b> fetches queries straight into Apache Arrow data frames — zero-copy to Polars/Pandas/DuckDB and Parquet, no row-by-row overhead.</div></div>
+      <div class="hit"><div class="ht">JSON Relational Duality</div><div class="hx">One source of truth, two shapes: relational tables and fully-updatable JSON documents over the same data, no sync.</div></div>
+      <div class="hit"><div class="ht">Three CDC adapters</div><div class="hx">Debezium reads Oracle via <b>LogMiner</b> (built-in), <b>XStream</b> (GoldenGate API), or <b>OpenLogReplicator</b> (open-source, low-impact) → Kafka.</div></div>
+      <div class="hit warn"><div class="ht">CDB/PDB is mandatory</div><div class="hx"><em>Non-CDB is abolished.</em> Every 23ai/26ai database is multitenant (a CDB with pluggable PDBs) — factor it into connection strings and migration.</div></div>
+      <div class="hit"><div class="ht">Developer-friendly SQL</div><div class="hx">23ai/26ai adds <code>BOOLEAN</code>, <code>SELECT</code> without <code>DUAL</code>, <code>IF [NOT] EXISTS</code>, multi-row insert, <code>GROUP BY</code> alias, and the <code>QUALIFY</code> clause.</div></div>
+    </div>
+    <p class="note-line">Each tab is a starting point, not exhaustive — the markdown companion carries the deep reference, and the Sources tab lists primary docs (checked June 2026).</p>
+  </section>
+
+  <!-- ================================================= ARCHITECTURE -->
+  <section role="tabpanel" id="p-arch" aria-labelledby="t-arch" hidden>
+    <div class="eyebrow">Architecture · how the engine works</div>
+    <h1 class="title">An instance is the memory and processes. A database is the files.</h1>
+    <p class="lede">To extract from Oracle well — consistently, at scale, without melting the source — you need its core model: the split between instance and database, how memory and redo/undo work, the storage hierarchy you'll read partition-by-partition, and the consistency guarantees (SCN, MVCC) that make a clean snapshot possible.</p>
+
+    <h2 class="sec">Instance vs. database</h2>
+    <p class="body">An <strong>instance</strong> is the in-memory structures (the <strong>SGA</strong>) plus background processes that live only while Oracle is running. A <strong>database</strong> is the persistent files on disk. RAC is the case of <em>many instances</em> mounting <em>one</em> database.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">SGA</span><span class="tag core"><span class="d"></span>shared memory</span></div><p class="card-what">Buffer cache (data blocks), shared pool (parsed SQL + dictionary), redo log buffer, large/Java/Streams pools, and the <strong>vector pool</strong> for HNSW indexes.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">PGA</span><span class="tag core"><span class="d"></span>per-session</span></div><p class="card-what">Private session memory — sorts, hash joins, cursor state. Big extracts lean on it; size <code>PGA_AGGREGATE_TARGET</code> accordingly.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Background processes</span><span class="tag core"><span class="d"></span>workers</span></div><p class="card-what">DBWn (write dirty blocks), LGWR (flush redo), CKPT, ARCn (archive redo), SMON, plus monitoring (MMON). They keep the engine durable and consistent.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Files on disk</span><span class="tag core"><span class="d"></span>database</span></div><p class="card-what">Data files (your segments), control files (the map), online redo logs (recent change), archived redo (the CDC goldmine), and temp.</p></div>
+    </div>
+
+    <h2 class="sec">Storage hierarchy — what you read</h2>
+    <div class="nest">
+      <div class="nest-row nest-1"><span class="nk">Tablespace</span><span class="nx">Logical storage container mapping to one or more data files.</span></div>
+      <div class="nest-row nest-2"><span class="nk">Segment</span><span class="nx">A table, index, or partition — the object that consumes space.</span></div>
+      <div class="nest-row nest-3"><span class="nk">Extent</span><span class="nx">A contiguous run of blocks allocated to a segment.</span></div>
+      <div class="nest-row nest-4"><span class="nk">Block</span><span class="nx">The smallest I/O unit (commonly 8&nbsp;KB) — what the buffer cache moves.</span></div>
+    </div>
+    <p class="body">This hierarchy is why <strong>partition-wise parallel reads</strong> work: a partitioned table is many segments, so N readers can each scan a partition independently — the backbone of fast bulk extraction.</p>
+
+    <h2 class="sec">Multitenant — CDB &amp; PDB (now mandatory)</h2>
+    <div class="callout warn">
+      <div class="ct-lab">Architecture you can't opt out of</div>
+      <p>Since 21c and through 23ai/26ai, the <strong>Non-CDB architecture is removed</strong>. A <strong>CDB</strong> (container database) holds the root plus one or more <strong>PDBs</strong> (pluggable databases) — self-contained, portable, individually clonable. Practically: your connect string targets a <strong>PDB service</strong> (e.g. <code>host:1521/freepdb1</code>), and CDC accounts use <strong>common users</strong> (<code>c##</code> prefix) at the CDB level.</p>
+    </div>
+
+    <h2 class="sec">Consistency — SCN, redo, undo</h2>
+    <p class="body">Every commit advances the <strong>System Change Number (SCN)</strong> — a logical clock. Oracle's <strong>read consistency</strong> (MVCC) means a query sees data as of the SCN it started at, reconstructing older versions from <strong>undo</strong> if needed — so readers never block writers and never see dirty data. Two log streams matter for movement:</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Redo</span><span class="tag core"><span class="d"></span>recovery + CDC</span></div><p class="card-what">An ordered record of every change. Drives crash recovery and Data Guard — and is exactly what LogMiner/GoldenGate/OpenLogReplicator mine for change data capture.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Undo</span><span class="tag core"><span class="d"></span>consistency</span></div><p class="card-what">Before-images that power rollback, read consistency, and Flashback. A consistent snapshot extract relies on enough undo retention to finish.</p></div>
+    </div>
+    <p class="note-line">RAC (shared-everything clustering with Cache Fusion), ASM (Oracle's volume manager), and Exadata (storage-offload "smart scan") sit on top of this same model — scale and availability, same fundamentals.</p>
+  </section>
+
+  <!-- ================================================= SQL & MODELING -->
+  <section role="tabpanel" id="p-sql" aria-labelledby="t-sql" hidden>
+    <div class="eyebrow">SQL &amp; modeling · the developer surface</div>
+    <h1 class="title">Model for the read you'll do a billion times.</h1>
+    <p class="lede">The schema decisions that matter most for a pipeline are types (fidelity downstream), indexing (how you find changed rows), and — above all — <strong>partitioning</strong> (how you read and prune at scale). 23ai/26ai also modernized the SQL surface in ways that cut boilerplate.</p>
+
+    <h2 class="sec">Data types — and their downstream fidelity</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Oracle type</th><th>Notes</th><th>Watch when extracting</th></tr></thead>
+      <tbody>
+        <tr><td class="k">NUMBER(p,s)</td><td>Exact, up to 38 digits</td><td class="am">Bigger than 64-bit int/float — map to decimal/Arrow decimal, not double, to avoid loss.</td></tr>
+        <tr><td class="k">VARCHAR2 / CLOB</td><td>Text (byte/char semantics)</td><td class="am">NLS charset matters; CLOB needs LOB-aware fetch.</td></tr>
+        <tr><td class="k">DATE / TIMESTAMP[ TZ]</td><td>DATE includes time; TZ variants exist</td><td class="am">DATE ≠ pure date; preserve time + time zone explicitly.</td></tr>
+        <tr><td class="k">BOOLEAN</td><td><span class="pr">New in 23ai</span> — true SQL boolean</td><td>Older clients/ETL may not expect it yet.</td></tr>
+        <tr><td class="k">JSON</td><td>Native binary JSON (OSON)</td><td>Maps to a string/struct downstream; consider duality views.</td></tr>
+        <tr><td class="k">VECTOR</td><td><span class="vi">AI Vector Search</span> embeddings</td><td>Fetchable to Arrow; flexible dimensions.</td></tr>
+        <tr><td class="k">RAW / BLOB</td><td>Binary</td><td>Base64 or binary-safe handling; size limits.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">Indexes &amp; constraints</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">B-tree</span><span class="tag core"><span class="d"></span>default</span></div><p class="card-what">Balanced, great for selective lookups and range scans on keys, dates, and your CDC watermark column.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Bitmap</span><span class="tag core"><span class="d"></span>low-cardinality</span></div><p class="card-what">Compact for few-distinct-value columns in read-mostly/DW tables; poor for high-concurrency OLTP writes.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Function-based</span><span class="tag core"><span class="d"></span>expressions</span></div><p class="card-what">Index <code>UPPER(col)</code> or an expression so predicates stay sargable.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Constraints</span><span class="tag core"><span class="d"></span>integrity</span></div><p class="card-what">PK/UK/FK/CHECK/NOT NULL — and the metadata your CDC keys and downstream schemas rely on.</p></div>
+    </div>
+
+    <h2 class="sec">Partitioning — the extraction superpower</h2>
+    <p class="body">Partitioning splits one logical table into many physical segments. It enables <strong>partition pruning</strong> (scan only relevant partitions), <strong>partition-wise parallel extraction</strong> (one reader per partition), and cheap bulk operations (truncate/exchange a partition). For time-series OLTP, <strong>range/interval on a date</strong> is the workhorse.</p>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Scheme</th><th>Splits by</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td class="k st">Range / Interval</td><td>Ordered ranges (auto-created for Interval)</td><td>Time-series; incremental loads by date window.</td></tr>
+        <tr><td class="k">List</td><td>Discrete values</td><td>Region/tenant/category segregation.</td></tr>
+        <tr><td class="k">Hash</td><td>Hash of a key</td><td>Even spread for parallelism; no natural ranges.</td></tr>
+        <tr><td class="k">Composite</td><td>Two schemes (e.g. range-hash)</td><td>Time windows + parallel spread together.</td></tr>
+        <tr><td class="k">Reference</td><td>Parent's partitioning (via FK)</td><td>Keep related child rows co-partitioned.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">PL/SQL, views &amp; set-based reads</h2>
+    <p class="body"><strong>PL/SQL</strong> (packages, procedures, triggers) lives in the database; for data movement, prefer <strong>set-based SQL</strong> and <code>BULK COLLECT</code>/<code>FORALL</code> over row-by-row loops. <strong>Materialized views</strong> precompute aggregates (with query rewrite and incremental refresh); <strong>analytic/window functions</strong> (<code>ROW_NUMBER</code>, <code>LAG</code>, <code>SUM() OVER</code>) do ranking and running totals in one pass.</p>
+
+    <h2 class="sec">23ai / 26ai SQL niceties</h2>
+    <pre><code><span class="cmt">-- No more FROM dual</span>
+<span class="kw">SELECT</span> 5280 * 1.5;
+
+<span class="cmt">-- Real BOOLEAN, IF [NOT] EXISTS, GROUP BY alias, QUALIFY</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> staging (id <span class="kw">NUMBER</span>, active <span class="kw">BOOLEAN</span>);
+
+<span class="kw">SELECT</span> dept_id <span class="kw">AS</span> d, <span class="fn">AVG</span>(salary) avg_sal
+<span class="kw">FROM</span> emp
+<span class="kw">GROUP BY</span> d
+<span class="kw">QUALIFY</span> <span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> avg_sal <span class="kw">DESC</span>) &lt;= 3;</code></pre>
+  </section>
+
+  <!-- ================================================= PERFORMANCE & OPS -->
+  <section role="tabpanel" id="p-perf" aria-labelledby="t-perf" hidden>
+    <div class="eyebrow">Performance &amp; operations</div>
+    <h1 class="title">The optimizer is only as good as its statistics — and your read is only as kind as its plan.</h1>
+    <p class="lede">Pulling billions of rows is a performance problem on both sides. You want plans that pruned and parallelized, reads that don't blow out the source's buffer cache or undo, and an HA setup that lets you offload extraction. Here's the toolkit.</p>
+
+    <h2 class="sec">The cost-based optimizer</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Statistics</span><span class="tag core"><span class="d"></span>fuel</span></div><p class="card-what"><code>DBMS_STATS</code> keeps table/column/index stats fresh; stale stats are the #1 cause of bad plans. Histograms handle skew.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Execution plans</span><span class="tag core"><span class="d"></span>x-ray</span></div><p class="card-what"><code>EXPLAIN PLAN</code> + <code>DBMS_XPLAN.DISPLAY_CURSOR</code> show what actually ran — look for full scans where you expected pruning, and the join order.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Bind variables</span><span class="tag core"><span class="d"></span>scale</span></div><p class="card-what">Bind, don't concatenate literals — it shares cursors, avoids hard-parse storms, and is your SQL-injection guard.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Hints</span><span class="tag core"><span class="d"></span>override</span></div><p class="card-what"><code>PARALLEL</code>, <code>FULL</code>, <code>INDEX</code> — targeted nudges when you know better than the stats. Use sparingly and document why.</p></div>
+    </div>
+
+    <h2 class="sec">Reading at scale, kindly</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Array / prefetch size</span><span class="tag ga"><span class="d"></span>throughput</span></div><p class="card-what">The single biggest extract lever: fetch thousands of rows per round trip (driver <code>arraysize</code>/fetch size), not one. Cuts network chatter dramatically.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Parallel query</span><span class="tag ga"><span class="d"></span>scale-out</span></div><p class="card-what">Partition-wise parallel scans split the work across PX servers; pair with partition pruning to read only what changed.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Compression</span><span class="tag core"><span class="d"></span>I/O</span></div><p class="card-what">Advanced Row / HCC (on Exadata) shrink scanned bytes; great for DW reads, mind CPU on writes.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">AWR · ASH · ADDM</span><span class="tag core"><span class="d"></span>diagnose</span></div><p class="card-what">Find the heavy SQL, the waits, and the time. ASH shows what was active; AWR trends it; ADDM advises.</p></div>
+    </div>
+
+    <h2 class="sec">High availability &amp; recovery</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">RAC</span><span class="tag core"><span class="d"></span>scale + uptime</span></div><p class="card-what">Multiple instances, one database (Cache Fusion). Survives node loss; spreads load — including extraction sessions.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Data Guard</span><span class="tag ga"><span class="d"></span>DR + offload</span></div><p class="card-what">Physical/logical standbys kept in sync via redo. <strong>Active Data Guard</strong> lets you run heavy <em>reads/extracts on the standby</em>, sparing primary.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">RMAN</span><span class="tag core"><span class="d"></span>backup</span></div><p class="card-what">Block-level, incremental backups with block change tracking; the standard for recoverability and cloning.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Flashback</span><span class="tag core"><span class="d"></span>time travel</span></div><p class="card-what">Query/restore prior states (query, table, database) from undo/FRA — handy for reconciling a load against an "as-of" SCN.</p></div>
+    </div>
+    <div class="callout">
+      <div class="ct-lab">Extraction-friendly pattern</div>
+      <p>For large recurring pulls, read from an <strong>Active Data Guard standby</strong> at a known <strong>SCN</strong>, use <strong>partition pruning + parallel</strong>, and a large <strong>array size</strong> — you get a consistent, point-in-time snapshot without taxing the primary OLTP workload.</p>
+    </div>
+  </section>
+
+  <!-- ================================================= DATA MOVEMENT -->
+  <section role="tabpanel" id="p-move" aria-labelledby="t-move" hidden>
+    <div class="eyebrow">Data movement · the end-to-end spine</div>
+    <h1 class="title">Snapshot once, then capture every change forever.</h1>
+    <p class="lede">Getting data out of Oracle is two problems: the <strong>initial bulk load</strong> (read it all, fast, consistently) and <strong>change data capture</strong> (track every insert/update/delete after). Then you stream and land it — preserving type fidelity and staying idempotent. This is the heart of the guide.</p>
+
+    <h2 class="sec">1 · Connect</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">python-oracledb</span><span class="tag ga"><span class="d"></span>python</span></div><p class="card-what">Thin (no client) or thick mode; the modern driver. Crucially, fetches <strong>straight to Apache Arrow</strong> data frames.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">JDBC (thin)</span><span class="tag core"><span class="d"></span>jvm</span></div><p class="card-what">Pure-Java connectivity for Spark/Flink/Kafka Connect; pair with UCP pooling.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">ODP.NET</span><span class="tag core"><span class="d"></span>.net</span></div><p class="card-what">Managed or unmanaged provider for C# pipelines; supports array binds and bulk copy.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Wallets &amp; TLS</span><span class="tag ga"><span class="d"></span>security</span></div><p class="card-what">Oracle wallets (mTLS) and Easy Connect/TNS. Use a <strong>least-privilege read-only</strong> extract user.</p></div>
+    </div>
+
+    <h2 class="sec">2 · Bulk extract — the first load</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Direct-to-Arrow</span><span class="tag ga"><span class="d"></span>columnar</span></div><p class="card-what">python-oracledb <code>fetch_df_batches()</code> returns Arrow — zero-copy into Polars/Pandas/<strong>DuckDB</strong> and straight to Parquet, no per-row Python objects.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Data Pump</span><span class="tag core"><span class="d"></span>logical bulk</span></div><p class="card-what"><code>expdp/impdp</code> for fast, parallel logical export/import between Oracle systems and for seeding.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">External tables</span><span class="tag core"><span class="d"></span>files↔db</span></div><p class="card-what">Read flat files (and unload via <code>ORACLE_DATAPUMP</code>) as if they were tables — and <code>DBMS_CLOUD</code> reads Parquet/CSV from object storage.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Partition-wise + parallel</span><span class="tag ga"><span class="d"></span>throughput</span></div><p class="card-what">One reader per partition with a large array size — the scalable bulk pattern. Pin a consistent SCN across readers.</p></div>
+    </div>
+    <pre><code><span class="cmt"># Oracle → Arrow → Parquet, in batches (zero row-by-row overhead)</span>
+<span class="kw">import</span> oracledb, pyarrow <span class="kw">as</span> pa, pyarrow.parquet <span class="kw">as</span> pq
+conn = oracledb.connect(user=u, password=p, dsn=<span class="str">"host:1521/freepdb1"</span>)
+writer = <span class="kw">None</span>
+<span class="kw">for</span> odf <span class="kw">in</span> conn.<span class="fn">fetch_df_batches</span>(<span class="str">"select * from orders"</span>, size=50_000):
+    batch = pa.<span class="fn">record_batch</span>(odf)                      <span class="cmt"># Arrow, zero-copy</span>
+    writer = writer <span class="kw">or</span> pq.<span class="fn">ParquetWriter</span>(<span class="str">"orders.parquet"</span>, batch.schema)
+    writer.<span class="fn">write_batch</span>(batch)
+writer.<span class="fn">close</span>()
+<span class="cmt"># DuckDB can now query orders.parquet directly — no copy step</span></code></pre>
+
+    <h2 class="sec">3 · Change Data Capture — the steady state</h2>
+    <p class="body">After the snapshot, you don't re-read the table — you mine the <strong>redo logs</strong> for changes. Three mechanisms, one decision:</p>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Mechanism</th><th>How</th><th>Trade-off</th></tr></thead>
+      <tbody>
+        <tr><td class="k">LogMiner</td><td>Oracle's built-in package; SQL interface over redo. Debezium default (incl. <code>logminer_unbuffered</code>).</td><td class="pr">No extra license; simplest. Watch SCN drift on long transactions.</td></tr>
+        <tr><td class="k">XStream</td><td>Native C/Java API — a licensed <strong>GoldenGate</strong> component.</td><td>Highest performance/control; needs a GoldenGate license.</td></tr>
+        <tr><td class="k">OpenLogReplicator</td><td>Open-source C++ that parses redo/archive logs directly, streams JSON/Protobuf.</td><td class="pr">Low DB impact, scalable; external component to run (<code>olr</code> adapter).</td></tr>
+        <tr><td class="k st">GoldenGate</td><td>Oracle's full replication product (and OCI GoldenGate, managed); GG for Big Data → Kafka.</td><td>Enterprise-grade, heterogeneous; commercial.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+    <div class="callout warn">
+      <div class="ct-lab">The CDC gotcha to plan for</div>
+      <p><strong>SCN drift:</strong> a long-running transaction can hold the connector's position behind the range still in the redo logs, stalling capture and ballooning memory. Mitigate with adequate <strong>redo retention</strong>, a sane <strong>offset flush interval</strong>, and Debezium <strong>signaling</strong> to drop a stuck transaction. Always enable supplemental logging on captured tables.</p>
+    </div>
+
+    <h2 class="sec">4 · Stream &amp; 5 · Land</h2>
+    <p class="body">CDC events flow as an ordered, keyed log — typically <strong>Kafka</strong> via <strong>Debezium</strong> (Kafka Connect) with a schema registry. Downstream, land them <strong>idempotently</strong>: use the source PK + change SCN/op as a deterministic key so replays don't double-apply. Common sinks: <strong>Parquet/object storage</strong> (the lake), <strong>DuckDB</strong> (read Parquet/Arrow directly), and <strong>Elasticsearch</strong> (via a Kafka ES sink, or Logstash JDBC for simple pulls).</p>
+    <pre><code><span class="cmt">// Debezium Oracle source (Kafka Connect) — LogMiner adapter</span>
+{
+  <span class="str">"connector.class"</span>: <span class="str">"io.debezium.connector.oracle.OracleConnector"</span>,
+  <span class="str">"database.dbname"</span>: <span class="str">"ORCLCDB"</span>, <span class="str">"database.pdb.name"</span>: <span class="str">"ORCLPDB1"</span>,
+  <span class="str">"database.connection.adapter"</span>: <span class="str">"logminer"</span>,
+  <span class="str">"table.include.list"</span>: <span class="str">"SALES.ORDERS"</span>,
+  <span class="str">"snapshot.mode"</span>: <span class="str">"initial"</span>,
+  <span class="str">"schema.history.internal.kafka.topic"</span>: <span class="str">"schema-changes.sales"</span>
+}</code></pre>
+
+    <h2 class="sec">Type fidelity — don't lose data in transit</h2>
+    <p class="body">The quiet failure mode is silent precision loss. Map <strong>NUMBER → decimal</strong> (not float), preserve <strong>DATE/TIMESTAMP time + zone</strong>, carry <strong>NLS charset</strong> through, handle <strong>CLOB/BLOB</strong> with LOB-aware fetches, and decide <strong>NULL</strong> semantics once. Validate row counts <em>and</em> checksums per partition, not just "it ran."</p>
+  </section>
+
+  <!-- ================================================= 26ai & AI -->
+  <section role="tabpanel" id="p-ai" aria-labelledby="t-ai" hidden>
+    <div class="eyebrow">26ai &amp; AI-native Oracle</div>
+    <h1 class="title">The database grew a <span class="v">vector engine</span> — and learned to talk to <span class="v">agents</span>.</h1>
+    <p class="lede">Oracle AI Database 26ai keeps the full mission-critical database and adds an AI-native surface: vector storage and similarity search in SQL, JSON/relational duality, natural-language SQL, and a Model Context Protocol server that lets AI agents work directly against Oracle — securely and with approval.</p>
+
+    <h2 class="sec">First: the name</h2>
+    <div class="callout">
+      <div class="ct-lab">23ai → 26ai, decoded</div>
+      <p><strong>Oracle AI Database 26ai</strong> replaces Oracle Database 23ai. It is <em>not</em> a new engine — it's the same <strong>23.x</strong> code line, delivered as a <strong>release update</strong> (apply the Oct 2025 RU; no upgrade or recertification). Version numbers read <code>23.26.1</code> = codebase 23, year 2026, quarter 1. On-prem Enterprise Edition (Linux x86-64) reached GA in <strong>January 2026</strong>. You'll still see "23ai" in many tools and docs — treat them as the same release family.</p>
+    </div>
+
+    <div class="family-h ai">AI Vector Search — RAG inside the database</div>
+    <p class="body">Store embeddings next to business data in a native <code>VECTOR</code> column, and run similarity search in plain SQL — combining semantic match with ordinary <code>WHERE</code> filters in one query. The workflow: <strong>generate</strong> embeddings (in-DB ONNX models via <code>DBMS_VECTOR.LOAD_ONNX_MODEL</code>, or external), <strong>store</strong> as <code>VECTOR</code>, optionally <strong>index</strong>, then <strong>query</strong>.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">HNSW</span><span class="tag ai"><span class="d"></span>in-memory graph</span></div><p class="card-what"><code>ORGANIZATION INMEMORY NEIGHBOR GRAPH</code>. Fastest ANN; needs the <code>VECTOR_MEMORY_SIZE</code> SGA pool; memory-heavy for big sets.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">IVF</span><span class="tag ai"><span class="d"></span>neighbor partitions</span></div><p class="card-what"><code>ORGANIZATION NEIGHBOR PARTITIONS</code>. Disk + buffer cache; scales to large datasets; supports local partitioning.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Hybrid Vector Index</span><span class="tag ai"><span class="d"></span>text + semantic</span></div><p class="card-what">Combines Oracle Text full-text with vector search (23.6+) — keyword + meaning in one index.</p></div>
+    </div>
+    <pre><code><span class="cmt">-- Approximate similarity search (uses the index)</span>
+<span class="kw">SELECT</span> id, <span class="fn">VECTOR_DISTANCE</span>(embedding, :q, <span class="kw">COSINE</span>) dist
+<span class="kw">FROM</span>   documents
+<span class="kw">ORDER BY</span> dist
+<span class="kw">FETCH APPROX FIRST</span> 10 <span class="kw">ROWS ONLY</span>;   <span class="cmt">-- exact = FETCH FIRST (no index)</span></code></pre>
+    <p class="note-line">26ai adds <strong>Unified Hybrid Vector Search</strong> across multimodal data (PDFs, images, video). Distance metric in the query must match the index, or it silently won't use it.</p>
+
+    <div class="family-h ai">Oracle &amp; the Model Context Protocol</div>
+    <p class="body">Oracle ships MCP servers so any MCP-capable assistant (Claude, Cursor, VS Code) can introspect schemas and run SQL through a trusted connection — agentic database work, with you approving each action.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">SQLcl MCP Server</span><span class="tag ai"><span class="d"></span>local · STDIO</span></div><p class="card-what">Built into Oracle SQLcl (and the SQL Developer VS Code extension). Tools like <code>list-connections</code>, <code>connect</code>, <code>run-sql</code>; connections in <code>~/.dbtools</code>, creds in SSO wallets. Ideal for dev/DBA workflows.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">OCI Managed MCP</span><span class="tag ai"><span class="d"></span>cloud · HTTPS</span></div><p class="card-what">Managed MCP servers in OCI Database Tools — HTTPS + OCI identity for enterprise agents against 26ai and 19c in the cloud.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Select AI</span><span class="tag ai"><span class="d"></span>NL → SQL</span></div><p class="card-what">Autonomous Database feature: ask in natural language, it generates and runs SQL (and can do RAG) — reasoning guided by your metadata.</p></div>
+    </div>
+    <div class="callout warn">
+      <div class="ct-lab">MCP safety — the connection IS the permission</div>
+      <p>Whatever the agent can do is exactly what the <strong>connected database user</strong> can do. Use a <strong>least-privilege, read-only</strong> user against <strong>sanitized non-prod</strong> data, and <strong>review every action</strong> before approving. "Do not trust, always verify" — never point an agent at a privileged account.</p>
+    </div>
+
+    <div class="family-h ai">More of the modern surface</div>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">JSON Relational Duality</span><span class="tag ga"><span class="d"></span>one truth, two shapes</span></div><p class="card-what">Duality views expose relational tables as fully-updatable JSON documents (and back) — document ergonomics without giving up normalization or consistency.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Property Graph (SQL/PGQ)</span><span class="tag core"><span class="d"></span>graph in SQL</span></div><p class="card-what">Native graph queries over your tables using the SQL:2023 <code>GRAPH_TABLE</code> / <code>MATCH</code> syntax.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">In-DB ML (OML)</span><span class="tag core"><span class="d"></span>models in SQL</span></div><p class="card-what">Train and score models where the data lives; run ONNX models in-database for embeddings and inference.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Autonomous Database</span><span class="tag core"><span class="d"></span>self-managing</span></div><p class="card-what">Self-tuning, self-patching managed Oracle in OCI — the same 26ai features without the ops burden.</p></div>
+    </div>
+  </section>
+
+  <!-- ================================================= PATTERNS -->
+  <section role="tabpanel" id="p-patterns" aria-labelledby="t-patterns" hidden>
+    <div class="eyebrow">Patterns &amp; anti-patterns</div>
+    <h1 class="title">A clean pipeline is mostly about what you refuse to do.</h1>
+    <p class="lede">Extraction at scale rewards a handful of disciplines and punishes a handful of habits. These are the patterns that keep an Oracle-sourced pipeline fast, faithful, and safe — and the anti-patterns that quietly corrupt data or hammer the source.</p>
+
+    <h2 class="sec">Extraction patterns</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Snapshot-then-CDC</span><span class="tag ga"><span class="d"></span>load model</span></div><p class="card-what">One consistent bulk load at a known SCN, then change capture forever. Don't re-full-scan a live table on a schedule.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Partition-wise parallel</span><span class="tag ga"><span class="d"></span>throughput</span></div><p class="card-what">One reader per partition + large array size; prune to only the partitions in scope.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">SCN / watermark cursors</span><span class="tag ga"><span class="d"></span>incremental</span></div><p class="card-what">Track a monotonic watermark (SCN or audit timestamp) so restarts resume exactly, with no gaps or overlaps.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Idempotent landing</span><span class="tag ga"><span class="d"></span>safety</span></div><p class="card-what">Deterministic key = PK + change SCN/op; upsert so replays and at-least-once delivery don't double-apply.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Read the standby</span><span class="tag ga"><span class="d"></span>isolation</span></div><p class="card-what">Offload heavy extracts to Active Data Guard so the primary OLTP path stays fast.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Validate per partition</span><span class="tag ga"><span class="d"></span>trust</span></div><p class="card-what">Row counts <em>and</em> checksums per partition/window — catch silent loss, not just hard failures.</p></div>
+    </div>
+
+    <h2 class="sec">Type-fidelity &amp; safety checklist</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Concern</th><th>Do</th></tr></thead>
+      <tbody>
+        <tr><td class="k">NUMBER precision</td><td>Map to <strong>decimal</strong> (Arrow/Parquet decimal), never silently to double.</td></tr>
+        <tr><td class="k">DATE vs TIMESTAMP</td><td>Preserve time and time zone; don't truncate DATE to a calendar date.</td></tr>
+        <tr><td class="k">NLS / charset</td><td>Carry source charset through; normalize to UTF-8 deliberately, once.</td></tr>
+        <tr><td class="k">LOBs</td><td>LOB-aware fetch; chunk large CLOB/BLOB; consider externalizing.</td></tr>
+        <tr><td class="k">NULL semantics</td><td>Decide NULL vs empty-string vs sentinel once, consistently downstream.</td></tr>
+        <tr><td class="k">Access</td><td>Least-privilege <strong>read-only</strong> user; wallet/mTLS; rotate credentials.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">Anti-patterns — quietly corrosive</h2>
+    <div class="two">
+      <div class="anti">
+        <h4><span class="dot6" style="background:var(--gap)"></span>Reading &amp; modeling</h4>
+        <ul>
+          <li><b>Row-by-row fetch</b> (array size 1) — death by round trips.</li>
+          <li><b>SELECT *</b> full scans of live tables on a timer.</li>
+          <li><b>Literals, not binds</b> — hard-parse storms, injection risk.</li>
+          <li><b>Ignoring partitions</b> — scanning the whole table to find a day's changes.</li>
+          <li><b>NUMBER → double</b> — silent precision loss.</li>
+          <li><b>No consistent SCN</b> across parallel readers — a torn snapshot.</li>
+        </ul>
+      </div>
+      <div class="anti">
+        <h4><span class="dot6" style="background:var(--gap)"></span>CDC, landing &amp; AI</h4>
+        <ul>
+          <li><b>No supplemental logging</b> — CDC can't see full row images.</li>
+          <li><b>Ignoring SCN drift</b> — long transactions stall the connector.</li>
+          <li><b>Non-idempotent loads</b> — at-least-once delivery double-applies.</li>
+          <li><b>Dropping deletes/tombstones</b> — downstream silently diverges.</li>
+          <li><b>God user for MCP/agents</b> — the connection is the blast radius.</li>
+          <li><b>Querying without FETCH APPROX</b> — vector index sits unused.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="sec">Choose by the job</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Job to be done</th><th>Reach for</th><th>Trap</th></tr></thead>
+      <tbody>
+        <tr><td>First full load → lake</td><td><strong>python-oracledb → Arrow → Parquet</strong> (partition-wise)</td><td class="am">Row-by-row into pandas via SQLAlchemy.</td></tr>
+        <tr><td>Oracle-to-Oracle bulk</td><td><strong>Data Pump</strong> (parallel)</td><td class="am">Hand-rolled CTAS over a slow link.</td></tr>
+        <tr><td>Ongoing change capture</td><td><strong>Debezium + LogMiner</strong> (or OLR / GoldenGate)</td><td class="am">Polling <code>updated_at</code> and missing deletes.</td></tr>
+        <tr><td>Heterogeneous enterprise replication</td><td><strong>GoldenGate / OCI GoldenGate</strong></td><td class="am">Bespoke triggers as a CDC substitute.</td></tr>
+        <tr><td>Land for ad-hoc analytics</td><td><strong>DuckDB over Parquet/Arrow</strong></td><td class="am">Re-querying Oracle for every analysis.</td></tr>
+        <tr><td>Full-text + semantic search</td><td><strong>Elasticsearch sink</strong> or <strong>26ai Hybrid Vector Index</strong></td><td class="am">Reinventing relevance in app code.</td></tr>
+        <tr><td>Agentic SQL on Oracle</td><td><strong>SQLcl MCP Server</strong> (read-only user)</td><td class="am">Pointing an agent at a privileged account.</td></tr>
+        <tr><td>RAG over enterprise data</td><td><strong>AI Vector Search</strong> in 26ai</td><td class="am">Exporting everything to an external vector DB unnecessarily.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">Maturity — four pillars</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Source discipline</span><span class="tag core"><span class="d"></span>read</span></div><p class="card-what">Partitioned tables, fresh stats, least-priv read user, extraction offloaded to a standby at a known SCN.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Capture</span><span class="tag core"><span class="d"></span>cdc</span></div><p class="card-what">Supplemental logging on, SCN-drift mitigations, schema-change handling, deletes/tombstones carried.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Fidelity</span><span class="tag core"><span class="d"></span>correctness</span></div><p class="card-what">Type mapping verified, per-partition count + checksum validation, idempotent upserts.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">AI governance</span><span class="tag ai"><span class="d"></span>agents</span></div><p class="card-what">MCP on scoped read-only users, approvals on actions, vectors/RAG kept in-DB where sovereignty matters.</p></div>
+    </div>
+  </section>
+
+  <!-- ================================================= SOURCES -->
+  <section role="tabpanel" id="p-sources" aria-labelledby="t-sources" hidden>
+    <div class="eyebrow">Appendix · sources</div>
+    <h1 class="title">Primary documentation, checked June 2026.</h1>
+    <p class="lede">Prefer official Oracle docs and primary project pages. Oracle's release naming and feature set move with each quarterly RU, so confirm version-specific facts (the 26ai/23ai naming, vector-search RU features, MCP availability) against the source before relying on them.</p>
+
+    <div class="src-group">
+      <h3>Oracle Database — core &amp; 26ai/23ai</h3>
+      <ul class="src-list">
+        <li><span class="nm">Oracle Database Documentation</span> — docs.oracle.com/en/database/</li>
+        <li><span class="nm">Oracle AI Database 26ai</span> — oracle.com/database/ai-native-database-26ai/</li>
+        <li><span class="nm">26ai announcement</span> — blogs.oracle.com/database/oracle-announces-oracle-ai-database-26ai</li>
+        <li><span class="nm">23ai GA blog</span> — blogs.oracle.com/database/oracle-23ai-now-generally-available</li>
+        <li><span class="nm">ORACLE-BASE (features)</span> — oracle-base.com</li>
+        <li><span class="nm">Version numbering</span> — mikedietrichde.com</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>AI Vector Search &amp; AI features</h3>
+      <ul class="src-list">
+        <li><span class="nm">AI Vector Search User's Guide</span> — docs.oracle.com/en/database/oracle/oracle-database/23/vecse/</li>
+        <li><span class="nm">DBMS_VECTOR / VECTOR type</span> — Oracle PL/SQL Packages &amp; SQL Reference</li>
+        <li><span class="nm">HNSW / IVF / Hybrid index blogs</span> — blogs.oracle.com/database</li>
+        <li><span class="nm">JSON Relational Duality</span> — docs.oracle.com (JSON-Relational Duality Developer's Guide)</li>
+        <li><span class="nm">Select AI</span> — docs.oracle.com (Autonomous Database)</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Oracle &amp; MCP (agentic access)</h3>
+      <ul class="src-list">
+        <li><span class="nm">Oracle MCP overview</span> — oracle.com/mcp/</li>
+        <li><span class="nm">SQLcl MCP Server intro</span> — blogs.oracle.com/database/introducing-mcp-server-for-oracle-database</li>
+        <li><span class="nm">OCI Managed MCP Service</span> — blogs.oracle.com/database (managed MCP servers in OCI)</li>
+        <li><span class="nm">SQLcl</span> — oracle.com/database/sqldeveloper/technologies/sqlcl/</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Drivers &amp; bulk extraction</h3>
+      <ul class="src-list">
+        <li><span class="nm">python-oracledb (Data Frames/Arrow)</span> — python-oracledb.readthedocs.io/en/latest/user_guide/dataframes.html</li>
+        <li><span class="nm">node-oracledb</span> — oracle.github.io/node-oracledb/</li>
+        <li><span class="nm">ODP.NET</span> — docs.oracle.com/en/database/oracle/oracle-data-access-components/</li>
+        <li><span class="nm">JDBC / UCP</span> — docs.oracle.com (JDBC Developer's Guide)</li>
+        <li><span class="nm">Data Pump / External Tables / DBMS_CLOUD</span> — Oracle Utilities &amp; PL/SQL Packages</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>CDC &amp; streaming</h3>
+      <ul class="src-list">
+        <li><span class="nm">Debezium Oracle connector</span> — debezium.io/documentation/reference/stable/connectors/oracle.html</li>
+        <li><span class="nm">OpenLogReplicator</span> — github.com/bersler/OpenLogReplicator</li>
+        <li><span class="nm">Oracle GoldenGate</span> — docs.oracle.com/en/middleware/goldengate/</li>
+        <li><span class="nm">OCI GoldenGate</span> — oracle.com/integration/goldengate/</li>
+        <li><span class="nm">LogMiner</span> — docs.oracle.com (Database Utilities)</li>
+      </ul>
+    </div>
+
+    <div class="callout warn">
+      <div class="ct-lab">On naming &amp; versions</div>
+      <p>Most tooling, drivers, and docs still say <strong>"23ai"</strong>; <strong>"26ai"</strong> is the same 23.x release family advanced by release update. When a deadline, feature GA, or RU-specific capability is load-bearing, confirm it against Oracle's documentation for your exact version (<code>SELECT version_full FROM v$instance;</code>).</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="legend">
+    <span class="lg"><span class="sw" style="background:var(--proof)"></span> recommended / correct / GA</span>
+    <span class="lg"><span class="sw" style="background:var(--gap)"></span> caution / legacy / anti-pattern</span>
+    <span class="lg"><span class="sw" style="background:var(--steel)"></span> core concept / structure</span>
+    <span class="lg"><span class="sw" style="background:var(--violet)"></span> AI-native (26ai)</span>
+  </div>
+  Oracle End-to-End Field Guide · architecture → data movement → 26ai · data-engineering lens · state-of-the-art checked June 2026 · see Sources for primary references.
+</footer>
+
+<script>
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+    var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function activate(i, focus) {
+      tabs.forEach(function (t, j) {
+        var sel = j === i;
+        t.setAttribute('aria-selected', sel ? 'true' : 'false');
+        t.tabIndex = sel ? 0 : -1;
+        panels[j].hidden = !sel;
+      });
+      if (focus !== false) tabs[i].focus();
+      try { tabs[i].scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {}
+      if (window.scrollY > 4) window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { activate(i); });
+      t.addEventListener('keydown', function (e) {
+        var n = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') n = 0;
+        else if (e.key === 'End') n = tabs.length - 1;
+        if (n !== null) { e.preventDefault(); activate(n); }
+      });
+    });
+    activate(0, false);
+  })();
+</script>
+</body>
+</html>

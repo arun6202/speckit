@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Strategy Field Guide — API & UI/E2E · 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0C0F14;
+    --bg-2:     #12161D;
+    --bg-3:     #161B23;
+    --bg-4:     #1C222B;
+    --line:     #252C37;
+    --line-2:   #313A47;
+    --text:     #E9ECF1;
+    --dim:      #A4AEBC;
+    --faint:    #7B8694;
+    --proof:    #4FE0A0;   /* green — proves / covers / spec-derived / strength */
+    --proof-bg: rgba(79, 224, 160, 0.10);
+    --proof-ln: rgba(79, 224, 160, 0.38);
+    --gap:      #E8A95C;   /* amber — blind spot / caution / anti-pattern */
+    --gap-bg:   rgba(232, 169, 92, 0.10);
+    --gap-ln:   rgba(232, 169, 92, 0.38);
+    --steel:    #7E97FF;   /* blue — structure / axis / example-based / neutral accent */
+    --steel-bg: rgba(126, 151, 255, 0.10);
+    --steel-ln: rgba(126, 151, 255, 0.38);
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --disp: 'Archivo', system-ui, sans-serif;
+    --body: 'Hanken Grotesk', system-ui, sans-serif;
+    --maxw: 1000px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(1000px 560px at 88% -8%, rgba(126, 151, 255, 0.06), transparent 60%),
+      radial-gradient(760px 520px at 2% 4%, rgba(79, 224, 160, 0.04), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  /* ---------------- HEADER ---------------- */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: rgba(12, 15, 20, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .app-header-inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 16px clamp(18px, 5vw, 40px) 0;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .brand-eye {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .brand-name {
+    font-family: var(--disp);
+    font-weight: 800;
+    font-size: clamp(17px, 2.4vw, 21px);
+    letter-spacing: -0.02em;
+  }
+  .brand-name .dot { color: var(--proof); }
+  .brand-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+
+  /* ---------------- TABS ---------------- */
+  .tabbar {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 12px clamp(18px, 5vw, 40px) 0;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabbar::-webkit-scrollbar { display: none; }
+  .tab {
+    appearance: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    padding: 9px 14px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab:hover { color: var(--dim); }
+  .tab[aria-selected="true"] {
+    color: var(--text);
+    border-bottom-color: var(--proof);
+  }
+  .tab:focus-visible {
+    outline: 2px solid var(--steel);
+    outline-offset: -2px;
+    border-radius: 4px;
+  }
+
+  /* ---------------- PANELS ---------------- */
+  .panels {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: clamp(34px, 5vw, 60px) clamp(18px, 5vw, 40px) 100px;
+  }
+  [role="tabpanel"] { animation: fade 0.4s ease; }
+  [role="tabpanel"][hidden] { display: none; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ---------------- TYPOGRAPHY PRIMITIVES ---------------- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--faint);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::after { content: ''; height: 1px; flex: 1; background: linear-gradient(90deg, var(--line-2), transparent); }
+
+  h1.title {
+    font-family: var(--disp);
+    font-weight: 800;
+    font-size: clamp(28px, 5.4vw, 46px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 22px 0 20px;
+    max-width: 20ch;
+  }
+  h1.title .q { color: var(--proof); }
+  h1.title .g { color: var(--gap); }
+
+  h2.sec {
+    font-family: var(--disp);
+    font-weight: 700;
+    font-size: clamp(21px, 3.2vw, 28px);
+    letter-spacing: -0.02em;
+    margin: 58px 0 8px;
+  }
+  h2.sec:first-of-type { margin-top: 40px; }
+  h3.sub {
+    font-family: var(--disp);
+    font-weight: 700;
+    font-size: clamp(17px, 2.4vw, 20px);
+    letter-spacing: -0.015em;
+    margin: 36px 0 14px;
+  }
+  .lede { font-size: clamp(16px, 2.1vw, 18px); color: var(--dim); max-width: 66ch; }
+  p.body { color: var(--dim); max-width: 70ch; margin: 14px 0; }
+  p.body strong { color: var(--text); font-weight: 600; }
+  .note-line { font-family: var(--mono); font-size: 12px; color: var(--faint); margin-top: 14px; }
+  a { color: var(--steel); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: #cdd6e3;
+  }
+
+  /* ---------------- QUESTION INDEX ---------------- */
+  .qindex { margin: 34px 0 4px; border-top: 1px solid var(--line); }
+  .qrow {
+    display: grid; grid-template-columns: 184px 1fr; align-items: baseline; gap: 18px;
+    padding: 16px 2px; border-bottom: 1px solid var(--line);
+  }
+  .qtool { font-family: var(--mono); font-size: 14px; font-weight: 600; white-space: nowrap; }
+  .qtool .n { color: var(--faint); font-weight: 400; margin-right: 10px; }
+  .qtool .alt { color: var(--faint); font-weight: 400; font-size: 11px; display: block; margin-left: 26px; margin-top: 2px; }
+  .qtext { font-family: var(--disp); font-weight: 600; font-size: clamp(16px, 2.2vw, 21px); letter-spacing: -0.012em; }
+
+  /* ---------------- CHAIN ---------------- */
+  .chain {
+    margin: 30px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
+    padding: 22px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px;
+  }
+  .chain-lab { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); width: 100%; }
+  .pill { font-weight: 600; font-size: 14px; padding: 7px 14px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--bg-3); white-space: nowrap; }
+  .neq { font-family: var(--disp); font-weight: 700; font-size: 19px; color: var(--gap); }
+
+  /* ---------------- LAYER CARDS ---------------- */
+  .layer {
+    background: var(--bg-3); border: 1px solid var(--line); border-radius: 16px;
+    padding: clamp(22px, 3.2vw, 30px); position: relative;
+  }
+  .layer-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-bottom: 15px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .layer-id { display: flex; align-items: baseline; gap: 13px; }
+  .num { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--bg); background: var(--steel); padding: 3px 8px; border-radius: 6px; transform: translateY(-2px); }
+  .tool-name { font-family: var(--mono); font-size: clamp(15px, 2.1vw, 18px); font-weight: 600; }
+  .scope { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+  .scope b { color: var(--steel); font-weight: 500; }
+  .layer-q { font-family: var(--disp); font-weight: 700; font-size: clamp(20px, 3vw, 28px); letter-spacing: -0.022em; line-height: 1.14; margin-bottom: 20px; }
+
+  .claim { padding: 2px 0 2px 17px; border-left: 2px solid var(--line-2); margin-bottom: 16px; }
+  .claim:last-of-type { margin-bottom: 0; }
+  .claim.proves { border-color: var(--proof-ln); }
+  .claim.blind { border-color: var(--gap-ln); }
+  .claim-lab { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+  .proves .claim-lab { color: var(--proof); }
+  .blind .claim-lab { color: var(--gap); }
+  .claim-lab .d { width: 6px; height: 6px; border-radius: 50%; }
+  .proves .d { background: var(--proof); box-shadow: 0 0 8px var(--proof-ln); }
+  .blind .d { background: var(--gap); box-shadow: 0 0 8px var(--gap-ln); }
+  .claim-txt { color: var(--dim); font-size: 15.5px; }
+  .claim-txt strong { color: var(--text); font-weight: 600; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .chip { font-family: var(--mono); font-size: 11.5px; color: var(--dim); padding: 4px 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-2); }
+
+  .handoff { display: flex; align-items: center; gap: 11px; padding: 13px 0 13px 14px; font-family: var(--mono); font-size: 12.5px; color: var(--gap); }
+  .handoff.up { color: var(--steel); }
+  .handoff .arr { font-size: 16px; line-height: 1; }
+  .handoff .target { color: var(--text); font-weight: 600; }
+
+  /* ---------------- AXIS ---------------- */
+  .axis-wrap { margin: 26px 0 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg-2); padding: 26px clamp(18px, 3vw, 28px) 22px; }
+  .axis-ends { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; color: var(--dim); margin-bottom: 10px; }
+  .axis-ends .l { color: var(--steel); }
+  .axis-ends .r { color: var(--proof); }
+  .axis-bar { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--steel) 0%, #6f86c9 38%, #5fae9d 64%, var(--proof) 100%); position: relative; }
+  .axis-scroll { overflow-x: auto; scrollbar-width: thin; }
+  .axis-stops { display: grid; grid-template-columns: repeat(5, minmax(150px, 1fr)); gap: 14px; margin-top: 20px; min-width: 720px; }
+  .stop { background: var(--bg-3); border: 1px solid var(--line); border-radius: 11px; padding: 13px 14px; }
+  .stop .tick { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); margin-bottom: 7px; }
+  .stop .who { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.45; }
+  .stop .what { font-size: 12.5px; color: var(--dim); margin-top: 6px; line-height: 1.45; }
+  .stop.trust { border-top: 2px solid var(--steel-ln); }
+  .stop.mid { border-top: 2px solid #5f7fb8; }
+  .stop.proof { border-top: 2px solid var(--proof-ln); }
+
+  /* ---------------- TOOL GRID ---------------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 14px; margin: 16px 0; }
+  .card { background: var(--bg-3); border: 1px solid var(--line); border-radius: 13px; padding: 17px 18px; }
+  .card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+  .card-name { font-family: var(--mono); font-size: 14.5px; font-weight: 600; }
+  .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .tag .d { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+  .tag.proof .d { background: var(--proof); }
+  .tag.trust .d { background: var(--steel); }
+  .tag.aux .d { background: var(--faint); }
+  .card-what { font-size: 13.5px; color: var(--dim); line-height: 1.5; }
+  .card-what strong { color: var(--text); font-weight: 600; }
+  .card ul { margin: 9px 0 0; padding-left: 16px; }
+  .card li { font-size: 12.5px; color: var(--dim); line-height: 1.5; margin-bottom: 3px; }
+  .card li::marker { color: var(--faint); }
+
+  .family-h { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); margin: 34px 0 4px; display: flex; align-items: center; gap: 10px; }
+  .family-h::after { content: ''; height: 1px; flex: 1; background: var(--line); }
+
+  /* ---------------- SUCCESSION ---------------- */
+  .steps { margin: 18px 0; border-left: 2px solid var(--line); padding-left: 0; }
+  .step { position: relative; padding: 0 0 26px 26px; }
+  .step::before { content: ''; position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 2px solid var(--steel); }
+  .step:last-child { padding-bottom: 0; }
+  .step.crown::before { background: var(--proof); border-color: var(--proof); box-shadow: 0 0 10px var(--proof-ln); }
+  .step-era { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--faint); text-transform: uppercase; }
+  .step-name { font-family: var(--disp); font-weight: 700; font-size: 18px; margin: 3px 0 6px; letter-spacing: -0.01em; }
+  .step-name .role { font-family: var(--body); font-weight: 500; font-size: 13px; color: var(--dim); margin-left: 8px; }
+  .step-txt { font-size: 14px; color: var(--dim); max-width: 64ch; }
+  .step-cost { font-size: 13px; color: var(--gap); margin-top: 6px; font-family: var(--mono); }
+  .step-cost .lbl { color: var(--faint); }
+
+  /* ---------------- PYRAMID ---------------- */
+  .pyr { margin: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .tier { border-radius: 8px; padding: 14px 18px; text-align: center; border: 1px solid var(--line); }
+  .tier .t-name { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text); }
+  .tier .t-meta { font-size: 12px; color: var(--dim); margin-top: 3px; }
+  .tier.t1 { width: 100%; background: var(--proof-bg); border-color: var(--proof-ln); }
+  .tier.t2 { width: 74%; background: var(--steel-bg); border-color: var(--steel-ln); }
+  .tier.t3 { width: 46%; background: var(--gap-bg); border-color: var(--gap-ln); }
+  .pyr-cap { font-family: var(--mono); font-size: 12px; color: var(--faint); text-align: center; margin-top: 10px; }
+
+  /* ---------------- TABLES ---------------- */
+  .table-wrap { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--bg-2); margin: 16px 0; }
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; }
+  th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13.5px; }
+  tbody tr:last-child td { border-bottom: none; }
+  thead th { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); background: var(--bg-3); white-space: nowrap; }
+  thead th:first-child { color: var(--faint); font-weight: 500; }
+  td { color: var(--dim); }
+  td.k { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+  td strong { color: var(--text); font-weight: 600; }
+  .pr { color: var(--proof); }
+  .am { color: var(--gap); }
+  .st { color: var(--steel); }
+
+  /* two-column anti-patterns */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .anti { background: var(--bg-3); border: 1px solid var(--line); border-radius: 13px; padding: 18px; }
+  .anti h4 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gap); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .anti ul { padding-left: 17px; margin: 0; }
+  .anti li { font-size: 13px; color: var(--dim); line-height: 1.5; margin-bottom: 8px; }
+  .anti li::marker { color: var(--gap-ln); }
+  .anti li b { color: var(--text); font-weight: 600; }
+
+  /* callout */
+  .callout { border: 1px solid var(--line-2); border-left: 3px solid var(--proof-ln); background: var(--bg-2); border-radius: 0 12px 12px 0; padding: 16px 20px; margin: 18px 0; }
+  .callout.warn { border-left-color: var(--gap-ln); }
+  .callout .ct-lab { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--proof); margin-bottom: 7px; }
+  .callout.warn .ct-lab { color: var(--gap); }
+  .callout p { font-size: 14.5px; color: var(--dim); }
+  .callout p strong { color: var(--text); }
+
+  /* code block */
+  pre { background: var(--bg-2); border: 1px solid var(--line); border-radius: 11px; padding: 15px 17px; overflow-x: auto; margin: 14px 0; }
+  pre code { background: none; border: none; padding: 0; font-size: 12.5px; color: #cdd6e3; line-height: 1.65; }
+  .cmt { color: var(--faint); }
+
+  /* prompt compare */
+  .prompts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .pbox { border: 1px solid var(--line); border-radius: 12px; padding: 16px 17px; background: var(--bg-3); }
+  .pbox.good { border-top: 2px solid var(--proof-ln); }
+  .pbox.bad { border-top: 2px solid var(--gap-ln); }
+  .pbox .pl { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 9px; }
+  .pbox.good .pl { color: var(--proof); }
+  .pbox.bad .pl { color: var(--gap); }
+  .pbox .pt { font-size: 13.5px; color: var(--dim); line-height: 1.55; }
+
+  /* sources */
+  .src-group { margin: 26px 0; }
+  .src-group h3 { font-family: var(--mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .src-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px 22px; }
+  .src-list li { font-size: 13.5px; color: var(--dim); padding-left: 16px; position: relative; line-height: 1.5; }
+  .src-list li::before { content: '→'; position: absolute; left: 0; color: var(--faint); }
+  .src-list .nm { color: var(--text); font-weight: 600; }
+
+  footer { max-width: var(--maxw); margin: 0 auto; padding: 28px clamp(18px, 5vw, 40px) 60px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--faint); line-height: 1.7; }
+  .legend { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 12px; }
+  .lg { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 9px; height: 9px; border-radius: 2px; }
+
+  /* ---------------- RESPONSIVE ---------------- */
+  @media (max-width: 720px) {
+    .two, .prompts { grid-template-columns: 1fr; }
+    .qrow { grid-template-columns: 1fr; gap: 4px; }
+    .qtool .alt { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    [role="tabpanel"] { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-header-inner">
+    <div class="brand">
+      <div>
+        <div class="brand-eye">Field reference · test strategy</div>
+        <div class="brand-name">The Testing Stack<span class="dot">.</span></div>
+      </div>
+      <div class="brand-tag">REST API + UI/E2E · checked Jun 2026</div>
+    </div>
+  </div>
+  <div class="tabbar" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="t-overview" aria-controls="p-overview" aria-selected="true">Overview</button>
+    <button class="tab" role="tab" id="t-layers"   aria-controls="p-layers"   aria-selected="false">The Four Layers</button>
+    <button class="tab" role="tab" id="t-api"      aria-controls="p-api"      aria-selected="false">API Testing</button>
+    <button class="tab" role="tab" id="t-ui"       aria-controls="p-ui"       aria-selected="false">UI &amp; E2E</button>
+    <button class="tab" role="tab" id="t-ai"       aria-controls="p-ai"       aria-selected="false">AI-Native</button>
+    <button class="tab" role="tab" id="t-patterns" aria-controls="p-patterns" aria-selected="false">Patterns</button>
+    <button class="tab" role="tab" id="t-sources"  aria-controls="p-sources"  aria-selected="false">Sources</button>
+  </div>
+</header>
+
+<main class="panels">
+
+  <!-- ============================================================ OVERVIEW -->
+  <section role="tabpanel" id="p-overview" aria-labelledby="t-overview">
+    <div class="eyebrow">Overview · the map</div>
+    <h1 class="title">Each layer answers one <span class="q">question</span>. Each leaves one <span class="g">gap</span>.</h1>
+    <p class="lede">Testing is not one activity but a stack of distinct questions, each answered by a different kind of tool, each blind to what the next one sees. This guide consolidates that stack into a single map: the four layers that carry you from <em>“my code is correct”</em> to <em>“a real user’s journey works,”</em> the two axes that sort every tool in the space, and the patterns that separate a real safety net from theatre. It is deliberately language- and project-agnostic — the named tools are representative, but the shape applies to any stack.</p>
+
+    <div class="qindex">
+      <div class="qrow">
+        <span class="qtool"><span class="n">01</span>Unit / logic<span class="alt">xUnit · JUnit · pytest · NUnit · Jest · go test</span></span>
+        <span class="qtext">Does my logic work?</span>
+      </div>
+      <div class="qrow">
+        <span class="qtool"><span class="n">02</span>Spec-derived<span class="alt">Schemathesis · CATS · RESTler · EvoMaster</span></span>
+        <span class="qtext">Does my API survive every input the spec implies — valid, invalid, and adversarial?</span>
+      </div>
+      <div class="qrow">
+        <span class="qtool"><span class="n">03</span>Contract<span class="alt">Pact · Spring Cloud Contract · Microcks</span></span>
+        <span class="qtext">Does my API still satisfy the real consumers that depend on it?</span>
+      </div>
+      <div class="qrow">
+        <span class="qtool"><span class="n">04</span>End-to-end<span class="alt">Playwright · Cypress · Selenium</span></span>
+        <span class="qtext">Does the full UI journey work?</span>
+      </div>
+    </div>
+
+    <div class="chain">
+      <span class="chain-lab">// why you need all four — these are not the same claim</span>
+      <span class="pill">logic is correct</span>
+      <span class="neq">≠</span>
+      <span class="pill">inputs are handled</span>
+      <span class="neq">≠</span>
+      <span class="pill">consumers are satisfied</span>
+      <span class="neq">≠</span>
+      <span class="pill">the journey works</span>
+    </div>
+
+    <h2 class="sec">Two axes that organize everything</h2>
+    <p class="body">Beneath the tool sprawl, two ideas explain almost every choice. The first sorts <strong>what kind of confidence</strong> a tool gives. The second sorts <strong>how much it should cost you</strong> to run.</p>
+
+    <h3 class="sub">Axis 1 — Trust vs. Proof</h3>
+    <p class="body">Every API tool sits between two poles. At one end you author each example by hand and the tool faithfully replays it — it <strong>trusts</strong> what you gave it. At the other, the tool reads your OpenAPI/GraphQL contract and <em>derives</em> the cases, hunting inputs you would never think to write — it <strong>proves</strong> conformance. UI testing never faced this choice: the rendered browser is the oracle. For APIs, the spec is the oracle, and tools differ almost entirely by how seriously they take it.</p>
+
+    <div class="axis-wrap">
+      <div class="axis-ends"><span class="l">◂ trusts your examples</span><span class="r">proves against the spec ▸</span></div>
+      <div class="axis-bar"></div>
+      <div class="axis-scroll">
+        <div class="axis-stops">
+          <div class="stop trust">
+            <div class="tick">author by hand</div>
+            <div class="who">Postman · Bruno · Insomnia</div>
+            <div class="what">GUI &amp; git-native clients. You write every request and assertion; the tool replays them. No derivation from the contract.</div>
+          </div>
+          <div class="stop trust">
+            <div class="tick">coded examples</div>
+            <div class="who">REST Assured · Karate</div>
+            <div class="what">Assertions live as code in the test runner and gate the build — still example-based, but reviewable and refactorable.</div>
+          </div>
+          <div class="stop mid">
+            <div class="tick">conformance</div>
+            <div class="who">Dredd</div>
+            <div class="what">Reads the spec and checks the live API matches it, endpoint by endpoint. The contract constrains the test — but no adversarial generation.</div>
+          </div>
+          <div class="stop proof">
+            <div class="tick">generated negatives</div>
+            <div class="who">CATS · RESTler</div>
+            <div class="what">Generate many malformed and stateful sequences from the spec, then check responses — minimal per-endpoint maintenance.</div>
+          </div>
+          <div class="stop proof">
+            <div class="tick">property-based</div>
+            <div class="who">Schemathesis · EvoMaster</div>
+            <div class="what">Convert the schema into properties, generate valid + adversarial inputs, prove every response honours the contract, and shrink failures to a minimal reproducer.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note-line">The further right, the more the contract is treated as a proposition to discharge rather than a suggestion to trust. Neither end is “better” — exploration and collaboration genuinely live on the left; regression confidence lives on the right.</p>
+
+    <h3 class="sub">Axis 2 — The pyramid economics</h3>
+    <p class="body">Confidence has a price. Keep most of your tests where they are fast and cheap; spend the slow, expensive layers only where they are irreplaceable. Inverting this — many end-to-end tests, few unit tests — is the classic <strong>“ice-cream cone”</strong> anti-pattern that yields slow, flaky suites with poor failure localization.</p>
+    <div class="pyr">
+      <div class="tier t1"><div class="t-name">Unit / component</div><div class="t-meta">many · milliseconds · cheap — widest coverage, narrowest scope</div></div>
+      <div class="tier t2"><div class="t-name">API · contract · spec-derived fuzz</div><div class="t-meta">fewer · seconds · the efficient middle that catches integration bugs</div></div>
+      <div class="tier t3"><div class="t-name">End-to-end (browser)</div><div class="t-meta">few · minutes · costly — highest confidence, narrowest breadth</div></div>
+    </div>
+    <p class="pyr-cap">✗ Ice-cream cone = the same picture upside down. Don’t build it.</p>
+
+    <h2 class="sec">At a glance</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Layer</th><th>Question</th><th>Scope</th><th>Source of truth</th><th>Blind spot</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Unit</td><td>Does my logic work?</td><td>a unit, in isolation</td><td>your assertions</td><td class="am">the deployed contract may still be wrong</td></tr>
+        <tr><td class="k">Spec-derived</td><td>Does it survive every input?</td><td>one running endpoint</td><td>the spec</td><td class="am">tests the spec’s world, not real consumers’ needs</td></tr>
+        <tr><td class="k">Contract</td><td>Do consumers stay satisfied?</td><td>provider ↔ consumer</td><td>your consumers</td><td class="am">validates shape, not the rendered journey</td></tr>
+        <tr><td class="k">End-to-end</td><td>Does the journey work?</td><td>the whole stack</td><td>a real user</td><td class="am">slow &amp; costly — can’t carry edge-case breadth</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+    <p class="note-line">Source of truth moves closer to reality as you descend; cost rises with it. Full citations live in the <strong>Sources</strong> tab.</p>
+  </section>
+
+  <!-- ============================================================ FOUR LAYERS -->
+  <section role="tabpanel" id="p-layers" aria-labelledby="t-layers" hidden>
+    <div class="eyebrow">The four layers · proves &amp; blind spot</div>
+    <h1 class="title">What each layer proves — and what it can’t see.</h1>
+    <p class="lede">Each layer discharges one class of doubt and leaves another untouched. Read top to bottom: every blind spot below is exactly what the next layer exists to catch. The tools are named as exemplars — the role is what matters, and every role has equivalents in every language.</p>
+
+    <h2 class="sec" style="margin-top:36px;">The layers</h2>
+
+    <article class="layer">
+      <div class="layer-top">
+        <div class="layer-id"><span class="num">01</span><span class="tool-name">Unit / logic tests</span></div>
+        <span class="scope">scope: <b>a single unit</b>, in isolation</span>
+      </div>
+      <h2 class="layer-q">Does my logic work?</h2>
+      <div class="claim proves">
+        <div class="claim-lab"><span class="d"></span>Proves</div>
+        <p class="claim-txt">Your branching, calculations, and transformations behave <strong>exactly as specified</strong> — for the inputs you chose, with collaborators mocked out. Fast, deterministic, white-box; runs on every save.</p>
+      </div>
+      <div class="claim blind">
+        <div class="claim-lab"><span class="d"></span>Blind spot</div>
+        <p class="claim-txt"><strong>Mocks can lie.</strong> A green run says nothing about whether the transport layer wires this unit up, whether the running service matches its spec, or whether anyone downstream can actually call it. Logic-correct and integration-broken is the classic trap.</p>
+      </div>
+      <div class="chips"><span class="chip">every save</span><span class="chip">~milliseconds</span><span class="chip">widest coverage · narrowest scope</span></div>
+    </article>
+    <div class="handoff"><span class="arr">↓</span><span>that gap — does the live endpoint hold up? — is what <span class="target">spec-derived testing</span> attacks</span></div>
+
+    <article class="layer">
+      <div class="layer-top">
+        <div class="layer-id"><span class="num">02</span><span class="tool-name">Spec-derived property / fuzz</span></div>
+        <span class="scope">scope: <b>one running endpoint</b>, black-box</span>
+      </div>
+      <h2 class="layer-q">Does my API survive every input the spec implies?</h2>
+      <div class="claim proves">
+        <div class="claim-lab"><span class="d"></span>Proves</div>
+        <p class="claim-txt">The live service handles the <strong>whole input space the OpenAPI/GraphQL spec describes</strong> — valid, malformed, boundary, nulls, oversized, odd encodings — without server errors, returning schema-conformant bodies and the documented status codes. Cases are generated from the contract, so they adapt automatically when it changes.</p>
+      </div>
+      <div class="claim blind">
+        <div class="claim-lab"><span class="d"></span>Blind spot</div>
+        <p class="claim-txt">It only knows <strong>the spec</strong>. Where the spec is wrong or thin, the generation is blind in exactly those places — and it explores the space the spec <em>describes</em>, not the narrow slice your real consumers depend on.</p>
+      </div>
+      <div class="chips"><span class="chip">in CI / nightly</span><span class="chip">many generated cases</span><span class="chip">shrinks to a minimal repro</span></div>
+    </article>
+    <div class="handoff"><span class="arr">↓</span><span>that gap — what do real callers actually rely on? — is what <span class="target">contract testing</span> pins down</span></div>
+
+    <article class="layer">
+      <div class="layer-top">
+        <div class="layer-id"><span class="num">03</span><span class="tool-name">Consumer-driven contracts</span></div>
+        <span class="scope">scope: <b>the provider ↔ consumer boundary</b></span>
+      </div>
+      <h2 class="layer-q">Does my API still satisfy real consumers?</h2>
+      <div class="claim proves">
+        <div class="claim-lab"><span class="d"></span>Proves</div>
+        <p class="claim-txt">Every change you ship still matches the <strong>exact requests each consumer sends and the responses it expects</strong>, recorded from real consumer code. Rename a field, change a type, or drop an endpoint, and it fails <em>here</em> — in your pipeline — instead of in their production. A deploy gate can block any version that would break a consumer in the target environment.</p>
+      </div>
+      <div class="claim blind">
+        <div class="claim-lab"><span class="d"></span>Blind spot</div>
+        <p class="claim-txt">It verifies the <strong>shape</strong> of the interaction, not its <strong>meaning</strong>. A provider can satisfy the contract perfectly and still return logically wrong data — and a contract says nothing about whether the full end-to-end journey holds together.</p>
+      </div>
+      <div class="chips"><span class="chip">in CI</span><span class="chip">per consumer</span><span class="chip">release gate</span></div>
+    </article>
+    <div class="handoff"><span class="arr">↓</span><span>that gap — does the whole thing work for a real user? — is what <span class="target">end-to-end testing</span> drives</span></div>
+
+    <article class="layer">
+      <div class="layer-top">
+        <div class="layer-id"><span class="num">04</span><span class="tool-name">End-to-end (browser)</span></div>
+        <span class="scope">scope: <b>the whole stack</b>, real browser</span>
+      </div>
+      <h2 class="layer-q">Does the full UI journey work?</h2>
+      <div class="claim proves">
+        <div class="claim-lab"><span class="d"></span>Proves</div>
+        <p class="claim-txt">Complete journeys — sign in, search, add to cart, check out — run against the <strong>real frontend and backend together</strong>, catching the integration failures that only surface when every piece is wired up live.</p>
+      </div>
+      <div class="claim blind">
+        <div class="claim-lab"><span class="d"></span>Blind spot</div>
+        <p class="claim-txt">Slow, costly, and brittle if undisciplined — so you can only afford a <strong>handful of critical paths</strong>. High confidence, narrow breadth. Edge-case coverage cannot live up here; it has to live in the layers above.</p>
+      </div>
+      <div class="chips"><span class="chip">pre-release</span><span class="chip">few critical paths</span><span class="chip">slowest · most expensive</span></div>
+    </article>
+    <div class="handoff up"><span class="arr">↑</span><span>which is exactly why <span class="target">layers 01–03</span> exist — they carry the breadth this layer can’t</span></div>
+
+    <div class="callout">
+      <div class="ct-lab">The synthesis</div>
+      <p>These aren’t four points on one scale — they’re four <strong>different questions</strong> that happen to widen in scope. As you descend, the source of truth shifts from your own assertions, to the spec, to your consumers, to a real user — and each step costs more to run. Each layer is <strong>necessary</strong>; none is <strong>sufficient</strong>.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ API TESTING -->
+  <section role="tabpanel" id="p-api" aria-labelledby="t-api" hidden>
+    <div class="eyebrow">API testing · the landscape</div>
+    <h1 class="title">The spec is the oracle. Tools differ by how much they trust it.</h1>
+    <p class="lede">There is no single Playwright-style monarch for REST APIs — the winning model is a <strong>stack</strong>: the contract as the source of truth, plus the right executor for coded regression, generated negatives, consumer contracts, mocks, and CI. Below, the families sorted from “replays your examples” to “proves against the spec,” then the supporting and adjacent tools.</p>
+
+    <div class="family-h">The contract — source of truth, not a test runner</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-h"><span class="card-name">OpenAPI / Swagger</span><span class="tag aux"><span class="d"></span>spec</span></div>
+        <p class="card-what">The language-agnostic description of your API. <strong>Not a test framework</strong> — it’s the contract every other tool consumes: docs, codegen, mock seed, validation input. Strongest when generated from code and versioned.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">Spectral</span><span class="tag aux"><span class="d"></span>lint</span></div>
+        <p class="card-what">Lints the <strong>spec itself</strong> with built-in and custom rules — enforce naming, require error schemas, ban deprecated patterns. The first CI gate: if the spec is broken, everything downstream is too.</p>
+      </div>
+    </div>
+
+    <div class="family-h">Example-based — you author, it replays (trust)</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-h"><span class="card-name">Postman</span><span class="tag trust"><span class="d"></span>client</span></div>
+        <p class="card-what">The category default: collections, environments, mocks, monitors, JS test scripts. The signed <strong>Postman CLI</strong> is the modern CI runner (Newman is the legacy alternative).</p>
+        <ul><li>If a non-developer touches your API, they touch Postman.</li><li>A 2026 change ended team collaboration on the free tier — a tailwind for git-native clients.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">Bruno</span><span class="tag trust"><span class="d"></span>client</span></div>
+        <p class="card-what">Git-native, offline-first: collections are <strong>plain-text files</strong> that live beside your code and diff in a pull request. No account, no cloud sync. CLI with JUnit output for CI.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">Insomnia</span><span class="tag trust"><span class="d"></span>client</span></div>
+        <p class="card-what">Design-first client (REST, GraphQL, gRPC, WebSockets) with a native OpenAPI editor and <strong>Inso CLI</strong> for linting and running suites in CI.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">REST Assured</span><span class="tag trust"><span class="d"></span>coded DSL</span></div>
+        <p class="card-what">The JVM standard: a fluent <strong>given/when/then</strong> DSL with deep JSON/XML assertions. Tests live as code in the repo, type-safe and refactorable, at the cost of boilerplate.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">Karate</span><span class="tag trust"><span class="d"></span>coded DSL</span></div>
+        <p class="card-what">A Gherkin-like DSL with <strong>no step-definitions required</strong> — JSON/XML are native, so full-payload assertions work out of the box. Bundles API tests, schema validation, mocks, and load hooks.</p>
+      </div>
+    </div>
+
+    <div class="family-h">Conformance &amp; spec-derived — it derives, it proves (proof)</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-h"><span class="card-name">Dredd</span><span class="tag aux"><span class="d"></span>conformance</span></div>
+        <p class="card-what">Reads the spec and checks the <strong>live API matches it endpoint-by-endpoint</strong> — status, headers, body shape. Hooks for auth and setup. Validates documented behaviour; doesn’t generate adversarial data.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">Schemathesis</span><span class="tag proof"><span class="d"></span>property-based</span></div>
+        <p class="card-what">Converts an OpenAPI/GraphQL schema into <strong>property-based tests</strong>, generating valid + adversarial inputs and checking each response against the contract — zero per-endpoint maintenance. Supports stateful flows; ships a <code>curl</code> repro for every failure.</p>
+        <ul><li>CLI, JUnit XML, GitHub Action, or use as a library.</li><li>Checks: server-error, status/content-type/schema conformance, negative-data rejection, auth.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">CATS</span><span class="tag proof"><span class="d"></span>fuzz</span></div>
+        <p class="card-what">JVM CLI fuzzer that auto-generates negative/edge tests from the contract with <strong>near-zero maintenance</strong>; in context mode also validates responses against the spec.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">RESTler</span><span class="tag proof"><span class="d"></span>stateful fuzz</span></div>
+        <p class="card-what">The first <strong>stateful</strong> REST fuzzer: infers producer-consumer dependencies across requests to reach deeper service states and surface security/reliability bugs.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">EvoMaster</span><span class="tag proof"><span class="d"></span>search-based</span></div>
+        <p class="card-what">AI/search-based generator — uniquely supports <strong>white-box</strong> testing (analysing the service to maximise coverage via evolutionary algorithms) as well as black-box. Outputs runnable test suites.</p>
+      </div>
+    </div>
+
+    <div class="family-h">Contracts — protect your consumers</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-h"><span class="card-name">Pact</span><span class="tag proof"><span class="d"></span>consumer-driven</span></div>
+        <p class="card-what">The de-facto standard for <strong>consumer-driven contracts</strong>: the consumer records expectations → a contract is published to a broker → the provider verifies against it → a <code>can-i-deploy</code> gate blocks breaking changes. Also covers event/message contracts.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">Spring Cloud Contract</span><span class="tag proof"><span class="d"></span>contract</span></div>
+        <p class="card-what">Contract testing for the Spring/JVM ecosystem; can use OpenAPI as the contract source. Natural fit for Spring microservice fleets.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">Microcks</span><span class="tag proof"><span class="d"></span>provider-driven</span></div>
+        <p class="card-what">Kubernetes-native mocking + <strong>conformance testing</strong> from OpenAPI/AsyncAPI/GraphQL/gRPC and Postman collections — a provider-driven counterpart to Pact’s consumer-driven model.</p>
+      </div>
+    </div>
+
+    <div class="family-h">Supporting — mocks &amp; real dependencies</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-h"><span class="card-name">WireMock</span><span class="tag aux"><span class="d"></span>mock / virtualize</span></div>
+        <p class="card-what">HTTP stubbing and service virtualization: match on URL/headers/body, <strong>inject faults and latency</strong>, record/playback, simulate stateful behaviour. A .NET port (WireMock.Net) carries the same core plus extras. Critical for deterministic CI when downstreams are missing, flaky, or paid.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">Testcontainers</span><span class="tag aux"><span class="d"></span>real deps</span></div>
+        <p class="card-what">Throwaway Docker containers as test fixtures — real databases, brokers, search, browsers — so integration tests run against <strong>real dependencies instead of mocks</strong>. Manages lifecycle; parallel-safe. Available across many languages.</p>
+      </div>
+    </div>
+
+    <div class="family-h">Adjacent — different problems, don’t conflate</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-h"><span class="card-name">Performance / load</span><span class="tag aux"><span class="d"></span>throughput</span></div>
+        <p class="card-what"><strong>k6, Gatling, JMeter, Locust, NBomber.</strong> They answer “how does it behave under traffic,” not “is it correct.” Pick by language/protocol — and never compare raw numbers across tools, which measure timing differently.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-name">API security</span><span class="tag aux"><span class="d"></span>authz / injection</span></div>
+        <p class="card-what"><strong>OWASP ZAP</strong> (open-source DAST, can seed from OpenAPI) and <strong>42Crunch</strong> (spec audit score + conformance scan). Functional tests do not replace security tests — generic scanners miss authorization flaws without API context.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="ct-lab">The verdict</div>
+      <p>API quality is an <strong>ecosystem, not a tool</strong>: OpenAPI is the map, coded/integration tests are the truth, contract tests protect consumers, spec-derived tests attack the edges, mocks control chaos, and CI enforces discipline. Choose each executor by the <em>job to be done</em> and your team’s language — not by hype.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ UI & E2E -->
+  <section role="tabpanel" id="p-ui" aria-labelledby="t-ui" hidden>
+    <div class="eyebrow">UI &amp; end-to-end · the browser</div>
+    <h1 class="title">In the browser, one move decided the winner: make the tool wait, not the human.</h1>
+    <p class="lede">Unlike APIs, UI testing has a clear modern default. The crown passed twice, and each handover turned on a single capability the incumbent couldn’t offer. Here’s why, what the leader actually gives you, where the rivals still hold ground, and the layers beneath end-to-end.</p>
+
+    <h2 class="sec">The line of succession</h2>
+    <p class="body">No framework appeared from nowhere. Each was dethroned by a capability it structurally could not provide.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-era">2004 · WebDriver</div>
+        <div class="step-name">Selenium <span class="role">the founder</span></div>
+        <div class="step-txt">Standardised browser automation — now the W3C WebDriver protocol — with the broadest language and browser reach of any tool.</div>
+        <div class="step-cost"><span class="lbl">what cost it the lead:</span> a protocol layer sits between test and browser — slower, and flaky unless you scatter explicit waits everywhere.</div>
+      </div>
+      <div class="step">
+        <div class="step-era">2017</div>
+        <div class="step-name">Cypress <span class="role">the reformer</span></div>
+        <div class="step-txt">In-browser execution, time-travel debugging, and a developer experience that felt like magic to frontend teams.</div>
+        <div class="step-cost"><span class="lbl">what cost it the lead:</span> running inside the browser is also a cage — historically Chromium-bound, with awkward cross-origin and multi-tab flows.</div>
+      </div>
+      <div class="step crown">
+        <div class="step-era">2020 · current reign</div>
+        <div class="step-name">Playwright <span class="role">the default</span></div>
+        <div class="step-txt">Drove the browser out-of-process, went cross-browser and cross-language, then shipped what nobody else had: <strong>auto-waiting</strong>.</div>
+        <div class="step-cost" style="color:var(--proof);"><span class="lbl" style="color:var(--faint);">why it leads:</span> the tool waits for actionability and assertions retry — a whole class of timing flake stops existing.</div>
+      </div>
+      <div class="step">
+        <div class="step-era">2026 · forming</div>
+        <div class="step-name">Agents <span class="role">the heir</span></div>
+        <div class="step-txt">Agents drive the browser through accessibility-tree snapshots and can author tests themselves. The open question: does the crown pass from humans writing tests to agents that write and run them? (See the AI-Native tab.)</div>
+      </div>
+    </div>
+
+    <h2 class="sec">The decisive move — the war on flakiness</h2>
+    <p class="body">Every earlier framework asked you to manage time by hand: sleep, poll, retry, pray. The modern fix is to make the tool wait. Before any action, Playwright runs <strong>actionability checks</strong> — is the element attached, <em>visible</em>, <em>stable</em> (same box across two frames), <em>enabled</em>, and able to <em>receive events</em> — and its web-first assertions <strong>retry until the condition holds</strong> or the timeout expires.</p>
+    <pre><code><span class="cmt">// Old way — you babysit the clock, and pray it's enough</span>
+await driver.wait(until.elementLocated(locator), 5000);
+await driver.sleep(500);
+
+<span class="cmt">// Modern way — the tool waits for actionability; the assertion retries</span>
+await page.getByRole('button', { name: 'Checkout' }).click();
+await expect(page.getByText('Order placed')).toBeVisible();</code></pre>
+
+    <h2 class="sec">The crown jewels</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Auto-wait + web-first assertions</span><span class="tag proof"><span class="d"></span>determinism</span></div><p class="card-what">Actionability gates every interaction; assertions poll until met. The default cure for timing flake.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Browser contexts</span><span class="tag proof"><span class="d"></span>isolation</span></div><p class="card-what">Near-instant, fully isolated sessions — clean state and parallelism without standing up a grid. Saved <code>storageState</code> reuses auth.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Out-of-process control</span><span class="tag proof"><span class="d"></span>architecture</span></div><p class="card-what">A persistent connection to browser internals instead of a per-command protocol round-trip — the basis of the speed advantage.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Cross-browser &amp; cross-language</span><span class="tag proof"><span class="d"></span>reach</span></div><p class="card-what">Chromium, Firefox, and WebKit (real Safari engine) with official bindings for TypeScript/JavaScript, Python, Java, and .NET.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Trace Viewer · Codegen · UI Mode</span><span class="tag proof"><span class="d"></span>observability</span></div><p class="card-what">Record a run and scrub it frame-by-frame with DOM, console, and network. Generate selectors by clicking. Debugging stops being archaeology.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Network interception + components</span><span class="tag proof"><span class="d"></span>control</span></div><p class="card-what">Route, stub, and assert on requests; mount components in isolation; built-in screenshot comparison and an API-request client.</p></div>
+    </div>
+
+    <h2 class="sec">Locator strategy — the real flake killer</h2>
+    <p class="body">Selector breakage is the biggest long-term maintenance cost in UI testing. The fix isn’t clever XPath — it’s <strong>user-facing, semantic locators</strong> backed by accessible HTML. Prefer the top of this list; treat <code>data-testid</code> as an explicit contract; reach for CSS/XPath last.</p>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Priority</th><th>Locator</th><th>Use when</th><th>Risk</th></tr></thead>
+      <tbody>
+        <tr><td class="k pr">1</td><td><code>getByRole</code></td><td>Buttons, links, headings, dialogs, menu items with accessible names.</td><td>Needs semantic HTML + stable accessible name.</td></tr>
+        <tr><td class="k pr">2</td><td><code>getByLabel</code></td><td>Form inputs where labels reflect user intent.</td><td>Breaks if labels are missing or fake.</td></tr>
+        <tr><td class="k">3</td><td><code>getByText</code></td><td>Stable messages, headings, visible business labels.</td><td>Localization and copy changes.</td></tr>
+        <tr><td class="k st">4</td><td><code>getByTestId</code></td><td>Repeated rows/cards, icon-only controls, complex widgets.</td><td>Drifts unless treated as a real contract.</td></tr>
+        <tr><td class="k am">5</td><td>CSS</td><td>Stable app-specific attributes; rare fallbacks.</td><td>Classes &amp; DOM structure change often.</td></tr>
+        <tr><td class="k am">last</td><td>XPath / <code>nth()</code></td><td>Only when trapped by poor DOM and no contract is possible.</td><td>High maintenance; invisible coupling to layout.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+    <p class="note-line">Rule: if a locator breaks, ask whether product accessibility or the test contract broke — don’t blindly add a longer wait.</p>
+
+    <h2 class="sec">The court — where rivals still hold ground</h2>
+    <p class="body">A default is not the whole kingdom. Each rival keeps a province the leader can’t take.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Selenium</span><span class="tag aux"><span class="d"></span>legacy / polyglot</span></div><p class="card-what">The W3C-standard estate: the widest language and browser footprint, mature grid infrastructure, and — via Appium — native mobile, which web-only tools can’t touch. Migrating toward WebDriver BiDi.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Cypress</span><span class="tag aux"><span class="d"></span>developer loop</span></div><p class="card-what">Still the most pleasant in-browser DX and a mature component-testing story for frontend teams living on Chromium.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">WebdriverIO</span><span class="tag aux"><span class="d"></span>node + bidi</span></div><p class="card-what">A flexible Node test framework over WebDriver/BiDi with a rich plugin ecosystem; combines web and, through Appium, mobile.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Puppeteer</span><span class="tag aux"><span class="d"></span>chromium predecessor</span></div><p class="card-what">The spiritual predecessor (Chrome team); steady and Chromium-focused, now with WebDriver BiDi support. New capabilities tend to land in Playwright first.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Appium</span><span class="tag aux"><span class="d"></span>native mobile</span></div><p class="card-what">Real-device and native/hybrid mobile automation across Android and iOS over the WebDriver protocol — the domain web-only tools structurally can’t enter.</p></div>
+    </div>
+
+    <h2 class="sec">Beneath end-to-end — the cheaper layers</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Testing Library + Vitest/Jest</span><span class="tag proof"><span class="d"></span>component / unit</span></div><p class="card-what">Query the DOM the way a user would (role, label, text); avoid implementation details. Use <em>before</em> Playwright when a full browser journey isn’t required — cheaper and faster.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">MSW</span><span class="tag aux"><span class="d"></span>network mocking</span></div><p class="card-what">Intercepts requests at the network level, so the <strong>same mock definitions</strong> work across unit, integration, E2E, and local dev — framework- and client-agnostic.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Percy · Chromatic · screenshots</span><span class="tag aux"><span class="d"></span>visual regression</span></div><p class="card-what">Catch visual diffs on <strong>stable, high-value</strong> surfaces — mask dynamic content, pin the render environment. Playwright’s built-in <code>toHaveScreenshot()</code> needs no service; Percy/Chromatic add cross-browser baselines and review.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">axe-core</span><span class="tag aux"><span class="d"></span>accessibility gate</span></div><p class="card-what">Catches obvious WCAG regressions in CI while keeping selectors close to user intent. A guardrail, not a full audit — automated checks cover only part of accessibility.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">WebDriver BiDi</span><span class="tag aux"><span class="d"></span>converging standard</span></div><p class="card-what">The emerging W3C bidirectional protocol — WebDriver’s standardization plus CDP-like real-time events. Selenium, WebdriverIO, and Puppeteer already adopt it; the likely convergence point.</p></div>
+    </div>
+
+    <div class="callout">
+      <div class="ct-lab">Architecture principle</div>
+      <p>A good UI test is not “click-click-click-pass.” It is a <strong>small executable business claim</strong>: “a seller can publish a product,” “an inactive user cannot access billing,” “search returns the indexed product after sync.” Design around journeys, stable selectors, clean data, and fast failure diagnosis — and don’t crown the recorder: generated scripts are a starting point, not an architecture.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ AI-NATIVE -->
+  <section role="tabpanel" id="p-ai" aria-labelledby="t-ai" hidden>
+    <div class="eyebrow">AI-native · the forming layer</div>
+    <h1 class="title">AI can write the test. A human owns the assertion.</h1>
+    <p class="lede">The newest layer points agents at the browser. It is genuinely useful for discovery and drafting — and unreliable as a source of truth. The rule that keeps it honest is simple: let AI accelerate; never let it be the oracle.</p>
+
+    <h2 class="sec">How agents drive the browser</h2>
+    <p class="body">The bridge between coding agents and the browser exposes the page as a <strong>structured accessibility-tree snapshot rather than pixels</strong>. Each interactive element gets a stable reference, which is fast, vision-free, deterministic, and far cheaper to reason over than a screenshot or raw DOM. An agent can navigate, fill forms, intercept network, and even author tests in natural language — registered into an agent client with a one-line configuration.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Accessibility-tree snapshots</span><span class="tag proof"><span class="d"></span>structured</span></div><p class="card-what">Deterministic, token-efficient page understanding — no vision model required. The same semantic surface that good locators rely on.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Author + reproduce</span><span class="tag proof"><span class="d"></span>discovery</span></div><p class="card-what">Agents explore flows, draft first-pass scripts, reproduce defects, and summarise trace failures into likely root causes.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">CLI or MCP</span><span class="tag aux"><span class="d"></span>integration</span></div><p class="card-what">Stateful, iterative agent loops favour a server interface; high-throughput coding agents can be more token-efficient with a CLI + skills workflow.</p></div>
+    </div>
+
+    <h2 class="sec">The line humans must hold</h2>
+    <div class="two">
+      <div class="anti" style="border-left:3px solid var(--proof-ln);">
+        <h4 style="color:var(--proof);"><span class="d" style="width:6px;height:6px;border-radius:50%;background:var(--proof);"></span>Where AI helps</h4>
+        <ul style="padding-left:17px;">
+          <li>Convert acceptance criteria into candidate test cases.</li>
+          <li>Explore app flows and produce first-draft scripts.</li>
+          <li>Inspect page state, reproduce defects, generate observations.</li>
+          <li>Summarise trace failures and suggest root causes.</li>
+          <li>Scaffold data factories, API clients, and fixtures.</li>
+        </ul>
+      </div>
+      <div class="anti">
+        <h4><span class="d" style="width:6px;height:6px;border-radius:50%;background:var(--gap);"></span>Where humans stay in control</h4>
+        <ul>
+          <li>Deciding <b>business-critical assertions</b>.</li>
+          <li>Choosing stable <b>locator contracts</b>.</li>
+          <li>Designing <b>data isolation</b> and cleanup.</li>
+          <li>Separating unit, component, API, and E2E concerns.</li>
+          <li>Approving <b>security, payment, and destructive</b> flows.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="sec">Why the oracle can’t be delegated yet</h2>
+    <p class="body">Recent research evaluating computer-use agents on end-to-end web testing consistently finds the same pattern: <strong>insufficient test completeness, weak defect detection, and unreliable long-horizon interaction</strong>. Field studies also show agents producing many <strong>false positives</strong> — frequently misattributing browser-automation limits (for example, a blocked download) to defects in the site under test. The qualitative conclusion across independent studies is that human oversight remains necessary; treat specific benchmark numbers as preliminary.</p>
+
+    <h3 class="sub">Prompt the agent like an engineer, not a wish</h3>
+    <div class="prompts">
+      <div class="pbox good">
+        <div class="pl">▸ Good prompt</div>
+        <div class="pt">“Given this acceptance criterion: <em>a suspended user cannot create an order and sees a support message.</em> Generate tests that: use role/label locators first; create the suspended user via an API fixture; reuse saved auth state; assert on the blocked button and the message; use no fixed waits; and name steps for tracing.”</div>
+      </div>
+      <div class="pbox bad">
+        <div class="pl">✗ Bad prompt</div>
+        <div class="pt">“Open the site and write all the tests. Use whatever selectors work. Make it pass.” → produces selector soup, happy-path bias, missing assertions, and brittle timing hacks.</div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="ct-lab">The honest rule</div>
+      <p>Let AI accelerate discovery and boilerplate. Do <strong>not</strong> let AI be the oracle. A test without a precise, human-owned assertion is just browser choreography — and agents are a force-multiplier on a mature framework, not a replacement for one.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ PATTERNS -->
+  <section role="tabpanel" id="p-patterns" aria-labelledby="t-patterns" hidden>
+    <div class="eyebrow">Patterns &amp; anti-patterns</div>
+    <h1 class="title">What a real safety net proves — and what turns green builds into false confidence.</h1>
+    <p class="lede">The difference between a suite that protects you and one that performs testing theatre is rarely the tool. It’s what you choose to prove, how you stage it, and the patterns you enforce. All of it is language-agnostic.</p>
+
+    <h2 class="sec">What serious API tests must prove</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Dimension</th><th>What to test</th><th>Example assertion</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Resource lifecycle</td><td>Create → read → update → search → delete</td><td>Created resource is returned by GET; delete changes visibility; search catches up after sync.</td></tr>
+        <tr><td class="k">Status semantics</td><td>Correct 2xx/4xx/5xx — not just “200”</td><td>Validation → 422; duplicate key → 409; unauthenticated → 401; unauthorized → 403.</td></tr>
+        <tr><td class="k">Schema conformance</td><td>Request/response shape, required fields, enums, formats</td><td>No undocumented fields; no missing required fields; date/time format stable.</td></tr>
+        <tr><td class="k">Business invariants</td><td>Rules beyond schema</td><td>Price can’t go negative; a settled order can’t be edited; only legal status transitions.</td></tr>
+        <tr><td class="k">Authorization matrix</td><td>Role · tenant · scope · ownership</td><td>Tenant A can’t read tenant B; a read-only token can’t mutate.</td></tr>
+        <tr><td class="k">Idempotency</td><td>Repeated POST/PUT/PATCH, idempotency keys</td><td>Same key → same result; duplicate create doesn’t double-charge.</td></tr>
+        <tr><td class="k">Concurrency</td><td>Races, optimistic locking, ETag/If-Match</td><td>Two updates: one succeeds, one gets 409/412.</td></tr>
+        <tr><td class="k">Eventual consistency</td><td>Write → propagate to search/read-model</td><td>Poll with a bounded timeout; verify index doc; no stale deleted record.</td></tr>
+        <tr><td class="k">Observability</td><td>Correlation IDs, audit logs, traces</td><td>Response carries a correlation ID; audit record created; error logged once.</td></tr>
+        <tr><td class="k">Fault tolerance</td><td>Downstream timeout, retry, circuit breaker</td><td>Returns a safe error; no duplicate side effect after retry.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">A CI pipeline that stages confidence</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Stage</th><th>Runs</th><th>Gate</th></tr></thead>
+      <tbody>
+        <tr><td class="k st">1 · Spec gate</td><td>Lint the spec; diff for breaking changes; compile generated clients.</td><td>Fail on removed fields/endpoints, changed types, status-code drift.</td></tr>
+        <tr><td class="k st">2 · Integration</td><td>Boot the service in a test host with real containerized dependencies.</td><td>Lifecycle, authz, invariants pass against real infra.</td></tr>
+        <tr><td class="k st">3 · Functional flows</td><td>Coded regression: create → read → update → search → delete with side-effect checks.</td><td>Business workflows hold end-to-end at the API level.</td></tr>
+        <tr><td class="k st">4 · Contract + fuzz</td><td>Provider contract verification; spec-derived negative/property testing.</td><td><code>can-i-deploy</code> is green; no server-error or schema-conformance failures.</td></tr>
+        <tr><td class="k st">5 · Release smoke</td><td>Minimal critical-path checks against the deployed environment.</td><td>Health and key journeys verified post-deploy.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">End-to-end patterns that separate real suites from demos</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">API-seed, UI-assert</span><span class="tag proof"><span class="d"></span>speed</span></div><p class="card-what">Create preconditions through the API, then verify through the UI. Faster and far less brittle than seeding state by clicking.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">storageState auth</span><span class="tag proof"><span class="d"></span>reuse</span></div><p class="card-what">Log in once per role, reuse the saved session — don’t pay the login cost in every test.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Fixtures over globals</span><span class="tag proof"><span class="d"></span>structure</span></div><p class="card-what">Inject page objects, API clients, tenants, users, and cleanup as fixtures — not scattered global state.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Test by role</span><span class="tag proof"><span class="d"></span>permissions</span></div><p class="card-what">Admin, viewer, seller, approver as explicit roles — model multi-user flows with isolated sessions, not login hacks.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Network-aware asserts</span><span class="tag proof"><span class="d"></span>determinism</span></div><p class="card-what">Wait for the specific response or state change when the UI alone is ambiguous — never a fixed sleep.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Trace on retry</span><span class="tag proof"><span class="d"></span>diagnosis</span></div><p class="card-what">Keep trace/video/screenshot on first retry or failure; fix the root cause, not the timeout number.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Contractual test IDs</span><span class="tag proof"><span class="d"></span>stability</span></div><p class="card-what">When you need a test ID, make it a stable product contract — not a random implementation leftover.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Minimal visual checks</span><span class="tag proof"><span class="d"></span>signal</span></div><p class="card-what">Screenshot high-value, stable surfaces only, with masks — not every page. Avoid baseline churn.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Flake quarantine</span><span class="tag proof"><span class="d"></span>ownership</span></div><p class="card-what">Quarantine is a temporary safety valve with an owner and a ticket — not a graveyard.</p></div>
+    </div>
+
+    <h2 class="sec">Anti-patterns — garbage in, garbage out</h2>
+    <div class="two">
+      <div class="anti">
+        <h4><span style="width:6px;height:6px;border-radius:50%;background:var(--gap);display:inline-block;"></span>API testing smells</h4>
+        <ul>
+          <li><b>Swagger theatre</b> — a spec nobody verifies against the implementation.</li>
+          <li>Only asserting status <b>200/201</b>.</li>
+          <li>A shared, <b>dirty test environment</b> with mutable data.</li>
+          <li>Collections live in someone’s cloud workspace, <b>not reviewed like code</b>.</li>
+          <li><b>No negative tests</b> for invalid values, missing auth, wrong tenant, duplicate keys.</li>
+          <li><b>Unverified mocks</b> that drift from real provider behaviour.</li>
+          <li>Tests depend on order and <b>can’t run in parallel</b>.</li>
+        </ul>
+      </div>
+      <div class="anti">
+        <h4><span style="width:6px;height:6px;border-radius:50%;background:var(--gap);display:inline-block;"></span>UI testing smells</h4>
+        <ul>
+          <li><b>Recorded scripts</b> checked in directly — brittle, selector-coupled flows.</li>
+          <li><b>Hard waits</b> / fixed sleeps; timeouts that keep growing.</li>
+          <li><b>One mega-test</b> per module — late failure hides the cause.</li>
+          <li><b>Shared mutable data</b> — passes alone, fails as a suite.</li>
+          <li>Testing <b>implementation details</b> — fails after a harmless refactor.</li>
+          <li><b>Screenshots everywhere</b> — baseline churn, ignored failures.</li>
+          <li><b>Retry-as-quality</b> — green builds hiding real nondeterminism.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="sec">Choose by the job, not the hype</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Job to be done</th><th>First choice</th><th>Why</th><th>Common trap</th></tr></thead>
+      <tbody>
+        <tr><td>Explore an API &amp; share examples</td><td><strong>Client</strong> (Postman / Bruno / Insomnia)</td><td>Fast discovery, environments, auth, examples.</td><td class="am">Calling exploratory collections “automation.”</td></tr>
+        <tr><td>Coded API regression with flows</td><td><strong>Coded DSL</strong> (Karate / REST Assured) or in-process integration</td><td>Readable, refactorable scenarios with setup.</td><td class="am">Giant chains that fail for unrelated reasons.</td></tr>
+        <tr><td>Spec conformance &amp; negatives</td><td><strong>Schemathesis</strong> (+ CATS / RESTler)</td><td>Spec-driven coverage and automatic edge cases.</td><td class="am">Assuming schema validation equals business correctness.</td></tr>
+        <tr><td>Protect downstream consumers</td><td><strong>Pact</strong></td><td>Captures real consumer expectations; gates release.</td><td class="am">Provider team ignoring consumer contracts.</td></tr>
+        <tr><td>Deterministic downstreams</td><td><strong>WireMock</strong> + Testcontainers</td><td>Fault/latency injection; real deps where it matters.</td><td class="am">Mocks drifting from provider reality.</td></tr>
+        <tr><td>Serious web E2E suite</td><td><strong>Playwright</strong></td><td>Isolation, cross-browser, traces, retries, parallelism.</td><td class="am">Starting with a legacy tool “because we always did.”</td></tr>
+        <tr><td>Component behaviour</td><td><strong>Testing Library</strong> + Vitest/Jest</td><td>Cheaper, faster, closer to component logic.</td><td class="am">Full browser E2E for every dropdown.</td></tr>
+        <tr><td>Native mobile</td><td><strong>Appium</strong></td><td>Real-device automation web tools can’t reach.</td><td class="am">Expecting a web-only tool to cover mobile.</td></tr>
+        <tr><td>Load / throughput</td><td><strong>k6 / Gatling</strong> (JMeter / Locust / NBomber)</td><td>A different problem: saturation, not correctness.</td><td class="am">Using functional tools as load tools.</td></tr>
+        <tr><td>Security baseline</td><td><strong>OWASP ZAP / 42Crunch</strong></td><td>Authz, injection, headers, schema risk.</td><td class="am">Thinking functional tests replace security tests.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">Maturity — four pillars to assess (not a score)</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Spec discipline</span><span class="tag st"><span class="d"></span>contract</span></div><p class="card-what">Spec generated or reviewed, linted, diffed for breaking changes, with generated clients and realistic examples.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Functional truth</span><span class="tag proof"><span class="d"></span>behaviour</span></div><p class="card-what">Lifecycle flows, business invariants, the authorization matrix, and data isolation are actually exercised.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Contract &amp; resilience</span><span class="tag proof"><span class="d"></span>safety</span></div><p class="card-what">Consumer contracts, fault simulation, idempotency, and concurrency are covered — not assumed.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Automation quality</span><span class="tag st"><span class="d"></span>operations</span></div><p class="card-what">CI gates, parallelism, traceable failure categories, and disciplined flake control — tests owned as production code.</p></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ SOURCES -->
+  <section role="tabpanel" id="p-sources" aria-labelledby="t-sources" hidden>
+    <div class="eyebrow">Appendix · sources</div>
+    <h1 class="title">Primary documentation, checked June 2026.</h1>
+    <p class="lede">Prefer official docs and primary project pages over blogs; recheck before relying on version-specific details. Popularity figures and benchmark percentages are deliberately omitted — they go stale and are rarely primary-sourced. Capabilities below are drawn from these references.</p>
+
+    <div class="src-group">
+      <h3>Specification &amp; governance</h3>
+      <ul class="src-list">
+        <li><span class="nm">OpenAPI Initiative</span> — openapis.org · spec.openapis.org</li>
+        <li><span class="nm">Spectral</span> (Stoplight) — github.com/stoplightio/spectral</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Spec-derived property / fuzz testing</h3>
+      <ul class="src-list">
+        <li><span class="nm">Schemathesis</span> — schemathesis.io · github.com/schemathesis/schemathesis · paper: arXiv:2112.10328</li>
+        <li><span class="nm">EvoMaster</span> — github.com/WebFuzzing/EvoMaster</li>
+        <li><span class="nm">RESTler</span> — github.com/microsoft/restler-fuzzer</li>
+        <li><span class="nm">CATS</span> — github.com/Endava/cats</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Contract testing &amp; mocking</h3>
+      <ul class="src-list">
+        <li><span class="nm">Pact</span> — docs.pact.io · pactflow.io</li>
+        <li><span class="nm">Spring Cloud Contract</span> — spring.io/projects/spring-cloud-contract</li>
+        <li><span class="nm">Microcks</span> — microcks.io</li>
+        <li><span class="nm">WireMock / WireMock.Net</span> — wiremock.org · github.com/wiremock/WireMock.Net</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Conformance &amp; API clients / DSLs</h3>
+      <ul class="src-list">
+        <li><span class="nm">Dredd</span> — dredd.org · github.com/apiaryio/dredd</li>
+        <li><span class="nm">REST Assured</span> — rest-assured.io</li>
+        <li><span class="nm">Karate</span> — github.com/karatelabs/karate</li>
+        <li><span class="nm">Postman</span> — learning.postman.com/docs/billing/about-plans</li>
+        <li><span class="nm">Bruno</span> — usebruno.com · docs.usebruno.com</li>
+        <li><span class="nm">Insomnia</span> (Kong) — developer.konghq.com/insomnia</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Integration, performance, security</h3>
+      <ul class="src-list">
+        <li><span class="nm">Testcontainers</span> — testcontainers.com</li>
+        <li><span class="nm">k6 · Gatling · JMeter · Locust · NBomber</span> — k6.io · gatling.io · jmeter.apache.org · locust.io · nbomber.com</li>
+        <li><span class="nm">OWASP ZAP</span> — zaproxy.org</li>
+        <li><span class="nm">42Crunch</span> — 42crunch.com</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>UI / E2E frameworks</h3>
+      <ul class="src-list">
+        <li><span class="nm">Playwright</span> — playwright.dev (actionability · locators · best-practices · test-snapshots)</li>
+        <li><span class="nm">Selenium</span> — selenium.dev (incl. WebDriver BiDi)</li>
+        <li><span class="nm">Cypress</span> — docs.cypress.io (trade-offs)</li>
+        <li><span class="nm">WebdriverIO</span> — webdriver.io</li>
+        <li><span class="nm">Puppeteer</span> — pptr.dev</li>
+        <li><span class="nm">Appium</span> — appium.io</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Component / unit · mocking · visual · a11y · protocol</h3>
+      <ul class="src-list">
+        <li><span class="nm">Testing Library</span> — testing-library.com/docs/guiding-principles</li>
+        <li><span class="nm">Vitest</span> — vitest.dev</li>
+        <li><span class="nm">MSW</span> — mswjs.io</li>
+        <li><span class="nm">Percy</span> — browserstack.com/percy</li>
+        <li><span class="nm">Chromatic</span> — chromatic.com</li>
+        <li><span class="nm">axe-core</span> (Deque) — github.com/dequelabs/axe-core</li>
+        <li><span class="nm">WebDriver BiDi</span> — w3.org/TR/webdriver-bidi · developer.mozilla.org</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Agentic / AI-native</h3>
+      <ul class="src-list">
+        <li><span class="nm">Playwright MCP</span> — playwright.dev/docs/getting-started-mcp · github.com/microsoft/playwright-mcp</li>
+        <li><span class="nm">AI web-testing research</span> — arXiv:2509.05197 (WebProber) · arXiv:2406.01623 (WebSuite)</li>
+      </ul>
+    </div>
+
+    <div class="callout warn">
+      <div class="ct-lab">A note on numbers</div>
+      <p>This guide describes <strong>qualitative leadership and documented capabilities</strong> rather than citing adoption percentages, download counts, or benchmark figures. Those are frequently vendor-sourced, version-specific, and quickly outdated — verify them yourself, at the source, on the day you need them.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="legend">
+    <span class="lg"><span class="sw" style="background:var(--proof)"></span> proves / covers / strength</span>
+    <span class="lg"><span class="sw" style="background:var(--gap)"></span> blind spot / caution / anti-pattern</span>
+    <span class="lg"><span class="sw" style="background:var(--steel)"></span> structure / axis / example-based</span>
+  </div>
+  Test Strategy Field Guide · consolidated &amp; language-agnostic · capabilities checked June 2026 · see the Sources tab for primary references.
+</footer>
+
+<script>
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+    var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function activate(i, focus) {
+      tabs.forEach(function (t, j) {
+        var sel = j === i;
+        t.setAttribute('aria-selected', sel ? 'true' : 'false');
+        t.tabIndex = sel ? 0 : -1;
+        panels[j].hidden = !sel;
+      });
+      if (focus !== false) tabs[i].focus();
+      try { tabs[i].scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {}
+      if (window.scrollY > 4) window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    }
+
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { activate(i); });
+      t.addEventListener('keydown', function (e) {
+        var n = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') n = 0;
+        else if (e.key === 'End') n = tabs.length - 1;
+        if (n !== null) { e.preventDefault(); activate(n); }
+      });
+    });
+
+    activate(0, false);
+  })();
+</script>
+</body>
+</html>

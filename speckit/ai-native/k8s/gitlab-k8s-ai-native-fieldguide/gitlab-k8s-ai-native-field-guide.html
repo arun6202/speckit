@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delivery Platform Field Guide — GitLab · Kubernetes · AI-Native · 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0C0F14;
+    --bg-2:     #12161D;
+    --bg-3:     #161B23;
+    --bg-4:     #1C222B;
+    --line:     #252C37;
+    --line-2:   #313A47;
+    --text:     #E9ECF1;
+    --dim:      #A4AEBC;
+    --faint:    #7B8694;
+    --proof:    #4FE0A0;   /* green — desired state / stable / GA / recommended / secure */
+    --proof-bg: rgba(79, 224, 160, 0.10);
+    --proof-ln: rgba(79, 224, 160, 0.38);
+    --gap:      #E8A95C;   /* amber — caution / EOL / sunset / risk / anti-pattern */
+    --gap-bg:   rgba(232, 169, 92, 0.10);
+    --gap-ln:   rgba(232, 169, 92, 0.38);
+    --steel:    #7E97FF;   /* blue — structure / control plane / pipeline / neutral */
+    --steel-bg: rgba(126, 151, 255, 0.10);
+    --steel-ln: rgba(126, 151, 255, 0.38);
+    --violet:   #C08CF0;   /* AI accent */
+    --violet-bg:rgba(192, 140, 240, 0.10);
+    --violet-ln:rgba(192, 140, 240, 0.38);
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --disp: 'Archivo', system-ui, sans-serif;
+    --body: 'Hanken Grotesk', system-ui, sans-serif;
+    --maxw: 1020px;
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--body);
+    font-size: 16px; line-height: 1.62; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(1000px 560px at 88% -8%, rgba(126, 151, 255, 0.06), transparent 60%),
+      radial-gradient(820px 520px at 4% 3%, rgba(79, 224, 160, 0.045), transparent 55%),
+      radial-gradient(680px 480px at 100% 40%, rgba(192, 140, 240, 0.04), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  /* HEADER */
+  .app-header { position: sticky; top: 0; z-index: 30; background: rgba(12,15,20,0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+  .app-header-inner { max-width: var(--maxw); margin: 0 auto; padding: 16px clamp(18px,5vw,40px) 0; }
+  .brand { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .brand-eye { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint); }
+  .brand-name { font-family: var(--disp); font-weight: 800; font-size: clamp(17px,2.4vw,21px); letter-spacing: -0.02em; }
+  .brand-name .dot { color: var(--proof); }
+  .brand-tag { font-family: var(--mono); font-size: 11px; color: var(--faint); white-space: nowrap; }
+
+  /* TABS */
+  .tabbar { max-width: var(--maxw); margin: 0 auto; padding: 12px clamp(18px,5vw,40px) 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  .tabbar::-webkit-scrollbar { display: none; }
+  .tab { appearance: none; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--faint); font-family: var(--mono); font-size: 13px; font-weight: 500; padding: 9px 14px 12px; cursor: pointer; white-space: nowrap; transition: color .15s, border-color .15s; }
+  .tab:hover { color: var(--dim); }
+  .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--proof); }
+  .tab:focus-visible { outline: 2px solid var(--steel); outline-offset: -2px; border-radius: 4px; }
+
+  /* PANELS */
+  .panels { max-width: var(--maxw); margin: 0 auto; padding: clamp(34px,5vw,60px) clamp(18px,5vw,40px) 100px; }
+  [role="tabpanel"] { animation: fade .4s ease; }
+  [role="tabpanel"][hidden] { display: none; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none; } }
+
+  /* TYPE */
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); display: flex; align-items: center; gap: 12px; }
+  .eyebrow::after { content:''; height:1px; flex:1; background: linear-gradient(90deg, var(--line-2), transparent); }
+  h1.title { font-family: var(--disp); font-weight: 800; font-size: clamp(28px,5.2vw,44px); line-height: 1.06; letter-spacing: -0.025em; margin: 22px 0 20px; max-width: 22ch; }
+  h1.title .q { color: var(--proof); } h1.title .g { color: var(--gap); } h1.title .v { color: var(--violet); }
+  h2.sec { font-family: var(--disp); font-weight: 700; font-size: clamp(21px,3.2vw,28px); letter-spacing: -0.02em; margin: 56px 0 8px; }
+  h2.sec:first-of-type { margin-top: 40px; }
+  h3.sub { font-family: var(--disp); font-weight: 700; font-size: clamp(17px,2.4vw,20px); letter-spacing: -0.015em; margin: 34px 0 12px; }
+  .lede { font-size: clamp(16px,2.1vw,18px); color: var(--dim); max-width: 68ch; }
+  p.body { color: var(--dim); max-width: 72ch; margin: 14px 0; }
+  p.body strong { color: var(--text); font-weight: 600; }
+  .note-line { font-family: var(--mono); font-size: 12px; color: var(--faint); margin-top: 14px; }
+  a { color: var(--steel); text-decoration: none; } a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; color: #cdd6e3; }
+
+  /* LOOP (delivery loop) */
+  .loop-scroll { overflow-x: auto; scrollbar-width: thin; margin: 24px 0 6px; }
+  .loop { display: flex; align-items: stretch; gap: 0; min-width: 760px; }
+  .loop-step { flex: 1; background: var(--bg-3); border: 1px solid var(--line); border-radius: 12px; padding: 14px 15px; position: relative; }
+  .loop-step + .loop-step { margin-left: 26px; }
+  .loop-step + .loop-step::before { content: '▸'; position: absolute; left: -20px; top: 50%; transform: translateY(-50%); color: var(--faint); font-size: 14px; }
+  .loop-num { font-family: var(--mono); font-size: 10.5px; color: var(--bg); padding: 2px 7px; border-radius: 5px; font-weight: 600; }
+  .ls-git .loop-num { background: var(--steel); } .ls-ci .loop-num { background: var(--steel); }
+  .ls-pub .loop-num { background: var(--proof); } .ls-rec .loop-num { background: var(--proof); }
+  .ls-run .loop-num { background: var(--proof); } .ls-obs .loop-num { background: var(--violet); }
+  .loop-name { font-family: var(--mono); font-size: 13px; font-weight: 600; margin: 9px 0 5px; }
+  .loop-txt { font-size: 12px; color: var(--dim); line-height: 1.45; }
+  .loop-tool { font-family: var(--mono); font-size: 10.5px; color: var(--faint); margin-top: 7px; }
+  .loop-back { font-family: var(--mono); font-size: 12px; color: var(--violet); text-align: center; margin-top: 10px; }
+
+  /* PLANES */
+  .planes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 22px 0 6px; }
+  .plane { border: 1px solid var(--line); border-radius: 14px; padding: 20px; background: var(--bg-2); }
+  .plane.delivery { border-top: 2px solid var(--steel-ln); }
+  .plane.runtime { border-top: 2px solid var(--proof-ln); }
+  .plane h4 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .plane.delivery h4 { color: var(--steel); } .plane.runtime h4 { color: var(--proof); }
+  .plane .pdesc { font-size: 13px; color: var(--dim); margin-bottom: 12px; }
+  .plane .pchips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .pchip { font-family: var(--mono); font-size: 11px; color: var(--dim); padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); }
+  .ai-band { border: 1px solid var(--violet-ln); background: var(--violet-bg); border-radius: 14px; padding: 16px 20px; margin: 14px 0 6px; }
+  .ai-band h4 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--violet); margin-bottom: 7px; }
+  .ai-band p { font-size: 13.5px; color: var(--dim); } .ai-band strong { color: var(--text); }
+
+  /* QUICK HITS */
+  .hits { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 12px; margin: 18px 0; }
+  .hit { background: var(--bg-3); border: 1px solid var(--line); border-radius: 11px; padding: 14px 15px; border-left: 2px solid var(--proof-ln); }
+  .hit.warn { border-left-color: var(--gap-ln); }
+  .hit .ht { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  .hit .hx { font-size: 12.5px; color: var(--dim); line-height: 1.45; }
+  .hit .hx em { color: var(--gap); font-style: normal; }
+  .hit .hx b { color: var(--proof); font-weight: 600; }
+
+  /* CARDS */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px,1fr)); gap: 14px; margin: 16px 0; }
+  .card { background: var(--bg-3); border: 1px solid var(--line); border-radius: 13px; padding: 17px 18px; }
+  .card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+  .card-name { font-family: var(--mono); font-size: 14.5px; font-weight: 600; }
+  .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .tag .d { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+  .tag.ga .d { background: var(--proof); } .tag.warn .d { background: var(--gap); } .tag.core .d { background: var(--steel); } .tag.ai .d { background: var(--violet); }
+  .card-what { font-size: 13.5px; color: var(--dim); line-height: 1.5; }
+  .card-what strong { color: var(--text); font-weight: 600; }
+  .card ul { margin: 9px 0 0; padding-left: 16px; }
+  .card li { font-size: 12.5px; color: var(--dim); line-height: 1.5; margin-bottom: 3px; }
+  .card li::marker { color: var(--faint); }
+
+  .family-h { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); margin: 34px 0 4px; display: flex; align-items: center; gap: 10px; }
+  .family-h.ai { color: var(--violet); }
+  .family-h::after { content:''; height:1px; flex:1; background: var(--line); }
+
+  /* STAGES BAR */
+  .stages { display: flex; gap: 8px; margin: 18px 0; overflow-x: auto; scrollbar-width: thin; padding-bottom: 4px; }
+  .stage { flex: 1; min-width: 130px; background: var(--bg-3); border: 1px solid var(--line); border-top: 2px solid var(--steel-ln); border-radius: 10px; padding: 12px 13px; }
+  .stage .sn { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+  .stage .st { font-family: var(--mono); font-size: 12.5px; font-weight: 600; margin: 4px 0 5px; }
+  .stage .sx { font-size: 11.5px; color: var(--dim); line-height: 1.4; }
+
+  /* RECON loop */
+  .recon { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; margin: 20px 0; background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .recon-box { text-align: center; padding: 14px; border-radius: 11px; }
+  .recon-box.desired { background: var(--proof-bg); border: 1px solid var(--proof-ln); }
+  .recon-box.live { background: var(--steel-bg); border: 1px solid var(--steel-ln); }
+  .recon-box .rl { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .recon-box.desired .rl { color: var(--proof); } .recon-box.live .rl { color: var(--steel); }
+  .recon-box .rt { font-size: 12.5px; color: var(--dim); }
+  .recon-mid { text-align: center; font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .recon-mid .ar { font-size: 20px; color: var(--violet); display: block; }
+
+  /* TABLES */
+  .table-wrap { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--bg-2); margin: 16px 0; }
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; }
+  th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13.5px; }
+  tbody tr:last-child td { border-bottom: none; }
+  thead th { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); background: var(--bg-3); white-space: nowrap; }
+  thead th:first-child { color: var(--faint); font-weight: 500; }
+  td { color: var(--dim); }
+  td.k { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+  td strong { color: var(--text); font-weight: 600; }
+  .pr { color: var(--proof); } .am { color: var(--gap); } .st { color: var(--steel); } .vi { color: var(--violet); }
+
+  /* TWO-COL anti */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .anti { background: var(--bg-3); border: 1px solid var(--line); border-radius: 13px; padding: 18px; }
+  .anti h4 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gap); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .anti.good h4 { color: var(--proof); }
+  .anti ul { padding-left: 17px; margin: 0; }
+  .anti li { font-size: 13px; color: var(--dim); line-height: 1.5; margin-bottom: 8px; }
+  .anti li::marker { color: var(--gap-ln); }
+  .anti.good li::marker { color: var(--proof-ln); }
+  .anti li b { color: var(--text); font-weight: 600; }
+  .dot6 { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+  /* CALLOUT */
+  .callout { border: 1px solid var(--line-2); border-left: 3px solid var(--proof-ln); background: var(--bg-2); border-radius: 0 12px 12px 0; padding: 16px 20px; margin: 18px 0; }
+  .callout.warn { border-left-color: var(--gap-ln); }
+  .callout.ai { border-left-color: var(--violet-ln); }
+  .callout .ct-lab { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--proof); margin-bottom: 7px; }
+  .callout.warn .ct-lab { color: var(--gap); } .callout.ai .ct-lab { color: var(--violet); }
+  .callout p { font-size: 14.5px; color: var(--dim); } .callout p strong { color: var(--text); }
+
+  pre { background: var(--bg-2); border: 1px solid var(--line); border-radius: 11px; padding: 15px 17px; overflow-x: auto; margin: 14px 0; }
+  pre code { background: none; border: none; padding: 0; font-size: 12.5px; color: #cdd6e3; line-height: 1.65; }
+  .cmt { color: var(--faint); } .kw { color: var(--steel); } .str { color: var(--proof); }
+
+  /* SOURCES */
+  .src-group { margin: 26px 0; }
+  .src-group h3 { font-family: var(--mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .src-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 8px 22px; }
+  .src-list li { font-size: 13.5px; color: var(--dim); padding-left: 16px; position: relative; line-height: 1.5; }
+  .src-list li::before { content: '→'; position: absolute; left: 0; color: var(--faint); }
+  .src-list .nm { color: var(--text); font-weight: 600; }
+
+  footer { max-width: var(--maxw); margin: 0 auto; padding: 28px clamp(18px,5vw,40px) 60px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--faint); line-height: 1.7; }
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 12px; }
+  .lg { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 9px; height: 9px; border-radius: 2px; }
+
+  @media (max-width: 760px) {
+    .two, .planes { grid-template-columns: 1fr; }
+    .recon { grid-template-columns: 1fr; }
+    .recon-mid .ar { transform: rotate(90deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } [role="tabpanel"] { animation: none; } }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-header-inner">
+    <div class="brand">
+      <div>
+        <div class="brand-eye">Field reference · delivery platform</div>
+        <div class="brand-name">Git → Cluster → Agents<span class="dot">.</span></div>
+      </div>
+      <div class="brand-tag">GitLab · Kubernetes · AI-native · SOTA Jun 2026</div>
+    </div>
+  </div>
+  <div class="tabbar" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="t-overview" aria-controls="p-overview" aria-selected="true">Overview</button>
+    <button class="tab" role="tab" id="t-gitlab"   aria-controls="p-gitlab"   aria-selected="false">GitLab CI/CD</button>
+    <button class="tab" role="tab" id="t-k8s"      aria-controls="p-k8s"      aria-selected="false">Kubernetes</button>
+    <button class="tab" role="tab" id="t-gitops"   aria-controls="p-gitops"   aria-selected="false">GitOps &amp; Delivery</button>
+    <button class="tab" role="tab" id="t-ai"       aria-controls="p-ai"       aria-selected="false">AI-Native</button>
+    <button class="tab" role="tab" id="t-patterns" aria-controls="p-patterns" aria-selected="false">Patterns</button>
+    <button class="tab" role="tab" id="t-sources"  aria-controls="p-sources"  aria-selected="false">Sources</button>
+  </div>
+</header>
+
+<main class="panels">
+
+  <!-- ===================================================== OVERVIEW -->
+  <section role="tabpanel" id="p-overview" aria-labelledby="t-overview">
+    <div class="eyebrow">Overview · the platform</div>
+    <h1 class="title">Git holds the <span class="q">truth</span>. The pipeline proves it. The cluster <span class="q">reconciles</span> to it. <span class="v">Agents</span> now ride the loop.</h1>
+    <p class="lede">Modern delivery is one continuous loop with two planes. The <strong>delivery plane</strong> — GitLab — turns a commit into a verified, signed artifact. The <strong>runtime plane</strong> — Kubernetes — continuously converges the live cluster onto the declared desired state. In 2026 a third thing cuts across both: <strong>AI</strong>, which now authors and fixes pipelines, diagnoses and operates clusters, and runs as first-class workloads on the cluster itself. This guide maps that whole picture — and flags what's genuinely state-of-the-art right now. It is deliberately stack-agnostic; tools are named as exemplars.</p>
+
+    <h2 class="sec">The delivery loop</h2>
+    <p class="body">Everything below is a stop on one loop. Code becomes truth in Git; CI proves and packages it; GitOps pulls it into the cluster; the cluster runs and self-heals; observability feeds the next change. The shift that defines the era: deployment is no longer a <em>push</em> from a pipeline but a <em>pull</em> the cluster performs against Git.</p>
+    <div class="loop-scroll">
+      <div class="loop">
+        <div class="loop-step ls-git"><span class="loop-num">01</span><div class="loop-name">Commit</div><div class="loop-txt">Source + manifests are versioned, reviewed, and merged. Git is the single source of truth.</div><div class="loop-tool">GitLab SCM · MR review</div></div>
+        <div class="loop-step ls-ci"><span class="loop-num">02</span><div class="loop-name">Build &amp; verify</div><div class="loop-txt">Pipeline builds, tests, scans, and gates. Fail fast before anything ships.</div><div class="loop-tool">GitLab CI/CD · components</div></div>
+        <div class="loop-step ls-pub"><span class="loop-num">03</span><div class="loop-name">Publish</div><div class="loop-txt">Immutable image + manifests pushed as signed OCI artifacts with an SBOM.</div><div class="loop-tool">Registry · Cosign · SBOM</div></div>
+        <div class="loop-step ls-rec"><span class="loop-num">04</span><div class="loop-name">Reconcile</div><div class="loop-txt">A controller pulls the desired state and converges the cluster, correcting drift.</div><div class="loop-tool">Flux / Argo CD · agent</div></div>
+        <div class="loop-step ls-run"><span class="loop-num">05</span><div class="loop-name">Run</div><div class="loop-txt">Kubernetes schedules, scales, heals, and routes traffic — progressively.</div><div class="loop-tool">K8s · Rollouts · Gateway API</div></div>
+        <div class="loop-step ls-obs"><span class="loop-num">06</span><div class="loop-name">Observe</div><div class="loop-txt">Metrics, logs, traces — increasingly read by AI agents that diagnose and propose fixes.</div><div class="loop-tool">Prometheus · k8sgpt · Duo</div></div>
+      </div>
+    </div>
+    <div class="loop-back">↻ findings open the next merge request — and the loop closes</div>
+
+    <h2 class="sec">Two planes, one AI layer</h2>
+    <div class="planes">
+      <div class="plane delivery">
+        <h4>Delivery plane — GitLab</h4>
+        <div class="pdesc">Where a change is proven and packaged. The system of record for code, pipelines, artifacts, security findings, and now agents.</div>
+        <div class="pchips"><span class="pchip">SCM + MRs</span><span class="pchip">CI/CD + components</span><span class="pchip">registry</span><span class="pchip">security scanning</span><span class="pchip">Duo agents</span></div>
+      </div>
+      <div class="plane runtime">
+        <h4>Runtime plane — Kubernetes</h4>
+        <div class="pdesc">Where the declared state becomes a running system. Scheduling, networking, scaling, and self-healing as a convergence engine.</div>
+        <div class="pchips"><span class="pchip">workloads</span><span class="pchip">Gateway API</span><span class="pchip">autoscaling</span><span class="pchip">operators/CRDs</span><span class="pchip">GPU scheduling</span></div>
+      </div>
+    </div>
+    <div class="ai-band">
+      <h4>↘ AI layer — across both planes</h4>
+      <p><strong>In the pipeline:</strong> agents draft issues→MRs, modernize CI, and auto-resolve vulnerabilities. <strong>On the cluster:</strong> agents diagnose incidents and operate workloads via MCP. <strong>As workloads:</strong> the cluster itself serves LLMs and schedules GPUs. The constant: agents propose; humans own the merge, the production apply, and anything irreversible.</p>
+    </div>
+
+    <h2 class="sec">What's state-of-the-art in 2026</h2>
+    <div class="hits">
+      <div class="hit"><div class="ht">GitLab Duo Agent Platform</div><div class="hx"><b>GA.</b> Agentic chat, foundational/custom/external agents (incl. Claude Code, Codex CLI), multi-step flows, an AI Catalog, and an MCP client across the SDLC.</div></div>
+      <div class="hit"><div class="ht">CI/CD Components &amp; Catalog</div><div class="hx"><b>GA.</b> Versioned, input-parameterized pipeline building blocks — the DRY successor to copy-pasted YAML and includes.</div></div>
+      <div class="hit"><div class="ht">GitOps is the default</div><div class="hx">Argo CD and Flux are <b>both CNCF-graduated</b>; pull-based reconciliation with drift correction is the mainstream deploy model.</div></div>
+      <div class="hit warn"><div class="ht">ingress-nginx → Gateway API</div><div class="hx"><em>ingress-nginx retired (read-only) March 2026 — no more CVE patches.</em> Gateway API (GatewayClass/Gateway/HTTPRoute) is the successor.</div></div>
+      <div class="hit"><div class="ht">DRA went GA for GPUs</div><div class="hx"><b>Kubernetes 1.34.</b> Attribute-based device claims replace count-based <code>nvidia.com/gpu: 1</code>; MIG/MPS/time-slicing for sharing.</div></div>
+      <div class="hit"><div class="ht">vLLM · KServe · llm-d</div><div class="hx">The consolidated 2026 inference stack: a fast engine, a serving control plane with scale-to-zero, and KV-cache-aware distributed routing.</div></div>
+      <div class="hit"><div class="ht">Agentic cluster ops</div><div class="hx">k8sgpt, kagent, and HolmesGPT bring Observe→Reason→Act to operations — most exposing an <b>MCP server</b> for assistants.</div></div>
+      <div class="hit warn"><div class="ht">Cert-based K8s integration</div><div class="hx"><em>Sunsetting on GitLab.com (2026).</em> Migrate to the GitLab agent for Kubernetes for secure, pull-based cluster connectivity.</div></div>
+    </div>
+    <p class="note-line">Every tab ends nowhere near exhaustive — the markdown companion carries the deep reference, and the Sources tab lists primary docs (checked June 2026).</p>
+  </section>
+
+  <!-- ===================================================== GITLAB CI/CD -->
+  <section role="tabpanel" id="p-gitlab" aria-labelledby="t-gitlab" hidden>
+    <div class="eyebrow">Delivery plane · GitLab CI/CD</div>
+    <h1 class="title">Turn a commit into a proven, signed artifact.</h1>
+    <p class="lede">A GitLab pipeline is a directed graph of jobs that build, test, scan, and package every change before it can ship. The 2026 platform adds two things that matter: <strong>reusable components</strong> that kill copy-pasted YAML, and <strong>agents</strong> that set up, modernize, and repair pipelines for you.</p>
+
+    <h2 class="sec">The pipeline model</h2>
+    <p class="body">Jobs belong to <strong>stages</strong> that run in sequence by default; <code>needs:</code> turns the pipeline into a <strong>DAG</strong> so independent jobs start as soon as their inputs are ready. <code>rules:</code> and <code>workflow:</code> decide when a job or pipeline runs; <strong>artifacts</strong> and <strong>cache</strong> pass state between jobs; <strong>environments</strong> model where a version is deployed and gate production behind manual approval.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Stages &amp; jobs</span><span class="tag core"><span class="d"></span>model</span></div><p class="card-what">Ordered stages of parallel jobs. The unit of work is a job running a script in an image.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">needs: (DAG)</span><span class="tag core"><span class="d"></span>speed</span></div><p class="card-what">Break the strict stage order — start a job the moment its dependencies finish. Shorter critical path.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">rules / workflow</span><span class="tag core"><span class="d"></span>control</span></div><p class="card-what">Conditional execution by branch, MR, tag, file changes, or variables. Replaces legacy <code>only/except</code>.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Environments</span><span class="tag core"><span class="d"></span>deploy</span></div><p class="card-what">Track deployed versions per environment; protect prod with approvals; tie into release and rollback.</p></div>
+    </div>
+
+    <h2 class="sec">Runners — where jobs execute</h2>
+    <p class="body">Runners pick up jobs and run them. The modern pattern is the <strong>Kubernetes executor</strong>: each job gets its own ephemeral pod that is created on demand and destroyed after — clean builds, automatic resource cleanup, no persistent host to babysit. The runner deployment itself becomes a GitOps artifact when managed by Flux.</p>
+
+    <h2 class="sec">CI/CD Components &amp; the Catalog</h2>
+    <p class="body">A <strong>component</strong> is a reusable, versioned unit of pipeline configuration — a function for pipelines, with typed <code>inputs</code> and pinned versions. Publish them to the <strong>CI/CD Catalog</strong> so teams discover and reuse instead of reinventing. This is the SOTA answer to YAML sprawl.</p>
+    <pre><code><span class="cmt"># Consume a versioned component — pinned, parameterized, reviewable</span>
+<span class="kw">include</span>:
+  - <span class="kw">component</span>: $CI_SERVER_FQDN/my-group/components/docker-build@<span class="str">1.2.0</span>
+    <span class="kw">inputs</span>:
+      image: <span class="str">my-app</span>
+      dockerfile: <span class="str">Dockerfile.prod</span>
+
+<span class="cmt"># Authoring one (templates/docker-build.yml)</span>
+<span class="kw">spec</span>:
+  <span class="kw">inputs</span>:
+    image: { type: string }
+    dockerfile: { type: string, default: <span class="str">Dockerfile</span> }
+---
+build:
+  image: docker:27
+  script:
+    - docker build -f $[[ inputs.dockerfile ]] -t $[[ inputs.image ]] .</code></pre>
+
+    <h2 class="sec">Security scanning — shift left, gate the merge</h2>
+    <p class="body">GitLab folds application-security scanners directly into the pipeline so findings surface in the merge request, not weeks later. Treat them as <strong>gates</strong>, not reports.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">SAST</span><span class="tag core"><span class="d"></span>code</span></div><p class="card-what">Static analysis of source for vulnerable patterns. Now paired with agentic resolution that drafts ready-to-merge fixes.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Dependency &amp; Container</span><span class="tag core"><span class="d"></span>supply</span></div><p class="card-what">Scan third-party libraries and image layers for known CVEs; produce a dependency inventory.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Secret Detection</span><span class="tag core"><span class="d"></span>leaks</span></div><p class="card-what">Catch committed tokens and keys before they reach history. Pair with rotation.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">DAST &amp; IaC</span><span class="tag core"><span class="d"></span>runtime/config</span></div><p class="card-what">Dynamic scanning of a running app, plus IaC scanning of Terraform/Kubernetes manifests for misconfig.</p></div>
+    </div>
+
+    <h2 class="sec">Supply-chain integrity</h2>
+    <p class="body">The pipeline is the right place to make artifacts trustworthy: generate an <strong>SBOM</strong> (CycloneDX) of what's inside, <strong>sign</strong> the image with Cosign (keyless OIDC), and attach <strong>SLSA provenance</strong> attestations describing how it was built. The cluster later verifies all of this at admission (see Patterns).</p>
+
+    <div class="callout ai">
+      <div class="ct-lab">AI in the pipeline</div>
+      <p>GitLab Duo agents now <strong>stand up a working pipeline from a repo</strong>, <strong>convert/modernize legacy CI</strong>, <strong>fix a failing pipeline</strong>, and <strong>auto-resolve SAST findings</strong> with ready-to-merge code. Useful acceleration — but the merge stays human-owned (see the AI-Native tab).</p>
+    </div>
+  </section>
+
+  <!-- ===================================================== KUBERNETES -->
+  <section role="tabpanel" id="p-k8s" aria-labelledby="t-k8s" hidden>
+    <div class="eyebrow">Runtime plane · Kubernetes</div>
+    <h1 class="title">A convergence engine for declared state.</h1>
+    <p class="lede">You don't tell Kubernetes <em>how</em> to run your system — you declare <em>what</em> you want, and controllers work continuously to make reality match. Understand the core objects, how traffic gets in (now via the Gateway API), how things scale, and how workloads stay healthy.</p>
+
+    <h2 class="sec">Core workload objects</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Pod</span><span class="tag core"><span class="d"></span>atom</span></div><p class="card-what">The smallest deployable unit — one or more containers sharing network and storage. You rarely create these directly.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Deployment</span><span class="tag core"><span class="d"></span>stateless</span></div><p class="card-what">Declarative rollout/rollback of replicated stateless pods via ReplicaSets. The default for web/API services.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">StatefulSet</span><span class="tag core"><span class="d"></span>stateful</span></div><p class="card-what">Stable identities and ordered, persistent storage for databases, brokers, and clustered systems.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">DaemonSet</span><span class="tag core"><span class="d"></span>per-node</span></div><p class="card-what">One pod per node — log shippers, metrics agents, CNI, GPU device tooling.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Job / CronJob</span><span class="tag core"><span class="d"></span>batch</span></div><p class="card-what">Run-to-completion tasks and scheduled work — migrations, ETL, training jobs.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">ConfigMap / Secret</span><span class="tag core"><span class="d"></span>config</span></div><p class="card-what">Externalized configuration and sensitive values. Keep Secrets encrypted; never commit plaintext to Git.</p></div>
+    </div>
+
+    <h2 class="sec">Getting traffic in — the Gateway API era</h2>
+    <div class="callout warn">
+      <div class="ct-lab">Major 2026 shift</div>
+      <p>The community <strong>ingress-nginx</strong> controller was <strong>retired in March 2026</strong> (repository read-only; no further releases, bug fixes, or CVE patches). The <strong>Gateway API</strong> — with GA core resources <code>GatewayClass</code>, <code>Gateway</code>, and <code>HTTPRoute</code> — is the successor, offering role separation, header/traffic matching, and cross-namespace routing without annotation sprawl. The legacy Ingress API itself remains but is feature-frozen; <code>ingress2gateway</code> assists migration.</p>
+    </div>
+    <p class="body">Gateway API implementations to evaluate include <strong>Envoy Gateway, Istio, Cilium, Traefik, Kong, kgateway, Contour,</strong> and <strong>NGINX Gateway Fabric</strong>. <code>Service</code> still provides stable in-cluster addressing (ClusterIP) and basic external exposure (LoadBalancer); the Gateway layer handles L7 routing on top.</p>
+
+    <h2 class="sec">Packaging — Helm &amp; Kustomize</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Helm</span><span class="tag core"><span class="d"></span>templating</span></div><p class="card-what">Charts package and parameterize manifests via <code>values</code>; great for redistributable apps and dependencies. GitOps tools consume it (Flux <code>HelmRelease</code>, Argo server-side render).</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Kustomize</span><span class="tag core"><span class="d"></span>overlays</span></div><p class="card-what">Template-free base + overlays for per-environment patches. Built into <code>kubectl</code>; idiomatic for "same app, different env."</p></div>
+    </div>
+
+    <h2 class="sec">Extending the API — operators &amp; CRDs</h2>
+    <p class="body">A <strong>CustomResourceDefinition</strong> adds new object types; an <strong>operator</strong> is a controller that reconciles them, encoding day-2 operational knowledge (backups, failover, upgrades) as software. Most of the AI-serving and GitOps tooling in this guide ships as operators with their own CRDs.</p>
+
+    <h2 class="sec">Scaling &amp; resilience</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">HPA / VPA</span><span class="tag core"><span class="d"></span>pod scaling</span></div><p class="card-what">Horizontal scaling on CPU/memory/custom metrics; vertical right-sizing of requests. The baseline elasticity.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">KEDA</span><span class="tag ga"><span class="d"></span>event-driven</span></div><p class="card-what">Scale on queue depth, stream lag, or external signals — and <strong>scale to zero</strong> when idle. Key for bursty and AI workloads.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Karpenter / Cluster Autoscaler</span><span class="tag core"><span class="d"></span>node scaling</span></div><p class="card-what">Provision and consolidate nodes to fit pending pods — including GPU node pools — for cost-efficient capacity.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Probes &amp; PDB</span><span class="tag core"><span class="d"></span>health</span></div><p class="card-what">liveness/readiness/startup probes drive healing and safe rollouts; PodDisruptionBudgets protect availability during disruptions.</p></div>
+    </div>
+    <p class="note-line">Production defaults that aren't optional: resource requests/limits, all three probe types, a PodDisruptionBudget, topology spread + anti-affinity, and a non-root, least-privilege security context. Details in Patterns.</p>
+  </section>
+
+  <!-- ===================================================== GITOPS & DELIVERY -->
+  <section role="tabpanel" id="p-gitops" aria-labelledby="t-gitops" hidden>
+    <div class="eyebrow">The bridge · GitOps &amp; delivery</div>
+    <h1 class="title">Stop pushing deploys. Let the cluster pull the truth.</h1>
+    <p class="lede">GitOps makes Git the single source of truth and puts a controller <em>inside</em> the cluster that continuously reconciles live state to declared state — correcting drift automatically. It's how the delivery plane and runtime plane connect, and in 2026 it's the mainstream model.</p>
+
+    <h2 class="sec">The reconciliation loop</h2>
+    <div class="recon">
+      <div class="recon-box desired"><div class="rl">Desired state</div><div class="rt">Manifests / Helm / Kustomize, versioned in Git (or an OCI artifact)</div></div>
+      <div class="recon-mid"><span class="ar">⇄</span>continuously compare &amp; converge · correct drift</div>
+      <div class="recon-box live"><div class="rl">Live state</div><div class="rt">What's actually running in the cluster, right now</div></div>
+    </div>
+    <p class="body">Per the OpenGitOps principles, the system is <strong>declarative</strong>, <strong>versioned &amp; immutable</strong>, <strong>pulled automatically</strong>, and <strong>continuously reconciled</strong>. A change is a commit; a rollback is a revert; the audit trail is the Git history.</p>
+
+    <h2 class="sec">Push vs. pull</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Model</th><th>How it works</th><th>Trade-off</th></tr></thead>
+      <tbody>
+        <tr><td class="k am">Push (CI deploys)</td><td>The pipeline runs <code>kubectl</code>/<code>helm</code> against the cluster using stored credentials.</td><td>Simple, but the pipeline holds cluster creds, there's no drift correction, and the cluster trusts an external actor.</td></tr>
+        <tr><td class="k pr">Pull (GitOps)</td><td>An in-cluster controller watches Git/OCI and applies changes itself; no inbound cluster credentials.</td><td>Recommended: least-privilege, self-healing, fully auditable. Slightly more moving parts to learn.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">The GitLab agent for Kubernetes</h2>
+    <p class="body"><strong>agentk</strong> (in-cluster) plus the <strong>agent server (KAS)</strong> establishes a secure, bidirectional tunnel that needs no open inbound cluster port. It supports both <strong>pull-based GitOps (with Flux)</strong> and <strong>push-based CI access</strong>, surfaces live cluster state in the GitLab UI, and provides user impersonation for scoped access.</p>
+    <div class="callout warn">
+      <div class="ct-lab">Migrate off the old path</div>
+      <p>The legacy <strong>certificate-based Kubernetes integration is sunsetting on GitLab.com (2026)</strong>. Move to the agent for Kubernetes for secure connectivity. GitLab recommends <strong>Flux</strong> for the GitOps engine, using <strong>signed OCI artifacts</strong> as the source rather than a raw Git repository.</p>
+    </div>
+
+    <h2 class="sec">The two GitOps engines</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th></th><th>Flux</th><th>Argo CD</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Model</td><td>Composable controllers running <strong>inside each cluster</strong>; no central plane.</td><td><strong>Centralized</strong> control plane + web UI managing many target clusters (hub-and-spoke).</td></tr>
+        <tr><td class="k">API</td><td>Fully CRD-native: <code>GitRepository</code>/<code>OCIRepository</code>, <code>Kustomization</code>, <code>HelmRelease</code>.</td><td><code>Application</code> / <code>ApplicationSet</code>; app-of-apps for fleets; rich dependency/health UI.</td></tr>
+        <tr><td class="k">Strength</td><td>Lightweight, Kubernetes-idiomatic, strong multi-tenancy &amp; OCI/SOPS story.</td><td>Visibility, multi-cluster operations, large ecosystem (Workflows, Events, Rollouts).</td></tr>
+        <tr><td class="k">Status</td><td class="pr">CNCF Graduated</td><td class="pr">CNCF Graduated</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+    <p class="note-line">Not a "which is better" — it's where you place control: distributed per-cluster autonomy (Flux) vs a central hub with a UI (Argo CD). Both are production-grade.</p>
+
+    <h2 class="sec">Progressive delivery</h2>
+    <p class="body">A rolling update is the floor — it gives readiness gating but no traffic control or automated rollback. <strong>Progressive delivery</strong> adds gradual traffic shifting, metric-based analysis, and automatic promote/abort.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Argo Rollouts</span><span class="tag ga"><span class="d"></span>Argo side</span></div><p class="card-what">A <code>Rollout</code> replaces <code>Deployment</code> with <strong>canary</strong> and <strong>blue-green</strong> strategies, <code>AnalysisTemplate</code> metric gates, and traffic shaping via Gateway API or a service mesh.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Flagger</span><span class="tag ga"><span class="d"></span>Flux side</span></div><p class="card-what">Canary, A/B, and blue-green driven by metrics, integrating with meshes (Istio, Linkerd) and ingress/gateway controllers.</p></div>
+    </div>
+    <p class="note-line">Automated promotion is only as trustworthy as the metrics behind it — progressive delivery assumes a Prometheus-class metrics source and precise traffic splitting (mesh or supported gateway).</p>
+  </section>
+
+  <!-- ===================================================== AI-NATIVE -->
+  <section role="tabpanel" id="p-ai" aria-labelledby="t-ai" hidden>
+    <div class="eyebrow">AI-native · across the platform</div>
+    <h1 class="title">Agents <span class="v">build</span> it, agents <span class="v">operate</span> it, and the cluster <span class="v">runs</span> the models.</h1>
+    <p class="lede">AI-native means three distinct things in 2026: AI <strong>in</strong> the delivery platform, AI <strong>operating</strong> the cluster, and AI <strong>as the workload</strong> the cluster runs. All three are real and production-adjacent — and all three keep a human on the irreversible decisions.</p>
+
+    <div class="family-h ai">A · AI in the delivery platform</div>
+    <p class="body"><strong>GitLab Duo Agent Platform (GA)</strong> moves from 1:1 code assistance to many-to-many team-agent collaboration across the SDLC.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Agentic Chat</span><span class="tag ai"><span class="d"></span>interface</span></div><p class="card-what">Multi-step reasoning with full project context — issues, MRs, pipelines, security findings — in the Web UI and IDEs.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Agents</span><span class="tag ai"><span class="d"></span>workers</span></div><p class="card-what"><strong>Foundational</strong> (Planner, Security Analyst…), <strong>Custom</strong> (your standards, via <code>AGENTS.md</code>), and <strong>External</strong> — Claude Code and Codex CLI, natively integrated.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Flows</span><span class="tag ai"><span class="d"></span>workflows</span></div><p class="card-what">Chained agents for end-to-end tasks: <strong>Issue→MR</strong> (Developer), <strong>Convert to GitLab CI/CD</strong>, <strong>Fix CI/CD Pipeline</strong>, Code Review.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">AI Catalog + MCP</span><span class="tag ai"><span class="d"></span>extensibility</span></div><p class="card-what">Discover and share agents/flows; the <strong>MCP client</strong> pulls context and takes action in Jira, Confluence, Slack, and more.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Agentic SAST resolution</span><span class="tag ga"><span class="d"></span>security</span></div><p class="card-what"><strong>GA.</strong> Automatically generates ready-to-merge fixes for detected vulnerabilities — closing them before production.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Credits &amp; governance</span><span class="tag ai"><span class="d"></span>cost control</span></div><p class="card-what">Per-feature model selection, subscription- and per-user spend caps, and usage visibility for safe enterprise rollout.</p></div>
+    </div>
+
+    <div class="family-h ai">B · AI operating the cluster (AIOps)</div>
+    <p class="body">A new class of tools brings <strong>Observe → Reason → Act</strong> to operations — and most expose an <strong>MCP server</strong> so any assistant can drive them.</p>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">k8sgpt</span><span class="tag ai"><span class="d"></span>diagnose</span></div><p class="card-what">CNCF project: 20+ built-in analyzers scan the cluster; <code>--explain</code> sends anonymized context to an LLM for plain-English root cause. Ships an <strong>MCP server</strong> for Claude/MCP clients.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">kagent</span><span class="tag ai"><span class="d"></span>operate</span></div><p class="card-what">Solo.io, CNCF Sandbox: an agentic framework that runs in-cluster, supports <strong>MCP and A2A</strong>, and executes constrained, auditable remediations — not a magic self-healing button.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">HolmesGPT</span><span class="tag ai"><span class="d"></span>investigate</span></div><p class="card-what">Root-cause analysis from alerts, pulling Prometheus, logs, and external tools — purpose-built for incident investigation.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">kubectl-ai · Botkube</span><span class="tag ai"><span class="d"></span>assist</span></div><p class="card-what">Natural-language <code>kubectl</code>, and alert triage with suggested commands inside Slack/Teams.</p></div>
+    </div>
+
+    <div class="family-h ai">C · AI workloads on the cluster</div>
+    <h3 class="sub">Serving the models</h3>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">vLLM</span><span class="tag ga"><span class="d"></span>engine</span></div><p class="card-what">The 2026 default inference engine: <strong>PagedAttention</strong> for efficient KV-cache memory and <strong>continuous batching</strong> for throughput. The runtime under most stacks.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">KServe</span><span class="tag ga"><span class="d"></span>serving plane</span></div><p class="card-what">Standardized serving control plane: <code>InferenceService</code> / <code>LLMInferenceService</code>, <strong>scale-to-zero</strong>, canary rollout, and model lifecycle/governance.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">llm-d</span><span class="tag ai"><span class="d"></span>distributed</span></div><p class="card-what">Kubernetes-native distributed inference: <strong>KV-cache-aware routing</strong>, prefill/decode disaggregation, and the Gateway API Inference Extension for cluster-wide efficiency.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">vLLM production-stack</span><span class="tag ai"><span class="d"></span>reference</span></div><p class="card-what">Reference K8s deployment: prefix-aware request routing and KV-cache sharing (LMCache) to scale from one engine to a fleet without app changes.</p></div>
+    </div>
+    <h3 class="sub">Scheduling the GPUs</h3>
+    <div class="callout">
+      <div class="ct-lab">SOTA: DRA is GA</div>
+      <p><strong>Dynamic Resource Allocation</strong> went GA in <strong>Kubernetes 1.34</strong> and is on by default. It replaces the count-based <code>nvidia.com/gpu: 1</code> model with <strong>attribute-based claims</strong> (<code>DeviceClass</code>, <code>ResourceClaim</code>, <code>ResourceSlice</code>) — request a GPU by memory, MIG profile, or topology. NVIDIA is donating its DRA driver to the CNCF.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">GPU sharing</span><span class="tag core"><span class="d"></span>density</span></div><p class="card-what"><strong>MIG</strong> = hardware partitions (≤7) with isolation; <strong>MPS</strong> = trusted concurrency; <strong>time-slicing</strong> = oversubscription, no isolation. Typical: MIG on inference, whole-GPU on training, time-slice on dev.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">NVIDIA GPU Operator</span><span class="tag core"><span class="d"></span>drivers</span></div><p class="card-what">Manages driver lifecycle, device plugin/CDI, and feature discovery. The standard way to make GPUs schedulable.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Kueue</span><span class="tag ga"><span class="d"></span>queueing</span></div><p class="card-what">CNCF job queueing and quota on top of the scheduler — fair sharing of scarce GPUs across teams; DRA-aware.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">KAI / Volcano</span><span class="tag core"><span class="d"></span>gang sched</span></div><p class="card-what">Gang scheduling and topology-aware placement for distributed training (atomic all-or-nothing). KAI (NVIDIA) and Volcano (HPC/MPI).</p></div>
+    </div>
+    <h3 class="sub">Orchestrating the rest</h3>
+    <p class="body"><strong>Ray</strong> for distributed training/serving, <strong>Kubeflow</strong> for pipelines, <strong>KAITO</strong> for model operators, <strong>Karmada</strong> for multi-cluster federation, <strong>MLflow</strong> for tracking, and <strong>Karpenter</strong> for GPU node provisioning round out the platform.</p>
+
+    <div class="callout ai">
+      <div class="ct-lab">The line humans hold</div>
+      <p>Agents draft MRs, diagnose incidents, and suggest remediations brilliantly — but a human owns <strong>the merge, the production apply, the rollout promotion, the security policy, and anything irreversible or destructive</strong>. Start agents read-only / dry-run in dev or staging; require approval for writes; scope blast radius with RBAC. <strong>An agent can open the MR; a human owns the merge.</strong> For data-sovereignty, point agents and AIOps at <em>self-hosted</em> model endpoints (e.g. a local vLLM/Ollama backend) so context never leaves your boundary.</p>
+    </div>
+  </section>
+
+  <!-- ===================================================== PATTERNS -->
+  <section role="tabpanel" id="p-patterns" aria-labelledby="t-patterns" hidden>
+    <div class="eyebrow">Patterns &amp; anti-patterns</div>
+    <h1 class="title">What a trustworthy platform does — and what quietly breaks it.</h1>
+    <p class="lede">The tools are commodities; the discipline isn't. These are the patterns that make delivery fast and safe across both planes, and the anti-patterns that turn green pipelines and "it's running" into false confidence. All stack-agnostic.</p>
+
+    <h2 class="sec">Pipeline &amp; delivery patterns</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Components over copy-paste</span><span class="tag ga"><span class="d"></span>DRY</span></div><p class="card-what">Centralize build/scan/deploy as versioned catalog components; consumers pin a version and pass inputs.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">DAG + fail-fast gates</span><span class="tag ga"><span class="d"></span>speed/safety</span></div><p class="card-what">Parallelize with <code>needs:</code>; run security and lint early so broken changes die cheaply.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Immutable, digest-pinned images</span><span class="tag ga"><span class="d"></span>reproducible</span></div><p class="card-what">Tag by version/SHA and deploy by digest — never <code>latest</code>. The same artifact promotes across environments.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Ephemeral runners</span><span class="tag ga"><span class="d"></span>clean</span></div><p class="card-what">One pod per job on the Kubernetes executor; no shared mutable runner state.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Environments + approvals</span><span class="tag ga"><span class="d"></span>control</span></div><p class="card-what">Model dev/stage/prod; protect production with manual approval and protected variables.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Sign + attest in CI</span><span class="tag ga"><span class="d"></span>supply chain</span></div><p class="card-what">Cosign signature + SBOM + SLSA provenance produced in the pipeline, verified later at admission.</p></div>
+    </div>
+
+    <h2 class="sec">GitOps patterns</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Separate app vs config repos</span><span class="tag ga"><span class="d"></span>structure</span></div><p class="card-what">Application source and deployment manifests live apart; a CI bump to the config repo triggers reconciliation.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Signed OCI as source</span><span class="tag ga"><span class="d"></span>integrity</span></div><p class="card-what">Package manifests as OCI artifacts, sign them, and have the controller deploy only verified images.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Env via overlay/dir/branch</span><span class="tag ga"><span class="d"></span>promotion</span></div><p class="card-what">Kustomize overlays or per-env directories; promotion is a reviewed change, not a console click.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Drift = alert + auto-correct</span><span class="tag ga"><span class="d"></span>convergence</span></div><p class="card-what">Out-of-band changes are detected and reverted to the declared state; surprises become signals.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Secrets, never plaintext</span><span class="tag ga"><span class="d"></span>safety</span></div><p class="card-what">SOPS, Sealed Secrets, or an external secrets operator — encrypted at rest in Git, decrypted in-cluster.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">App-of-apps / ApplicationSet</span><span class="tag ga"><span class="d"></span>scale</span></div><p class="card-what">Template fleets across clusters/teams from one declarative definition instead of hand-managing each.</p></div>
+    </div>
+
+    <h2 class="sec">Kubernetes production patterns</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Requests &amp; limits</span><span class="tag ga"><span class="d"></span>fairness</span></div><p class="card-what">Set both so the scheduler can pack honestly and one workload can't starve a node (OOM/noisy neighbor).</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">All three probes</span><span class="tag ga"><span class="d"></span>health</span></div><p class="card-what">startup → readiness → liveness drive safe rollouts and self-healing without flapping.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Least-privilege security context</span><span class="tag ga"><span class="d"></span>hardening</span></div><p class="card-what">Non-root, read-only root filesystem, drop capabilities; enforce via Pod Security Admission (restricted).</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Default-deny NetworkPolicy</span><span class="tag ga"><span class="d"></span>segmentation</span></div><p class="card-what">Deny all, then allow needed flows. Closes the most common production gap (K8s Top 10).</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">PDB + spread + anti-affinity</span><span class="tag ga"><span class="d"></span>availability</span></div><p class="card-what">Survive node drains and zone loss; don't co-locate all replicas on one node/zone.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Namespaces + RBAC</span><span class="tag ga"><span class="d"></span>tenancy</span></div><p class="card-what">Isolate by team/env with least-privilege roles; no cluster-admin for routine work.</p></div>
+    </div>
+
+    <h2 class="sec">Supply-chain &amp; admission security</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Layer</th><th>Do</th><th>Tooling</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Sign &amp; verify</td><td>Sign images at build (keyless OIDC); reject unsigned at admission.</td><td>Cosign / Sigstore · Sigstore Policy Controller</td></tr>
+        <tr><td class="k">Provenance &amp; SBOM</td><td>Attach SLSA provenance + CycloneDX SBOM as attestations; verify what &amp; how.</td><td>Syft · Trivy · SLSA (L3 target)</td></tr>
+        <tr><td class="k">Admission policy</td><td>Enforce required labels, registries, non-root, signature checks.</td><td class="pr">Kyverno (graduated) · VAP/CEL · OPA Gatekeeper</td></tr>
+        <tr><td class="k">Vuln scanning</td><td>Continuously scan running images for CVEs; gate in CI too.</td><td>Trivy Operator</td></tr>
+        <tr><td class="k">Runtime</td><td>Detect anomalous syscalls/behaviour at runtime.</td><td>Falco · Tetragon · KubeArmor</td></tr>
+        <tr><td class="k">Posture</td><td>Audit cluster config against benchmarks regularly.</td><td>Kubescape · kube-bench · OWASP K8s Top 10</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">AI-workload &amp; agent patterns</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Right sharing per tier</span><span class="tag ga"><span class="d"></span>GPU economy</span></div><p class="card-what">MIG for isolated inference, whole-GPU for training, time-slicing for dev — expressed as DRA DeviceClasses, not separate node pools.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Scale idle models to zero</span><span class="tag ga"><span class="d"></span>cost</span></div><p class="card-what">KServe/KEDA scale-to-zero so idle endpoints don't burn GPUs; Karpenter releases the node.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Queue, don't thrash</span><span class="tag ga"><span class="d"></span>fairness</span></div><p class="card-what">Kueue admits GPU jobs against quota; gang-schedule distributed training so partial placement can't deadlock.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Cap the agent blast radius</span><span class="tag ai"><span class="d"></span>governance</span></div><p class="card-what">Read-only/dry-run first; approval gates for writes; scoped RBAC; audit every action. No unattended prod mutation.</p></div>
+    </div>
+
+    <h2 class="sec">Anti-patterns — quietly corrosive</h2>
+    <div class="two">
+      <div class="anti">
+        <h4><span class="dot6" style="background:var(--gap)"></span>Delivery &amp; supply chain</h4>
+        <ul>
+          <li><b>kubectl apply from laptops</b> — undocumented, unauditable drift.</li>
+          <li>Pipeline deploys with <b>cluster-admin creds</b> stored in CI.</li>
+          <li>Deploying <b>:latest</b> — no reproducibility, no real rollback.</li>
+          <li>Secrets in <b>CI variables or plaintext Git</b>.</li>
+          <li><b>No security gates</b> — scanners run but never block.</li>
+          <li><b>Snowflake runners</b> and copy-pasted YAML everywhere.</li>
+        </ul>
+      </div>
+      <div class="anti">
+        <h4><span class="dot6" style="background:var(--gap)"></span>Runtime, GitOps &amp; AI</h4>
+        <ul>
+          <li><b>ClickOps drift</b> — changes made in the console, not Git.</li>
+          <li><b>No requests/limits or probes</b> — OOM, noisy neighbors, no healing.</li>
+          <li>Running <b>ingress-nginx past EOL</b> (unpatched L7 in the data path).</li>
+          <li><b>Unsigned images</b> admitted; cluster-admin as the default.</li>
+          <li><b>nvidia.com/gpu: 1 for everything</b> — no sharing, no scale-to-zero, GPUs idle-burning.</li>
+          <li><b>Auto-merging agent MRs</b> or giving agents unattended prod write access.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="sec">Choose by the job</h2>
+    <div class="table-wrap"><div class="table-scroll">
+    <table>
+      <thead><tr><th>Job to be done</th><th>Reach for</th><th>Why</th><th>Trap</th></tr></thead>
+      <tbody>
+        <tr><td>Reusable pipeline logic</td><td><strong>CI/CD Components + Catalog</strong></td><td>Versioned, parameterized, discoverable.</td><td class="am">Copy-pasting YAML across repos.</td></tr>
+        <tr><td>Connect cluster to GitLab</td><td><strong>Agent for Kubernetes</strong></td><td>Secure tunnel; pull + push; live state in UI.</td><td class="am">Cert-based integration (sunsetting).</td></tr>
+        <tr><td>Continuous deployment</td><td><strong>Flux</strong> or <strong>Argo CD</strong></td><td>Pull-based, self-healing, auditable.</td><td class="am">Pipeline pushing with cluster creds.</td></tr>
+        <tr><td>Safe releases</td><td><strong>Argo Rollouts / Flagger</strong></td><td>Canary/blue-green with metric gates.</td><td class="am">Big-bang rollout, manual rollback.</td></tr>
+        <tr><td>External traffic (new)</td><td><strong>Gateway API</strong> impl.</td><td>Portable L7; ingress-nginx is retired.</td><td class="am">Standing up unmaintained ingress-nginx.</td></tr>
+        <tr><td>Serve an LLM</td><td><strong>vLLM + KServe</strong> (+ llm-d)</td><td>Fast engine + serving plane + scale-to-zero.</td><td class="am">A generic web Deployment per model.</td></tr>
+        <tr><td>Share scarce GPUs</td><td><strong>DRA + MIG/time-slice + Kueue</strong></td><td>Attribute claims, isolation tiers, fair queues.</td><td class="am">Whole GPU per pod, no queue.</td></tr>
+        <tr><td>Diagnose the cluster</td><td><strong>k8sgpt / HolmesGPT</strong></td><td>Analyzer + LLM RCA; MCP-accessible.</td><td class="am">Treating output as ground truth.</td></tr>
+        <tr><td>Enforce policy at deploy</td><td><strong>Kyverno</strong> (or VAP/CEL)</td><td>YAML policies; verify signatures, require config.</td><td class="am">Hoping CI alone catches it.</td></tr>
+      </tbody>
+    </table>
+    </div></div>
+
+    <h2 class="sec">Maturity — four pillars</h2>
+    <div class="grid">
+      <div class="card"><div class="card-h"><span class="card-name">Delivery</span><span class="tag core"><span class="d"></span>pipeline</span></div><p class="card-what">Catalog components, fail-fast gates, immutable digest-pinned artifacts, signed with SBOM + provenance.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">GitOps</span><span class="tag core"><span class="d"></span>delivery</span></div><p class="card-what">Pull-based reconciliation, drift correction, encrypted secrets, environments promoted by review.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">Runtime</span><span class="tag core"><span class="d"></span>cluster</span></div><p class="card-what">Probes + limits everywhere, restricted PSA, default-deny network, verified-image admission, Gateway API.</p></div>
+      <div class="card"><div class="card-h"><span class="card-name">AI governance</span><span class="tag ai"><span class="d"></span>agents</span></div><p class="card-what">Scoped agents, approval gates, model routing (incl. self-hosted), full action audit, GPU queues + scale-to-zero.</p></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== SOURCES -->
+  <section role="tabpanel" id="p-sources" aria-labelledby="t-sources" hidden>
+    <div class="eyebrow">Appendix · sources</div>
+    <h1 class="title">Primary documentation, checked June 2026.</h1>
+    <p class="lede">Prefer official docs and primary project pages over blogs; this is a fast-moving area, so recheck version-specific details (GA states, release numbers, retirement dates) before relying on them. Capabilities here are drawn from the references below.</p>
+
+    <div class="src-group">
+      <h3>GitLab — CI/CD, components, agent, Duo</h3>
+      <ul class="src-list">
+        <li><span class="nm">GitLab Docs</span> — docs.gitlab.com</li>
+        <li><span class="nm">CI/CD Components</span> — docs.gitlab.com/ci/components · explore/catalog</li>
+        <li><span class="nm">Agent for Kubernetes &amp; GitOps</span> — docs.gitlab.com/user/clusters/agent</li>
+        <li><span class="nm">Duo Agent Platform</span> — docs.gitlab.com/user/duo_agent_platform · about.gitlab.com/blog</li>
+        <li><span class="nm">Cert-based integration sunset</span> — GitLab release/deprecation notes</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Kubernetes core &amp; networking</h3>
+      <ul class="src-list">
+        <li><span class="nm">Kubernetes Docs</span> — kubernetes.io/docs</li>
+        <li><span class="nm">Gateway API</span> — gateway-api.sigs.k8s.io</li>
+        <li><span class="nm">ingress-nginx retirement</span> — kubernetes.io/blog (Jan/Mar 2026 statements)</li>
+        <li><span class="nm">ingress2gateway</span> — kubernetes.io/blog/2026/03/20</li>
+        <li><span class="nm">Helm</span> — helm.sh · <span class="nm">Kustomize</span> — kustomize.io</li>
+        <li><span class="nm">KEDA</span> — keda.sh · <span class="nm">Karpenter</span> — karpenter.sh</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>GitOps &amp; progressive delivery</h3>
+      <ul class="src-list">
+        <li><span class="nm">Flux</span> — fluxcd.io</li>
+        <li><span class="nm">Argo CD</span> — argo-cd.readthedocs.io</li>
+        <li><span class="nm">Argo Rollouts</span> — argoproj.github.io/rollouts</li>
+        <li><span class="nm">Flagger</span> — flagger.app</li>
+        <li><span class="nm">OpenGitOps</span> — opengitops.dev</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>AI workloads on Kubernetes</h3>
+      <ul class="src-list">
+        <li><span class="nm">vLLM</span> — docs.vllm.ai · <span class="nm">production-stack</span> — github.com/vllm-project/production-stack</li>
+        <li><span class="nm">KServe</span> — kserve.github.io/website</li>
+        <li><span class="nm">llm-d</span> — llm-d.ai · github.com/llm-d/llm-d</li>
+        <li><span class="nm">Kueue</span> — kueue.sigs.k8s.io · <span class="nm">DRA</span> — kubernetes.io/docs (1.34)</li>
+        <li><span class="nm">NVIDIA GPU Operator</span> — docs.nvidia.com/datacenter/cloud-native</li>
+        <li><span class="nm">Ray</span> — docs.ray.io · <span class="nm">Kubeflow</span> — kubeflow.org</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Agentic operations</h3>
+      <ul class="src-list">
+        <li><span class="nm">k8sgpt</span> — k8sgpt.ai · github.com/k8sgpt-ai/k8sgpt</li>
+        <li><span class="nm">kagent</span> — kagent.dev (CNCF Sandbox)</li>
+        <li><span class="nm">HolmesGPT</span> — github.com/robusta-dev/holmesgpt</li>
+        <li><span class="nm">Model Context Protocol</span> — modelcontextprotocol.io</li>
+      </ul>
+    </div>
+
+    <div class="src-group">
+      <h3>Supply chain &amp; security</h3>
+      <ul class="src-list">
+        <li><span class="nm">Sigstore / Cosign</span> — sigstore.dev</li>
+        <li><span class="nm">SLSA</span> — slsa.dev · <span class="nm">Syft / Trivy</span> — github.com/anchore/syft · trivy.dev</li>
+        <li><span class="nm">Kyverno</span> — kyverno.io · <span class="nm">OPA Gatekeeper</span> — open-policy-agent.github.io/gatekeeper</li>
+        <li><span class="nm">Falco</span> — falco.org · <span class="nm">Tetragon</span> — tetragon.io</li>
+        <li><span class="nm">Kubescape</span> — kubescape.io · <span class="nm">OWASP K8s Top 10</span> — owasp.org</li>
+      </ul>
+    </div>
+
+    <div class="callout warn">
+      <div class="ct-lab">On version-specific facts</div>
+      <p>Release numbers, GA milestones, and retirement dates in this guide reflect <strong>mid-2026</strong>. This ecosystem moves monthly — confirm anything load-bearing (a feature's GA status, a project's CNCF tier, a deprecation deadline) against the primary source on the day you act.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="legend">
+    <span class="lg"><span class="sw" style="background:var(--proof)"></span> desired state / stable / recommended</span>
+    <span class="lg"><span class="sw" style="background:var(--gap)"></span> caution / EOL / anti-pattern</span>
+    <span class="lg"><span class="sw" style="background:var(--steel)"></span> structure / control plane</span>
+    <span class="lg"><span class="sw" style="background:var(--violet)"></span> AI-native</span>
+  </div>
+  Delivery Platform Field Guide · GitLab + Kubernetes + AI-native · stack-agnostic · state-of-the-art checked June 2026 · see Sources for primary references.
+</footer>
+
+<script>
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+    var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function activate(i, focus) {
+      tabs.forEach(function (t, j) {
+        var sel = j === i;
+        t.setAttribute('aria-selected', sel ? 'true' : 'false');
+        t.tabIndex = sel ? 0 : -1;
+        panels[j].hidden = !sel;
+      });
+      if (focus !== false) tabs[i].focus();
+      try { tabs[i].scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {}
+      if (window.scrollY > 4) window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { activate(i); });
+      t.addEventListener('keydown', function (e) {
+        var n = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') n = 0;
+        else if (e.key === 'End') n = tabs.length - 1;
+        if (n !== null) { e.preventDefault(); activate(n); }
+      });
+    });
+    activate(0, false);
+  })();
+</script>
+</body>
+</html>
