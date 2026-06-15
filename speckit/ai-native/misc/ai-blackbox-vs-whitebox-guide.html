@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Open the Box · Black-Box vs Glass-Box AI Literacy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+Tamil:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0F16; --panel:#121A23; --panel-2:#18222C;
+    --line:#243240; --line-2:#32434F;
+    --paper:#E8EEF2; --dim:#94A6B2; --faint:#5C6F7C;
+    --glass:#58C0DE; --glass-soft:rgba(88,192,222,0.12);   /* white-box / clarity */
+    --opaque:#CC5C4E; --opaque-soft:rgba(204,92,78,0.10);  /* black-box / opacity */
+    --amber:#E0B24A; --amber-soft:rgba(224,178,74,0.13);   /* through-line emphasis */
+    --verify:#6FB98F;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--ink); color:var(--paper);
+    font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(820px 460px at 86% -8%, rgba(88,192,222,0.07), transparent 62%), radial-gradient(680px 540px at -8% 12%, rgba(204,92,78,0.06), transparent 60%);}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px;}
+  .mono{font-family:"JetBrains Mono",monospace;}
+  .eyebrow{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--faint);}
+
+  .topbar{position:sticky; top:0; z-index:30; background:rgba(10,15,22,0.85); backdrop-filter:blur(9px); border-bottom:1px solid var(--line);}
+  .topbar .wrap{display:flex; align-items:center; justify-content:space-between; height:52px;}
+  .mark{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--dim);}
+  .mark b{color:var(--glass);}
+  .tnav{display:flex; gap:18px; font-family:"JetBrains Mono",monospace; font-size:11.5px; letter-spacing:0.5px;}
+  .tnav a{color:var(--dim); text-decoration:none;} .tnav a:hover{color:var(--paper);}
+  @media(max-width:740px){ .tnav{display:none;} }
+
+  .hero{padding:58px 0 42px; border-bottom:1px solid var(--line);}
+  h1{font-family:"Space Grotesk",sans-serif; font-weight:700; font-size:clamp(33px,5.2vw,58px); line-height:1.02; letter-spacing:-1.1px; margin:14px 0 0; text-wrap:balance;}
+  h1 .op{color:var(--opaque);} h1 .gl{color:var(--glass);}
+  .lede{font-size:18px; color:var(--dim); max-width:62ch; margin:20px 0 0;}
+  .lede b{color:var(--paper); font-weight:600;}
+
+  .kural{margin-top:24px; padding:16px 20px; border:1px solid var(--line); border-left:3px solid var(--amber); background:var(--panel); border-radius:3px; max-width:62ch;}
+  .kural .ta{font-family:"Noto Serif Tamil",serif; font-size:17px; line-height:1.6; color:var(--paper);}
+  .kural .en{margin-top:8px; color:var(--dim); font-style:italic; font-size:14px;}
+  .kural .src{margin-top:6px; font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:var(--faint);}
+
+  /* ---- signature: the box ---- */
+  .boxwrap{margin-top:36px; border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:24px;}
+  .boxhead{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:20px;}
+  .boxhead .t{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--dim);}
+  .toggle{display:inline-flex; border:1px solid var(--line-2); border-radius:30px; overflow:hidden; font-family:"JetBrains Mono",monospace; font-size:12px;}
+  .toggle button{background:transparent; color:var(--dim); border:0; padding:8px 16px; cursor:pointer; transition:all .15s;}
+  .toggle button.on[data-m="opaque"]{background:var(--opaque); color:#fff;}
+  .toggle button.on[data-m="glass"]{background:var(--glass); color:#06121a; font-weight:600;}
+
+  .machine{display:flex; align-items:stretch; gap:14px;}
+  @media(max-width:760px){ .machine{flex-direction:column;} }
+  .port{flex:0 0 96px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--dim); font-size:12px; text-align:center;}
+  .port .ico{font-family:"JetBrains Mono",monospace; font-size:20px; color:var(--glass);}
+  @media(max-width:760px){ .port{flex:1; flex-direction:row;} }
+  .core{flex:1; border-radius:10px; min-height:150px; display:flex; align-items:center; justify-content:center; position:relative; transition:all .4s ease; padding:16px;}
+  .core.opaque{background:repeating-linear-gradient(45deg,#10161d,#10161d 10px,#0d131a 10px,#0d131a 20px); border:1px solid var(--opaque);}
+  .core.opaque .q{font-family:"Space Grotesk"; font-size:52px; font-weight:700; color:var(--opaque); opacity:0.85;}
+  .core.opaque .cap{position:absolute; bottom:12px; left:0; right:0; text-align:center; font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--faint);}
+  .core.glass{background:linear-gradient(160deg, rgba(88,192,222,0.09), rgba(88,192,222,0.02)); border:1px solid var(--glass); box-shadow:inset 0 0 40px rgba(88,192,222,0.08);}
+  .pipe{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center;}
+  .stage{font-family:"JetBrains Mono",monospace; font-size:11px; padding:7px 11px; border-radius:6px; background:rgba(88,192,222,0.10); border:1px solid rgba(88,192,222,0.35); color:#cfeefa; white-space:nowrap; animation:rise .4s ease backwards;}
+  .stage .s{color:var(--glass); font-weight:600;}
+  .arrowm{color:var(--faint); font-family:"JetBrains Mono",monospace;}
+  @keyframes rise{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .boxnote{margin-top:18px; font-size:14.5px; color:var(--dim); line-height:1.55;} .boxnote b{color:var(--paper);}
+
+  section{padding:54px 0; border-bottom:1px solid var(--line);}
+  .sec-head{display:flex; align-items:baseline; gap:14px; margin-bottom:6px;}
+  .sec-num{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--glass);}
+  h2{font-family:"Space Grotesk",sans-serif; font-weight:700; font-size:clamp(23px,3.3vw,33px); margin:0; letter-spacing:-0.5px;}
+  .sec-sub{color:var(--dim); max-width:66ch; margin:11px 0 0; font-size:15.5px;}
+
+  /* two operators */
+  .ops{margin-top:30px; display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:720px){ .ops{grid-template-columns:1fr;} }
+  .opcard{border:1px solid var(--line); border-radius:9px; padding:22px; background:var(--panel);}
+  .opcard.black{border-color:rgba(204,92,78,0.45); background:linear-gradient(160deg,var(--opaque-soft),var(--panel));}
+  .opcard.white{border-color:rgba(88,192,222,0.45); background:linear-gradient(160deg,var(--glass-soft),var(--panel));}
+  .opcard .lab{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px;}
+  .opcard.black .lab{color:var(--opaque);} .opcard.white .lab{color:var(--glass);}
+  .opcard h3{font-family:"Space Grotesk"; font-weight:700; font-size:22px; margin:0 0 10px;}
+  .opcard .mantra{font-style:italic; color:var(--paper); font-size:15px; padding:12px 14px; border-radius:6px; background:rgba(255,255,255,0.03); border:1px dashed var(--line-2); margin-bottom:12px;}
+  .opcard p{margin:0; color:var(--dim); font-size:14px; line-height:1.55;}
+
+  /* disadvantages */
+  .dis{margin-top:30px; display:flex; flex-direction:column; gap:10px;}
+  .drow{display:grid; grid-template-columns:1.05fr 1fr; gap:0; border:1px solid var(--line); border-radius:9px; overflow:hidden;}
+  @media(max-width:720px){ .drow{grid-template-columns:1fr;} }
+  .drow .sym, .drow .fix{padding:15px 18px;}
+  .drow .sym{background:var(--opaque-soft); border-right:1px solid var(--line);}
+  .drow .fix{background:var(--panel);}
+  @media(max-width:720px){ .drow .sym{border-right:none; border-bottom:1px solid var(--line);} }
+  .drow .tag{font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;}
+  .drow .sym .tag{color:var(--opaque);} .drow .fix .tag{color:var(--glass);}
+  .drow .sym h4{margin:0 0 4px; font-size:15px; font-weight:600; color:var(--paper);}
+  .drow p{margin:0; font-size:13.5px; color:var(--dim); line-height:1.5;}
+  .drow .fix p b{color:var(--paper);}
+
+  /* concept groups */
+  .grp{margin-top:34px;}
+  .grp-h{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+  .grp-h .gid{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--glass); border:1px solid var(--glass); border-radius:5px; padding:3px 8px;}
+  .grp-h h3{font-family:"Space Grotesk"; font-weight:600; font-size:19px; margin:0;}
+  .cards{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
+  @media(max-width:820px){ .cards{grid-template-columns:1fr 1fr;} }
+  @media(max-width:560px){ .cards{grid-template-columns:1fr;} }
+  .cc{border:1px solid var(--line); border-radius:8px; padding:16px; background:var(--panel);}
+  .cc .term{font-family:"Space Grotesk"; font-weight:600; font-size:15.5px; color:var(--paper); margin-bottom:3px;}
+  .cc .gloss{font-size:13px; color:var(--dim); line-height:1.5;}
+  .cc .so{margin-top:9px; padding-top:9px; border-top:1px dashed var(--line-2); font-size:12.5px; color:var(--paper); line-height:1.45;}
+  .cc .so b{color:var(--amber); font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:0.5px;}
+
+  /* swot */
+  .swotwrap{margin-top:30px; display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media(max-width:820px){ .swotwrap{grid-template-columns:1fr;} }
+  .swot{border:1px solid var(--line); border-radius:10px; padding:18px; background:var(--panel);}
+  .swot.black{border-color:rgba(204,92,78,0.4);} .swot.white{border-color:rgba(88,192,222,0.4);}
+  .swot .stitle{font-family:"Space Grotesk"; font-weight:700; font-size:18px; margin:0 0 4px;}
+  .swot.black .stitle{color:var(--opaque);} .swot.white .stitle{color:var(--glass);}
+  .swot .ssub{font-size:12.5px; color:var(--faint); margin-bottom:14px; font-family:"JetBrains Mono",monospace;}
+  .quad{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media(max-width:480px){ .quad{grid-template-columns:1fr;} }
+  .q{border-radius:7px; padding:12px; border:1px solid var(--line);}
+  .q .qh{font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; margin-bottom:7px;}
+  .q ul{margin:0; padding-left:15px;}
+  .q li{font-size:12.5px; color:var(--dim); line-height:1.45; margin-bottom:4px;}
+  .q.s{background:rgba(111,185,143,0.06);} .q.s .qh{color:var(--verify);}
+  .q.w{background:var(--amber-soft);} .q.w .qh{color:var(--amber);}
+  .q.o{background:rgba(88,192,222,0.06);} .q.o .qh{color:var(--glass);}
+  .q.t{background:var(--opaque-soft);} .q.t .qh{color:var(--opaque);}
+
+  /* comparison table */
+  .cmp{margin-top:30px; border:1px solid var(--line); border-radius:9px; overflow:hidden;}
+  .cmp .cr{display:grid; grid-template-columns:0.8fr 1fr 1fr; border-top:1px solid var(--line);}
+  .cmp .cr:first-child{border-top:none;}
+  @media(max-width:720px){ .cmp .cr{grid-template-columns:1fr;} }
+  .cmp .cr > div{padding:13px 16px; font-size:13.5px; line-height:1.5;}
+  .cmp .dim{background:var(--panel-2); font-family:"JetBrains Mono",monospace; font-size:11.5px; color:var(--dim); letter-spacing:0.3px; display:flex; align-items:center;}
+  .cmp .bb{color:var(--dim); border-left:1px solid var(--line);} .cmp .bb b{color:#E69A8E;}
+  .cmp .wb{color:var(--paper); border-left:1px solid var(--line);} .cmp .wb b{color:var(--glass);}
+  @media(max-width:720px){ .cmp .bb,.cmp .wb{border-left:none;} .cmp .dim{background:var(--panel-2);} }
+  .cmp .head{background:var(--panel-2); font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase;}
+  .cmp .head .bb{color:var(--opaque);} .cmp .head .wb{color:var(--glass);}
+
+  /* ladder */
+  .lad{margin-top:30px; display:flex; flex-direction:column; gap:8px;}
+  .lr{display:flex; gap:14px; align-items:flex-start; border:1px solid var(--line); border-radius:8px; padding:14px 16px; background:var(--panel);
+      border-left:3px solid; }
+  .lr .rn{font-family:"JetBrains Mono",monospace; font-weight:700; font-size:13px; flex:0 0 28px;}
+  .lr h4{margin:0 0 3px; font-size:15px; font-weight:600;}
+  .lr p{margin:0; font-size:13.5px; color:var(--dim); line-height:1.5;}
+
+  /* myth table */
+  .myth{margin-top:30px; border:1px solid var(--line); border-radius:9px; overflow:hidden;}
+  .myth .mr{display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--line);}
+  .myth .mr:first-child{border-top:none;}
+  @media(max-width:600px){ .myth .mr{grid-template-columns:1fr;} }
+  .myth .mr > div{padding:13px 16px; font-size:13.5px; line-height:1.5;}
+  .myth .belief{background:var(--opaque-soft); color:var(--dim);} .myth .belief b{color:#E69A8E;}
+  .myth .truth{color:var(--paper); border-left:1px solid var(--line);} .myth .truth b{color:var(--glass);}
+  @media(max-width:600px){ .myth .truth{border-left:none; border-top:1px solid var(--line);} }
+  .myth .head{background:var(--panel-2); font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase;}
+  .myth .head .belief{color:var(--opaque);} .myth .head .truth{color:var(--glass);}
+
+  .flag{margin-top:30px; border:1px solid var(--line-2); border-left:3px solid var(--glass); border-radius:6px; background:var(--panel-2); padding:22px 24px;}
+  .flag .lbl{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--glass);}
+  .flag p{margin:9px 0 0; color:var(--dim); font-size:15px; line-height:1.6;} .flag p b{color:var(--paper);}
+
+  footer{padding:34px 0 56px; color:var(--faint); font-size:12.5px;}
+  footer .wrap{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;}
+  footer .ta{font-family:"Noto Serif Tamil",serif; color:var(--amber);}
+
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important; scroll-behavior:auto!important;} }
+  :focus-visible{outline:2px solid var(--glass); outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <div class="mark">OPEN&nbsp;THE&nbsp;<b>BOX</b></div>
+  <nav class="tnav">
+    <a href="#cost">Cost</a><a href="#open">Concepts</a><a href="#swot">SWOT</a><a href="#compare">Compare</a><a href="#ladder">Cross over</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">AI literacy · from oracle to instrument · mid-2026</div>
+  <h1>It isn't magic. It's a <span class="gl">machine you can see inside</span> — once you stop treating it as a <span class="op">black box.</span></h1>
+  <p class="lede">If you joined the AI wave recently, you've probably been handed one mental model: <b>type a question, read an answer, trust it or don't.</b> That's the black box. It works until it doesn't — and when it fails, you have no idea why. The alternative isn't a PhD. It's a working picture of what the thing actually is: <b>a probability machine that predicts text, trained on the past, steered by settings you can learn.</b> This guide opens the lid.</p>
+
+  <div class="kural">
+    <div class="ta">கற்க கசடறக் கற்பவை கற்றபின்<br>நிற்க அதற்குத் தக.</div>
+    <div class="en">Learn thoroughly what is worth learning — then live and act by it.</div>
+    <div class="src">திருவள்ளுவர் · குறள் 391 · on Learning</div>
+  </div>
+
+  <div class="boxwrap">
+    <div class="boxhead">
+      <span class="t">The same model · two ways to see it</span>
+      <div class="toggle" id="tg">
+        <button data-m="opaque" class="on">Black box</button>
+        <button data-m="glass">Glass box</button>
+      </div>
+    </div>
+    <div class="machine">
+      <div class="port"><span class="ico">⌨</span><span>your prompt</span></div>
+      <div class="core opaque" id="core"></div>
+      <div class="port"><span class="ico">▤</span><span>the answer</span></div>
+    </div>
+    <p class="boxnote" id="boxnote"></p>
+  </div>
+</div></header>
+
+<!-- two operators -->
+<section><div class="wrap">
+  <div class="sec-head"><span class="sec-num">01</span><h2>Two operators, one tool</h2></div>
+  <p class="sec-sub">Give the same model to two people and you get two completely different relationships with it. The gap isn't intelligence — it's whether the lid is open.</p>
+  <div class="ops">
+    <div class="opcard black">
+      <div class="lab">● black-box operator</div>
+      <h3>The oracle user</h3>
+      <div class="mantra">"I ask, it answers. If it's good, I use it. If it's bad, I try again."</div>
+      <p>Treats the model as a sealed source of truth. Has no model of <i>why</i> it behaves as it does, so can't predict it, steer it, debug it, or know when to distrust it. Fast to start — and capped at the novice ceiling. Every failure looks like bad luck.</p>
+    </div>
+    <div class="opcard white">
+      <div class="lab">○ glass-box operator</div>
+      <h3>The instrument pilot</h3>
+      <div class="mantra">"I'm steering a token-prediction engine. I know the knobs, the limits, and the failure modes."</div>
+      <p>Sees inputs, mechanism, and outputs. Calibrates trust to the task, picks the right model and settings, designs around the limits, and verifies. Slower to learn — but the ceiling is the whole field. Failures become diagnosable.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- cost of black box -->
+<section id="cost"><div class="wrap">
+  <div class="sec-head"><span class="sec-num">02</span><h2>The cost of staying in the dark</h2></div>
+  <p class="sec-sub">Black-box thinking isn't just "less optimal." It produces specific, repeatable failures — each one a symptom of a missing concept. Left column: what goes wrong. Right column: the understanding that fixes it.</p>
+  <div class="dis">
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>Can't tell confident from correct</h4><p>The model sounds exactly as fluent when it's right as when it's inventing. You have no signal to separate the two.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>It optimises for plausibility, not truth.</b> Fluency is the product; accuracy is not guaranteed. So you verify high-stakes claims instead of trusting tone.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>Hallucination feels like betrayal</h4><p>It confidently states a fake citation or API, and you're shocked — "it lied to me."</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>Hallucination is the mechanism, not a glitch.</b> A next-token predictor will always produce a plausible-looking token even when it has no fact. Expect it; design for it.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>Prompts feel random</h4><p>A tiny rewording flips the answer and you can't see why. You're cargo-culting magic words.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>Output is sampled from probabilities your wording shifts.</b> Once you know that, you steer with structure and examples instead of superstition.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>Wrong tool, wrong settings</h4><p>You use one model at default settings for everything — creative writing and exact extraction alike.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>Temperature, model tier, and reasoning mode are dials.</b> Low temperature and a reasoning model for precision; a faster model for bulk. You choose on purpose.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>It "forgot" what you told it</h4><p>Earlier instructions vanish mid-conversation and you assume the model is broken.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>It only sees the context window.</b> Past the limit, things fall off the edge. You manage what's in the window instead of expecting infinite memory.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>Blind to the attack surface</h4><p>You paste untrusted text or wire it to your tools, never imagining the text could hijack the model.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>Prompt injection is real.</b> Anything in context can issue instructions. You isolate, sandbox, and gate what an AI can touch.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>Surprised by cost and latency</h4><p>Bills spike, responses lag, and you've no idea what drives either.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>You pay per token; latency starts with time-to-first-token.</b> Long contexts and reasoning chains cost more. You budget tokens deliberately.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>Can't debug a failure</h4><p>When output is wrong, your only move is to re-roll and hope. No diagnosis, no fix.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>A mental model turns luck into method.</b> Wrong because of stale knowledge? cutoff. Lost detail? context. Too wild? temperature. Each has a lever.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>No way to know if a change helped</h4><p>You tweak a prompt, it "feels better," you ship — and it silently regresses on other cases.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>Evals are how you actually know.</b> A handful of test cases beats vibes. You measure before and after, not just feel.</p></div></div>
+    <div class="drow"><div class="sym"><div class="tag">✕ symptom</div><h4>Permanently stuck at novice</h4><p>You can chat, but you can't build reliable systems, architect agents, or lead others past basic use.</p></div>
+      <div class="fix"><div class="tag">○ fix</div><p><b>The white box is the on-ramp to everything else.</b> RAG, tools, agents, guardrails — all of it needs a working picture of the machine.</p></div></div>
+  </div>
+</div></section>
+
+<!-- open the box: concepts -->
+<section id="open"><div class="wrap">
+  <div class="sec-head"><span class="sec-num">03</span><h2>Open the box: the concepts you're missing</h2></div>
+  <p class="sec-sub">You don't need to build a transformer. You need a working picture — enough to predict, steer, and trust the machine correctly. Six groups, each term in plain language, each with a "so what" for how you actually use it.</p>
+
+  <div class="grp">
+    <div class="grp-h"><span class="gid">A</span><h3>The engine — how it generates at all</h3></div>
+    <div class="cards">
+      <div class="cc"><div class="term">Token</div><div class="gloss">The unit the model reads and writes — a word-chunk, not a whole word. "Tokenization" splits your text into these.</div><div class="so"><b>SO WHAT</b> You're billed and limited in tokens, not words. Code and rare words cost more tokens.</div></div>
+      <div class="cc"><div class="term">Next-token prediction</div><div class="gloss">The whole engine. Given the text so far, it predicts the most likely next token, appends it, and repeats — one token at a time.</div><div class="so"><b>SO WHAT</b> It doesn't "look up" answers. It continues patterns. That's why it can be fluent and wrong at once.</div></div>
+      <div class="cc"><div class="term">Probability, not truth</div><div class="gloss">For each step it produces a probability over every possible next token. It picks from that distribution.</div><div class="so"><b>SO WHAT</b> "Likely text" ≠ "true text." Plausibility is the optimisation target; truth is a hope.</div></div>
+      <div class="cc"><div class="term">Temperature</div><div class="gloss">The randomness dial. Low (→0) = pick the most likely token, deterministic and focused. High = adventurous, varied, riskier.</div><div class="so"><b>SO WHAT</b> Low for extraction, code, facts. Higher for brainstorming, prose. A single most-important knob.</div></div>
+      <div class="cc"><div class="term">Top-p / top-k sampling</div><div class="gloss">Other dials that limit which tokens are eligible — the smallest set covering p% of probability (top-p), or the k most likely (top-k).</div><div class="so"><b>SO WHAT</b> They trade focus vs. diversity alongside temperature. Defaults are usually fine until they aren't.</div></div>
+      <div class="cc"><div class="term">System prompt</div><div class="gloss">Hidden standing instructions placed before your message that set the model's role, rules, and tone for the whole session.</div><div class="so"><b>SO WHAT</b> Much of "how it behaves" lives here, not in the model. Change it and the same model acts differently.</div></div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-h"><span class="gid">B</span><h3>Where it learned — and why it's confident yet wrong</h3></div>
+    <div class="cards">
+      <div class="cc"><div class="term">Pretraining</div><div class="gloss">Months of reading a huge slice of the internet, learning to predict the next token. This is where raw knowledge and language ability come from.</div><div class="so"><b>SO WHAT</b> Its "knowledge" is frozen text patterns, not a live database. It can be confidently out of date.</div></div>
+      <div class="cc"><div class="term">Post-training (SFT + RLHF)</div><div class="gloss">After pretraining, it's fine-tuned on good examples (SFT) and shaped by human/AI preference feedback (RLHF/RLAIF) to be helpful and safe.</div><div class="so"><b>SO WHAT</b> Alignment selects a <i>persona</i>, it doesn't add facts. "Helpful tone" is trained; correctness isn't.</div></div>
+      <div class="cc"><div class="term">The hallucination paradox</div><div class="gloss">If training rewards answering questions it never actually learned, it's taught to produce the <i>shape</i> of a right answer before it has the fact — i.e. to be confidently wrong.</div><div class="so"><b>SO WHAT</b> Confidence is trained behaviour, not evidence. Never read fluency as proof.</div></div>
+      <div class="cc"><div class="term">Knowledge cutoff</div><div class="gloss">The date its training data ends. It has no inherent knowledge of anything after it — and can't tell you it doesn't know.</div><div class="so"><b>SO WHAT</b> For anything current, it must search or be given the data. Otherwise it guesses from old patterns.</div></div>
+      <div class="cc"><div class="term">Weights are frozen</div><div class="gloss">In a normal chat, the model does not learn from you. Its parameters are fixed; only the conversation in front of it changes.</div><div class="so"><b>SO WHAT</b> It isn't "getting to know you." Personalisation comes from context and memory features, not learning.</div></div>
+      <div class="cc"><div class="term">Parameters</div><div class="gloss">The billions of numbers learned in training that encode everything the model "knows." Bigger isn't automatically better.</div><div class="so"><b>SO WHAT</b> Capability comes from training quality + architecture + test-time compute, not parameter count alone.</div></div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-h"><span class="gid">C</span><h3>The architecture — why it's huge but fast</h3></div>
+    <div class="cards">
+      <div class="cc"><div class="term">Transformer</div><div class="gloss">The blueprint behind every frontier model since 2017. It processes a whole sequence at once and learns which parts relate to which.</div><div class="so"><b>SO WHAT</b> Architecture is now a commodity — every major lab uses it. Differences come from data, scale, and tuning.</div></div>
+      <div class="cc"><div class="term">Attention</div><div class="gloss">The core trick: for each token, the model weighs how much every other token matters. "Attention is all you need."</div><div class="so"><b>SO WHAT</b> It's why long, well-structured prompts work — and why a buried instruction in a huge prompt gets ignored.</div></div>
+      <div class="cc"><div class="term">Embeddings</div><div class="gloss">Words and chunks turned into vectors — points in a high-dimensional space where similar meanings sit close together.</div><div class="so"><b>SO WHAT</b> This is what powers semantic search and RAG: "find text that <i>means</i> this," not "matches these letters."</div></div>
+      <div class="cc"><div class="term">Mixture of Experts (MoE)</div><div class="gloss">The model is split into many "expert" sub-networks; each token only activates a few. So a 2-trillion-param model might use ~290B per token.</div><div class="so"><b>SO WHAT</b> "Active vs total" params explain how models stay huge yet affordable to run. It's the dominant frontier design.</div></div>
+      <div class="cc"><div class="term">Quantization</div><div class="gloss">Storing the weights at lower numeric precision (e.g. 4-bit) to shrink size and speed inference, at a small quality cost.</div><div class="so"><b>SO WHAT</b> This is what lets big models run on local hardware. Trade precision for fit; measure the quality hit.</div></div>
+      <div class="cc"><div class="term">Multimodal</div><div class="gloss">Models that take more than text — images, audio, sometimes video — by mapping them into the same token/vector space.</div><div class="so"><b>SO WHAT</b> "Show, don't tell" works now. A screenshot or diagram can be a better prompt than a paragraph.</div></div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-h"><span class="gid">D</span><h3>Running it — the mechanics of cost &amp; speed</h3></div>
+    <div class="cards">
+      <div class="cc"><div class="term">Context window</div><div class="gloss">The model's entire working memory for one turn — system prompt + history + your message + its reply, measured in tokens. Everything must fit.</div><div class="so"><b>SO WHAT</b> It's not memory of you; it's a fixed-size desk. Manage what's on it; expect edges to fall off.</div></div>
+      <div class="cc"><div class="term">Time to first token (TTFT)</div><div class="gloss">The pause before the first word appears — the model reading and "thinking" through your whole prompt before generating.</div><div class="so"><b>SO WHAT</b> Bigger prompts and reasoning modes raise TTFT. Latency isn't random; it tracks input size and mode.</div></div>
+      <div class="cc"><div class="term">Tokens per second</div><div class="gloss">How fast it streams after the first token. A property of the model and the serving hardware.</div><div class="so"><b>SO WHAT</b> Faster, cheaper models exist for bulk work; reserve slow, expensive ones for hard reasoning.</div></div>
+      <div class="cc"><div class="term">Inference vs training</div><div class="gloss">Training builds the model (rare, enormous). Inference is running it to answer you (constant, the real production cost now).</div><div class="so"><b>SO WHAT</b> Your cost lives in inference. Token efficiency is the lever you actually control.</div></div>
+      <div class="cc"><div class="term">Determinism</div><div class="gloss">Same input ≠ same output, because of sampling — unless you set temperature to 0 (and even then, rarely byte-identical).</div><div class="so"><b>SO WHAT</b> Don't expect repeatability by default. For tests and pipelines, pin settings and verify behaviour, not exact strings.</div></div>
+      <div class="cc"><div class="term">Context rot</div><div class="gloss">As a window fills, the model attends worse to the middle — important details get "lost in the middle."</div><div class="so"><b>SO WHAT</b> More context isn't always better. Curate the smallest set of high-signal tokens; don't dump.</div></div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-h"><span class="gid">E</span><h3>The 2026 frontier — what's new since you arrived</h3></div>
+    <div class="cards">
+      <div class="cc"><div class="term">Reasoning / test-time compute</div><div class="gloss">"Thinking" models generate a long hidden chain of reasoning before answering, spending more compute at answer-time to get harder things right.</div><div class="so"><b>SO WHAT</b> Use them for hard logic/code/math; they're slower and pricier. And they have a ceiling — more thinking saturates.</div></div>
+      <div class="cc"><div class="term">RAG &amp; tools</div><div class="gloss">Retrieval-Augmented Generation feeds the model relevant documents at query time; tool use lets it call code, search, and APIs.</div><div class="so"><b>SO WHAT</b> This is how you give it current, private, or exact knowledge — instead of trusting frozen memory.</div></div>
+      <div class="cc"><div class="term">Agents</div><div class="gloss">A model in a loop: plan → call a tool → observe → repeat, until a goal is met. The shift from "answers" to "actions."</div><div class="so"><b>SO WHAT</b> Power and risk both jump. Agents need boundaries, verification, and a bounded blast radius.</div></div>
+      <div class="cc"><div class="term">Benchmark saturation</div><div class="gloss">Frontier models now ace the old exams (grade-school math, MMLU). Evaluation has moved to agentic, judge-based, and real-task tests.</div><div class="so"><b>SO WHAT</b> "Tops the benchmark" means little now. Judge models on <i>your</i> task, with <i>your</i> evals.</div></div>
+      <div class="cc"><div class="term">Distillation</div><div class="gloss">Training a small, cheap model to imitate a big one — capturing much of the capability at a fraction of the cost.</div><div class="so"><b>SO WHAT</b> Why capable small/local models exist. You can often pick a smaller model than you think.</div></div>
+      <div class="cc"><div class="term">Context engineering</div><div class="gloss">The discipline that replaced "prompt engineering": curating exactly what enters the limited window at each step.</div><div class="so"><b>SO WHAT</b> The highest-leverage skill now isn't a magic phrase — it's managing the model's attention budget.</div></div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-h"><span class="gid">F</span><h3>The honest limits — what it cannot do</h3></div>
+    <div class="cards">
+      <div class="cc"><div class="term">It can be confidently wrong</div><div class="gloss">By design it will produce a fluent answer with no internal "I don't know" — unless trained and prompted to flag uncertainty.</div><div class="so"><b>SO WHAT</b> Verification is your job, not the model's. Build the check; don't outsource judgement.</div></div>
+      <div class="cc"><div class="term">No real-time knowledge</div><div class="gloss">Without search or supplied data, it knows nothing past its cutoff and can't sense "now."</div><div class="so"><b>SO WHAT</b> For anything current, give it the data. Don't ask a frozen model about today.</div></div>
+      <div class="cc"><div class="term">Weak at exact computation</div><div class="gloss">It predicts the look of arithmetic, not the result. It can fumble big multiplications and counting.</div><div class="so"><b>SO WHAT</b> Hand maths and exactness to a tool/code, not the raw model. Predicting ≠ calculating.</div></div>
+      <div class="cc"><div class="term">No persistent self</div><div class="gloss">Between chats it carries nothing unless a memory feature stores it. Each call is, fundamentally, stateless.</div><div class="so"><b>SO WHAT</b> Continuity is engineered (context, memory, notes), not innate. Design for statelessness.</div></div>
+      <div class="cc"><div class="term">Injectable &amp; manipulable</div><div class="gloss">Text it reads can carry hostile instructions; it can't always tell data from commands.</div><div class="so"><b>SO WHAT</b> Treat any untrusted input as potentially adversarial. Isolation and gates, not blind trust.</div></div>
+      <div class="cc"><div class="term">Bias &amp; blind spots</div><div class="gloss">It reflects the data it learned from — including gaps, skews, and stereotypes — in fluent, convincing prose.</div><div class="so"><b>SO WHAT</b> Fluency hides bias. Sanity-check outputs in sensitive domains; the smoothness is not neutrality.</div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- SWOT -->
+<section id="swot"><div class="wrap">
+  <div class="sec-head"><span class="sec-num">04</span><h2>SWOT: the two stances, weighed</h2></div>
+  <p class="sec-sub">Black-box use isn't always wrong — it's right-sized for some things and dangerous for others. Here's each stance with its honest trade-offs.</p>
+  <div class="swotwrap">
+    <div class="swot black">
+      <div class="stitle">Black box</div>
+      <div class="ssub">"I ask, it answers."</div>
+      <div class="quad">
+        <div class="q s"><div class="qh">Strengths</div><ul><li>Zero learning curve — usable in minutes</li><li>Accessible to absolutely anyone</li><li>Fast for casual, low-stakes tasks</li><li>No setup, no theory required</li></ul></div>
+        <div class="q w"><div class="qh">Weaknesses</div><ul><li>No way to calibrate trust</li><li>Can't debug or steer failures</li><li>Prompt-fragile, superstitious</li><li>Blind to cost, latency, settings</li></ul></div>
+        <div class="q o"><div class="qh">Opportunities</div><ul><li>Lowers the barrier to first adoption</li><li>"Good enough" for many simple jobs</li><li>A fine on-ramp — if you don't stop here</li></ul></div>
+        <div class="q t"><div class="qh">Threats</div><ul><li>Acting on confident hallucinations</li><li>Prompt-injection / data-leak exposure</li><li>Over-reliance in high-stakes work</li><li>Builds fragile, unverifiable systems</li></ul></div>
+      </div>
+    </div>
+    <div class="swot white">
+      <div class="stitle">Glass box</div>
+      <div class="ssub">"I steer a probability machine."</div>
+      <div class="quad">
+        <div class="q s"><div class="qh">Strengths</div><ul><li>Trust calibrated to the task</li><li>Failures are diagnosable &amp; fixable</li><li>Right model + settings, on purpose</li><li>Cost-, latency-, security-aware</li></ul></div>
+        <div class="q w"><div class="qh">Weaknesses</div><ul><li>Real learning curve &amp; time</li><li>Can tip into over-engineering</li><li>Risk of analysis paralysis</li><li>Knowledge needs refreshing often</li></ul></div>
+        <div class="q o"><div class="qh">Opportunities</div><ul><li>Build reliable production systems</li><li>Architect agents, RAG, guardrails</li><li>Mentor others; lead adoption</li><li>Durable competitive edge</li></ul></div>
+        <div class="q t"><div class="qh">Threats</div><ul><li>Over-confidence in one's own model</li><li>Fast field outdates specifics</li><li>Tinkering past the point of value</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- comparison -->
+<section id="compare"><div class="wrap">
+  <div class="sec-head"><span class="sec-num">05</span><h2>Head to head</h2></div>
+  <p class="sec-sub">The same situations, handled two ways.</p>
+  <div class="cmp">
+    <div class="cr head"><div class="dim">Dimension</div><div class="bb">Black box</div><div class="wb">Glass box</div></div>
+    <div class="cr"><div class="dim">Mental model</div><div class="bb"><b>Oracle</b> that knows things</div><div class="wb"><b>Predictor</b> that continues patterns</div></div>
+    <div class="cr"><div class="dim">When output is wrong</div><div class="bb">Re-roll and hope</div><div class="wb">Diagnose: cutoff? context? temperature? tool?</div></div>
+    <div class="cr"><div class="dim">Prompting</div><div class="bb">Magic words, copied rituals</div><div class="wb">Structure, examples, right altitude</div></div>
+    <div class="cr"><div class="dim">Model &amp; settings</div><div class="bb">One model, defaults, always</div><div class="wb">Chosen per task — tier, temperature, reasoning</div></div>
+    <div class="cr"><div class="dim">Cost &amp; latency</div><div class="bb">A mystery; surprised by bills</div><div class="wb">Budgeted in tokens; TTFT understood</div></div>
+    <div class="cr"><div class="dim">Security</div><div class="bb">Pastes anything, wires anything</div><div class="wb">Treats input as untrusted; isolates &amp; gates</div></div>
+    <div class="cr"><div class="dim">Trust</div><div class="bb">All-or-nothing, by vibe</div><div class="wb">Calibrated to stakes; verified</div></div>
+    <div class="cr"><div class="dim">Knowing it works</div><div class="bb">"Feels right"</div><div class="wb">Evals — measured before/after</div></div>
+    <div class="cr"><div class="dim">Ceiling</div><div class="bb">Basic chat</div><div class="wb">Systems, agents, leadership</div></div>
+    <div class="cr"><div class="dim">Best fit</div><div class="bb">Casual, low-stakes, throwaway</div><div class="wb">Production, high-stakes, anything you ship</div></div>
+  </div>
+</div></section>
+
+<!-- ladder -->
+<section id="ladder"><div class="wrap">
+  <div class="sec-head"><span class="sec-num">06</span><h2>How to cross over</h2></div>
+  <p class="sec-sub">You don't flip from black to glass overnight. You climb. Each rung is one idea that changes how you work — none of them require maths.</p>
+  <div class="lad">
+    <div class="lr" style="border-left-color:#CC5C4E"><span class="rn" style="color:#CC5C4E">1</span><div><h4>Drop "it knows"</h4><p>Replace it with "it predicts." This single swap fixes how you read every confident answer — and why you start verifying.</p></div></div>
+    <div class="lr" style="border-left-color:#D08A52"><span class="rn" style="color:#D08A52">2</span><div><h4>Learn tokens + context window</h4><p>Understand that everything it can use is in the window right now, in token units. Memory, cost, and "forgetting" all click into place.</p></div></div>
+    <div class="lr" style="border-left-color:#E0B24A"><span class="rn" style="color:#E0B24A">3</span><div><h4>Use temperature &amp; model choice on purpose</h4><p>Pick low-temperature + a capable model for precision, faster models for bulk. Stop using one setting for every job.</p></div></div>
+    <div class="lr" style="border-left-color:#9FB75A"><span class="rn" style="color:#9FB75A">4</span><div><h4>Calibrate trust with training facts</h4><p>Cutoff, frozen weights, the hallucination paradox → you now know <i>when</i> to distrust, not just <i>that</i> you sometimes should.</p></div></div>
+    <div class="lr" style="border-left-color:#6FB98F"><span class="rn" style="color:#6FB98F">5</span><div><h4>Sketch the architecture, lightly</h4><p>Attention, MoE, quantization — just enough to reason about why it's fast, why it's huge, why prompts behave as they do.</p></div></div>
+    <div class="lr" style="border-left-color:#58C0DE"><span class="rn" style="color:#58C0DE">6</span><div><h4>Add verification &amp; evals</h4><p>A handful of test cases. You measure changes instead of feeling them. This is the line between hobbyist and engineer.</p></div></div>
+    <div class="lr" style="border-left-color:#7AA7E0"><span class="rn" style="color:#7AA7E0">7</span><div><h4>Design systems</h4><p>RAG, tools, agents, guardrails, governance. Now you're not using AI — you're architecting with it. The box is fully open.</p></div></div>
+  </div>
+</div></section>
+
+<!-- myths -->
+<section><div class="wrap">
+  <div class="sec-head"><span class="sec-num">07</span><h2>Myth → mechanism</h2></div>
+  <p class="sec-sub">The fastest way to spot black-box thinking is the language it uses. Each belief on the left quietly misleads; the mechanism on the right is what's really happening.</p>
+  <div class="myth">
+    <div class="mr head"><div class="belief">The black-box belief</div><div class="truth">What's really happening</div></div>
+    <div class="mr"><div class="belief"><b>"It knows the answer."</b></div><div class="truth">It predicts the <b>most likely next token</b> from learned patterns. Knowing is not in the loop.</div></div>
+    <div class="mr"><div class="belief"><b>"It remembers me."</b></div><div class="truth">It only sees what's in <b>this turn's context window</b>. Memory is a feature bolted on, not the model.</div></div>
+    <div class="mr"><div class="belief"><b>"It lied to me."</b></div><div class="truth">It <b>sampled a plausible-but-wrong token</b>. No intent, no deception — just probability without a fact.</div></div>
+    <div class="mr"><div class="belief"><b>"It's learning as we chat."</b></div><div class="truth">Its <b>weights are frozen</b>. Only the conversation changes. It learns nothing from you in-session.</div></div>
+    <div class="mr"><div class="belief"><b>"More context is always better."</b></div><div class="truth"><b>Context rot</b> buries the signal. Past a point, more text means worse attention, not better answers.</div></div>
+    <div class="mr"><div class="belief"><b>"Same question, same answer."</b></div><div class="truth"><b>Sampling makes it non-deterministic</b> unless you pin temperature to 0 — and even then, rarely identical.</div></div>
+    <div class="mr"><div class="belief"><b>"It's thinking it over."</b></div><div class="truth">It's running <b>test-time compute</b> — generating a reasoning chain of tokens. Useful, but not cognition.</div></div>
+    <div class="mr"><div class="belief"><b>"It tops the benchmark, so it's best."</b></div><div class="truth">Benchmarks are <b>saturated</b>. What matters is performance on <b>your</b> task, measured by <b>your</b> evals.</div></div>
+  </div>
+
+  <div class="flag"><span class="lbl">○ For the pseudo-architects</span>
+    <p>You will never out-build the labs, and you don't need to. But you cannot architect <b>with</b> a thing you treat as opaque. The minimum bar to design real systems is exactly this glass-box literacy — <b>predictor not oracle, context is the memory, plausibility not truth, verify what you ship.</b> Hold that, and every advanced pattern — RAG, tools, agents, evals, governance — becomes learnable. Stay in the black box, and you'll keep mistaking fluency for correctness and luck for skill. Learn the machine thoroughly; then act by it.</p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span>Open the Box · black-box → glass-box AI literacy · predictor, not oracle</span>
+  <span class="ta">கற்க கசடற</span>
+</div></footer>
+
+<script>
+const BOX = {
+  opaque: {
+    html: '<span class="q">?</span><span class="cap">input → ??? → output · you trust, or you don\'t</span>',
+    note: '<b>The black box.</b> Text goes in, text comes out, the middle is sealed. When it works you can\'t say why; when it fails you can\'t say why either. Every outcome is luck. Flip the switch →'
+  },
+  glass: {
+    html: '<div class="pipe">'
+      + '<span class="stage"><span class="s">1</span> Tokenize</span><span class="arrowm">→</span>'
+      + '<span class="stage"><span class="s">2</span> Embed</span><span class="arrowm">→</span>'
+      + '<span class="stage"><span class="s">3</span> Attention ×N</span><span class="arrowm">→</span>'
+      + '<span class="stage"><span class="s">4</span> MoE: route to experts</span><span class="arrowm">→</span>'
+      + '<span class="stage"><span class="s">5</span> Next-token probabilities</span><span class="arrowm">→</span>'
+      + '<span class="stage"><span class="s">6</span> Sample @ temperature</span>'
+      + '</div>',
+    note: '<b>The glass box.</b> Same model — now you can see the stages. Each one is a place you can reason about, steer, or debug: your wording shifts step 5; temperature controls step 6; a buried instruction gets lost at step 3. Nothing here is magic.'
+  }
+};
+const core = document.getElementById('core');
+const boxnote = document.getElementById('boxnote');
+function setBox(mode){
+  const b = BOX[mode];
+  core.className = 'core ' + mode;
+  core.innerHTML = b.html;
+  boxnote.innerHTML = b.note;
+  // stagger the stage animations
+  if(mode==='glass'){
+    core.querySelectorAll('.stage').forEach((s,i)=>{ s.style.animationDelay = (i*70)+'ms'; });
+  }
+}
+document.querySelectorAll('#tg button').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('#tg button').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on'); setBox(btn.dataset.m);
+}));
+setBox('opaque');
+</script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ஆணை · The Agentic-Native Field Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Serif+Tamil:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0D1318;            /* deep slate-ink ground */
+    --ink-2:#121C23;          /* panel */
+    --ink-3:#18242C;          /* lifted panel */
+    --line:#243440;           /* hairline */
+    --line-2:#2E4150;
+    --paper:#E9EEF1;          /* primary text */
+    --paper-dim:#9DB0BC;      /* muted */
+    --paper-faint:#647884;    /* faintest */
+    /* ladder temperature: cold steel -> warm brass */
+    --l0:#5B7080;
+    --l1:#5E8CA8;
+    --l2:#3FA89B;
+    --l3:#C99A3C;
+    --l4:#E6BC4A;
+    --brass:#E0B544;
+    --brass-deep:#C99A3C;
+    --teal:#3FA89B;
+    --flag:#E07B53;           /* ⚠ functional warning */
+    --maxw:1120px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--ink); color:var(--paper);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    font-size:16px; line-height:1.6; letter-spacing:0.1px;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(900px 500px at 85% -10%, rgba(224,181,68,0.07), transparent 60%),
+      radial-gradient(700px 600px at -5% 20%, rgba(63,168,155,0.05), transparent 60%);
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px;}
+  a{color:var(--brass); text-decoration:none;}
+
+  .mono{font-family:"IBM Plex Mono",monospace;}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:3.5px;
+    text-transform:uppercase; color:var(--paper-faint);
+  }
+
+  /* ---------- top rule ---------- */
+  .topbar{
+    border-bottom:1px solid var(--line); position:sticky; top:0; z-index:40;
+    background:rgba(13,19,24,0.82); backdrop-filter:blur(10px);
+  }
+  .topbar .wrap{display:flex; align-items:center; justify-content:space-between; height:54px;}
+  .wordmark{display:flex; align-items:baseline; gap:10px;}
+  .wordmark .ta{font-family:"Noto Serif Tamil",serif; font-size:21px; color:var(--brass); line-height:1;}
+  .wordmark .en{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:2px; color:var(--paper-dim); text-transform:uppercase;}
+  .topnav{display:flex; gap:22px;}
+  .topnav a{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:1px; color:var(--paper-dim); text-transform:uppercase;}
+  .topnav a:hover{color:var(--paper);}
+  @media(max-width:760px){ .topnav{display:none;} }
+
+  /* ---------- hero ---------- */
+  .hero{padding:64px 0 30px; border-bottom:1px solid var(--line);}
+  .hero-grid{display:grid; grid-template-columns:1fr 320px; gap:54px; align-items:start;}
+  @media(max-width:860px){ .hero-grid{grid-template-columns:1fr; gap:40px;} }
+
+  h1.title{
+    font-family:"Archivo",sans-serif; font-weight:900; font-size:clamp(40px,6.4vw,76px);
+    line-height:0.96; letter-spacing:-1.5px; margin:18px 0 0; text-wrap:balance;
+  }
+  h1.title .accent{color:var(--brass); display:block;}
+  .lede{font-size:18.5px; color:var(--paper-dim); max-width:48ch; margin:22px 0 0; line-height:1.55;}
+  .lede strong{color:var(--paper); font-weight:600;}
+
+  .kural{
+    margin-top:34px; padding:20px 22px; border:1px solid var(--line);
+    border-left:3px solid var(--brass-deep); background:var(--ink-2); border-radius:3px;
+  }
+  .kural .ta{font-family:"Noto Serif Tamil",serif; font-size:19px; line-height:1.7; color:var(--paper); font-weight:500;}
+  .kural .en{margin-top:10px; color:var(--paper-dim); font-style:italic; font-size:15px;}
+  .kural .src{margin-top:8px; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:1.5px; color:var(--paper-faint); text-transform:uppercase;}
+
+  /* ---------- the gauge (signature) ---------- */
+  .gauge{
+    background:var(--ink-2); border:1px solid var(--line); border-radius:4px; padding:22px 20px 18px;
+  }
+  .gauge h3{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:2.5px; text-transform:uppercase; color:var(--paper-faint); margin:0 0 18px;}
+  .ladder{display:flex; gap:14px;}
+  .ladder-track{
+    position:relative; width:12px; border-radius:7px; flex:0 0 12px;
+    background:linear-gradient(to top, var(--l0), var(--l1) 28%, var(--l2) 52%, var(--l3) 76%, var(--l4));
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .ladder-track::after{content:""; position:absolute; inset:0; border-radius:7px; box-shadow:0 0 22px rgba(224,181,68,0.25);}
+  .rungmark{position:absolute; left:50%; width:18px; height:18px; transform:translate(-50%,50%); border-radius:50%; background:var(--ink); border:3px solid; }
+  .ladder-steps{display:flex; flex-direction:column-reverse; justify-content:space-between; gap:0; flex:1;}
+  .lstep{padding:0 0 22px;}
+  .lstep:last-child{padding-bottom:0;}
+  .lstep .lid{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; letter-spacing:1px;}
+  .lstep .lname{font-weight:700; font-size:14.5px; margin-left:7px;}
+  .lstep .ldesc{color:var(--paper-dim); font-size:13px; line-height:1.45; margin-top:2px;}
+
+  /* ---------- section frame ---------- */
+  section{padding:62px 0; border-bottom:1px solid var(--line);}
+  .sec-head{display:flex; align-items:baseline; gap:16px; margin-bottom:8px;}
+  .sec-num{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--brass-deep); letter-spacing:1px;}
+  h2{font-family:"Archivo",sans-serif; font-weight:800; font-size:clamp(26px,3.6vw,38px); letter-spacing:-0.6px; margin:0; line-height:1.05;}
+  .sec-sub{color:var(--paper-dim); max-width:62ch; margin:14px 0 0; font-size:16.5px;}
+
+  /* ---------- role cards ---------- */
+  .roles{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:36px;}
+  @media(max-width:820px){ .roles{grid-template-columns:1fr;} }
+  .role{
+    background:var(--ink-2); border:1px solid var(--line); border-radius:5px; padding:22px 22px 20px;
+    display:flex; flex-direction:column;
+  }
+  .role-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+  .role h3{font-family:"Archivo",sans-serif; font-weight:700; font-size:20px; margin:0; letter-spacing:-0.3px;}
+  .role .rid{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--paper-faint); letter-spacing:1.5px; margin-top:2px;}
+  .role .mandate{color:var(--paper-dim); font-size:14.5px; margin:12px 0 16px; line-height:1.5;}
+  .role .mandate b{color:var(--paper); font-weight:600;}
+
+  .chips-label{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--paper-faint); margin-bottom:9px;}
+  .chips{display:flex; gap:6px; flex-wrap:wrap;}
+  .chip{
+    font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; letter-spacing:0.5px;
+    padding:6px 11px; border-radius:20px; border:1px solid var(--line-2); background:transparent;
+    color:var(--paper-dim); cursor:pointer; transition:all .16s ease; user-select:none;
+  }
+  .chip:hover{border-color:var(--paper-faint); color:var(--paper);}
+  .chip.active{color:var(--ink); font-weight:600; border-color:transparent;}
+
+  .reveal{
+    margin-top:16px; border-top:1px dashed var(--line-2); padding-top:16px;
+    display:none;
+  }
+  .reveal.show{display:block; animation:fade .28s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+  .reveal .at{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px;}
+  .reveal .signal{color:var(--paper-dim); font-size:14px; font-style:italic; margin-bottom:14px;}
+  .reveal .move-h{display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:6px;}
+  .reveal .move-h .arrow{color:var(--brass);}
+  .reveal .move{color:var(--paper); font-size:14.5px; line-height:1.5;}
+  .reveal .topped{margin-top:10px; padding:10px 12px; border-radius:4px; background:rgba(224,181,68,0.08); border:1px solid rgba(224,181,68,0.25); font-size:13.5px; color:var(--brass);}
+
+  .stack{
+    margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
+    font-size:13.5px; color:var(--paper-dim); line-height:1.55;
+  }
+  .stack b{color:var(--teal); font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:0.5px;}
+
+  /* ---------- durable skills ---------- */
+  .durable{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:34px;}
+  @media(max-width:820px){ .durable{grid-template-columns:1fr;} }
+  .dcard{background:var(--ink-2); border:1px solid var(--line); border-radius:5px; padding:20px;}
+  .dcard .dn{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--brass-deep); letter-spacing:1px;}
+  .dcard h4{font-family:"Archivo",sans-serif; font-weight:700; font-size:18px; margin:8px 0 8px; letter-spacing:-0.2px;}
+  .dcard p{color:var(--paper-dim); font-size:14px; margin:0; line-height:1.5;}
+
+  /* ---------- windsurf panel ---------- */
+  .ws-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:22px; margin-top:34px;}
+  @media(max-width:820px){ .ws-grid{grid-template-columns:1fr;} }
+  .ws-card{background:var(--ink-2); border:1px solid var(--line); border-radius:6px; padding:24px;}
+  .ws-card.spec{background:linear-gradient(160deg, rgba(63,168,155,0.06), var(--ink-2));}
+  .ws-card h3{font-family:"Archivo",sans-serif; font-weight:700; font-size:19px; margin:0 0 4px;}
+  .ws-card .ver{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--teal); letter-spacing:1px; margin-bottom:16px;}
+  .specrow{display:flex; gap:12px; padding:11px 0; border-top:1px solid var(--line);}
+  .specrow:first-of-type{border-top:none;}
+  .specrow .k{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--paper-faint); letter-spacing:0.5px; flex:0 0 88px; text-transform:uppercase; padding-top:2px;}
+  .specrow .v{font-size:14px; color:var(--paper); line-height:1.5;}
+  .specrow .v b{color:var(--brass);}
+  .ws-note{margin-top:16px; padding:14px 16px; border-radius:5px; border:1px solid rgba(224,123,83,0.3); background:rgba(224,123,83,0.06); font-size:13.5px; color:#F0C3AD; line-height:1.55;}
+  .ws-note .lbl{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--flag); text-transform:uppercase; display:block; margin-bottom:5px;}
+
+  /* ---------- officer's flag ---------- */
+  .flag{
+    margin-top:34px; border:1px solid var(--line-2); border-left:3px solid var(--flag);
+    border-radius:4px; background:var(--ink-3); padding:22px 24px;
+  }
+  .flag .lbl{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:2px; color:var(--flag); text-transform:uppercase;}
+  .flag p{margin:10px 0 0; color:var(--paper-dim); font-size:15px; line-height:1.6;}
+  .flag p b{color:var(--paper); font-weight:600;}
+  .flag code{font-family:"IBM Plex Mono",monospace; background:rgba(224,123,83,0.12); color:#F0C3AD; padding:1px 6px; border-radius:3px; font-size:13px;}
+
+  footer{padding:40px 0 60px; color:var(--paper-faint); font-size:13px;}
+  footer .wrap{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;}
+  footer .ta{font-family:"Noto Serif Tamil",serif; color:var(--brass-deep);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important; scroll-behavior:auto !important;}
+  }
+  :focus-visible{outline:2px solid var(--brass); outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="wordmark">
+      <span class="ta">ஆணை</span>
+      <span class="en">Field Manual</span>
+    </div>
+    <nav class="topnav">
+      <a href="#ladder">Ladder</a>
+      <a href="#roles">Roles</a>
+      <a href="#durable">Durable</a>
+      <a href="#windsurf">Windsurf</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Agentic-Native Readiness · Mid-2026</div>
+      <h1 class="title">Stop writing code.<span class="accent">Start commanding agents.</span></h1>
+      <p class="lede">The work has moved from <strong>syntax production</strong> to <strong>constraint definition</strong>. Every role on a software team now lives somewhere on one ladder — from typing by hand to supervising fleets of agents against a verifiable spec. This manual tells each role <strong>where they likely are</strong> and <strong>the one move that takes them up</strong>, grounded in the Oracle · ASP.NET · Kafka · Elasticsearch · Kubernetes stack.</p>
+
+      <div class="kural">
+        <div class="ta">வினைவலியும் தன்வலியும் மாற்றான் வலியும்<br>துணைவலியும் தூக்கிச் செயல்.</div>
+        <div class="en">Weigh the strength of the deed, your own strength, the adversary's, and your allies' — then act.</div>
+        <div class="src">திருவள்ளுவர் · குறள் 471 · Knowing the Right Means</div>
+      </div>
+    </div>
+
+    <div class="gauge" id="ladder">
+      <h3>The Capability Ladder</h3>
+      <div class="ladder">
+        <div class="ladder-track">
+          <span class="rungmark" style="bottom:0%;     border-color:var(--l0);"></span>
+          <span class="rungmark" style="bottom:25%;    border-color:var(--l1);"></span>
+          <span class="rungmark" style="bottom:50%;    border-color:var(--l2);"></span>
+          <span class="rungmark" style="bottom:75%;    border-color:var(--l3);"></span>
+          <span class="rungmark" style="bottom:100%;   border-color:var(--l4);"></span>
+        </div>
+        <div class="ladder-steps">
+          <div class="lstep"><span class="lid" style="color:var(--l0)">L0</span><span class="lname">Dormant</span><div class="ldesc">AI is a curiosity. Work is hand-typed.</div></div>
+          <div class="lstep"><span class="lid" style="color:var(--l1)">L1</span><span class="lname">Assisted</span><div class="ldesc">Chat as a smarter search. Ask, copy, paste.</div></div>
+          <div class="lstep"><span class="lid" style="color:var(--l2)">L2</span><span class="lname">Delegating</span><div class="ldesc">Hand bounded, specified tasks to one agent. Review the diff.</div></div>
+          <div class="lstep"><span class="lid" style="color:var(--l3)">L3</span><span class="lname">Orchestrating</span><div class="ldesc">Parallel agents. Diff-review is the craft. Reusable skills + evals.</div></div>
+          <div class="lstep"><span class="lid" style="color:var(--l4)">L4</span><span class="lname">Commanding</span><div class="ldesc">Supervise fleets against a spec + verification harness. You own intent.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ROLES -->
+<section id="roles">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Locate your role. Take your move.</h2></div>
+    <p class="sec-sub">Tap the rung you honestly sit on today. The manual shows the signal that confirms it, then the single move that advances you — operating model first, tools second.</p>
+    <div class="roles" id="roleGrid"></div>
+  </div>
+</section>
+
+<!-- DURABLE SKILLS -->
+<section id="durable">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>The skills that won't go stale</h2></div>
+    <p class="sec-sub">Models, IDEs and pricing churn every quarter. These six are the spine — durable across every role and every tool shift. Build people here, not on seat counts.</p>
+    <div class="durable">
+      <div class="dcard"><div class="dn">D1</div><h4>Spec-driven thinking</h4><p>Constraint definition over syntax production. A precise, testable spec is now the unit of work. The market pays for clarity, not typing speed.</p></div>
+      <div class="dcard"><div class="dn">D2</div><h4>Verification &amp; evals</h4><p>Own the definition of "correct." Write the property tests and oracles the agent must pass. Green is not the same as right.</p></div>
+      <div class="dcard"><div class="dn">D3</div><h4>MCP literacy</h4><p>The Model Context Protocol is the USB-C for AI — how agents reach tools and data with explicit, audited scopes. Know what's read-only vs. acting.</p></div>
+      <div class="dcard"><div class="dn">D4</div><h4>Orchestration patterns</h4><p>Delegate → review → own. The progression from one agent, to parallel sessions, to supervised fleets. Reusable skills and prompts are leverage.</p></div>
+      <div class="dcard"><div class="dn">D5</div><h4>Governance &amp; blast radius</h4><p>RBAC, audit trails, and human-in-loop gates sized to risk. Autonomy is earned per action by how bounded its damage is.</p></div>
+      <div class="dcard"><div class="dn">D6</div><h4>Systems thinking</h4><p>Architecture, judgment, and knowing what to build remain scarce and human. When syntax is free, the design of the whole is everything.</p></div>
+    </div>
+
+    <div class="flag">
+      <span class="lbl">⚠ Officer's flag · the discipline survives the agent</span>
+      <p>Generated code earns <b>no exemption</b> from the law. Parse-don't-validate, types as proofs, DUs over classes, <code>Result</code> over exceptions, illegal states unrepresentable, property-based tests. The agent drafts; the officer enforces. Any C#-shaped pattern that surfaces in an F# answer gets a <code>⚠️</code> and a rewrite — autonomy does not lower the bar, it raises the value of holding it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WINDSURF -->
+<section id="windsurf">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Windsurf, as it actually stands</h2></div>
+    <p class="sec-sub">The tool moved under you. Windsurf is now a Cognition (Devin) product — the IDE, the proprietary models, and a cloud agent in one surface. Here's the current shape and how to spend it well.</p>
+    <div class="ws-grid">
+      <div class="ws-card">
+        <h3>Windsurf 2.0 + SWE-1.6</h3>
+        <div class="ver">Verified June 2026 · Cognition-owned</div>
+        <div class="specrow"><div class="k">Model</div><div class="v"><b>SWE-1.6</b> (Apr 7) — ~950 tok/s, roughly 13× faster than Sonnet 4.5. Free / zero-quota tier. Strong on routine multi-file edits and parallel tool calls; lighter on deep reasoning.</div></div>
+        <div class="specrow"><div class="k">Surface</div><div class="v"><b>2.0</b> (Apr 15) — Agent Command Center (Kanban for local + cloud agents), Devin Cloud, Spaces, Codemaps, Fast Context via SWE-grep.</div></div>
+        <div class="specrow"><div class="k">Devin</div><div class="v">Cloud + a Rust <b>Terminal CLI</b> + a Local agent shared between IDE and CLI. One harness, three places to run it.</div></div>
+        <div class="specrow"><div class="k">Pricing</div><div class="v">Moved off credits to a <b>quota model</b>; Pro ~$20/mo (now level with Cursor). Enterprise carries FedRAMP / HIPAA / ITAR.</div></div>
+      </div>
+
+      <div class="ws-card spec">
+        <h3>How to spend it</h3>
+        <div class="ver">Operating guidance</div>
+        <div class="specrow"><div class="k">Routine</div><div class="v">Default to <b>SWE-1.6</b> for scaffolding, edits, refactors of a few files — it costs zero quota and the speed is felt in real sessions.</div></div>
+        <div class="specrow"><div class="k">Heavy</div><div class="v">Spend quota on <b>Opus 4.7 / GPT-5.5 / Gemini 3 Flash</b> only where reasoning depth earns it — architecture, gnarly bugs, ambiguous specs.</div></div>
+        <div class="specrow"><div class="k">Big jobs</div><div class="v">Cascade can crash on ~30-file refactors and offers no partial correction — a wrong turn forces a full restart. <b>Commit before every session</b>; gate large refactors behind review.</div></div>
+
+        <div class="ws-note">
+          <span class="lbl">Recalibrate your estimator</span>
+          The credits → quota shift breaks the cost model in your Windsurf credit-estimator. Re-base it on quota economics and SWE-1.6's zero-quota tier, or it will mis-price every agentic loop.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>ஆணை · Agentic-Native Field Manual · weigh the deed, then act</span>
+    <span class="mono">L0 → L4 · delegate / review / own</span>
+  </div>
+</footer>
+
+<script>
+const LEVELS = [
+  {id:'L0', name:'Dormant',       c:'var(--l0)'},
+  {id:'L1', name:'Assisted',      c:'var(--l1)'},
+  {id:'L2', name:'Delegating',    c:'var(--l2)'},
+  {id:'L3', name:'Orchestrating', c:'var(--l3)'},
+  {id:'L4', name:'Commanding',    c:'var(--l4)'},
+];
+
+const ROLES = [
+  {
+    name:'Software Engineer', rid:'DEV',
+    mandate:'From writing code to <b>commanding agents</b> and owning the spec and the diff-review.',
+    stack:'<b>ASP.NET</b> agent scaffolds controllers / EF / DTOs — you own domain boundaries &amp; invariants · <b>Kafka</b> agent drafts the consumer; you prove idempotency &amp; exactly-once · <b>Elasticsearch</b> generate query DSL under typed constraints, never by hand.',
+    levels:[
+      {sig:'You hand-type everything; AI is a tab you rarely open.', move:'Put a coding agent in your editor and use it on real tickets this week — autocomplete and chat, every day.'},
+      {sig:'You ask the chat questions and paste answers, but you drive every keystroke.', move:'Delegate one bounded task end-to-end: write a 5-line spec, let the agent implement, you review the diff.'},
+      {sig:'You delegate scoped tasks and review diffs — one agent at a time, specs in your head.', move:'Externalise the spec (requirements → plan → tasks), run a second agent in parallel, start a personal prompt/skill library.'},
+      {sig:'You run parallel sessions, diff-review is your main work, you reuse prompts and skills.', move:'Make verification the contract — write evals / property tests the agent must pass; promote your best prompts into shared team skills.'},
+      {sig:'You command fleets against a machine-readable spec + harness; you own intent, agents execute.', move:'Hold the line: keep the spec and eval harness as the source of truth, mentor the team up, and hunt for silent quality drift.'},
+    ]
+  },
+  {
+    name:'Engineering Manager', rid:'EM / TECH LEAD',
+    mandate:'Run a <b>blended human + agent workforce</b>. Your metric moves from lines shipped to throughput delivered safely.',
+    stack:'Govern <b>where</b> agents may act across the Oracle→ES pipeline · gate every prod-affecting step · own the audit trail and the 10–80–10 split.',
+    levels:[
+      {sig:'Adoption is ad-hoc; you measure people by output, not leverage.', move:'Pick one team, one workflow. Define a "delegate / review / own" contract and run a 30-day pilot.'},
+      {sig:'A few devs use AI privately; no shared practice or guardrails.', move:'Make spec-driven the team norm. Stand up shared prompt/skill libraries and a review-the-diff culture.'},
+      {sig:'The team delegates routinely; you have no visibility into where agents help or hurt.', move:'Instrument agent usage and review load. Run the 10–80–10 deliberately and name what humans must always own.'},
+      {sig:'Agent use is measured and governed; you are scaling across teams.', move:'Codify a COMPASS-style brownfield rollout, manage resistance, and build eval / governance gates into CI.'},
+      {sig:'Your org runs on delegate/review/own with audited gates; you lead other leaders.', move:'Defend judgment as the scarce resource — invest in review and architecture skills, not just tool seats.'},
+    ]
+  },
+  {
+    name:'Architect', rid:'ARCH',
+    mandate:'<b>Constraints as code.</b> Make illegal states — and illegal agent actions — unrepresentable.',
+    stack:'<b>Oracle→ES transform</b> round-trip property tests as the contract · phantom-typed query DSL · parse-don\'t-validate at every boundary · the Refined-style boundary library stays ahead of the pipeline.',
+    levels:[
+      {sig:'Architecture lives in slides and your head; agents have no rails.', move:'Write one machine-readable spec for a real component — your level3-spec style, executable not prose.'},
+      {sig:'Specs exist as prose; agents interpret them loosely.', move:'Encode invariants as types + property tests so generated code cannot compile if it is wrong.'},
+      {sig:'Types and tests constrain code, but agent tool-access is unbounded.', move:'Define MCP server boundaries: what agents may read vs. act on, with explicit scopes.'},
+      {sig:'Agents operate inside the typed and tool boundaries you defined.', move:'Make the eval / property-test harness a first-class architectural artifact the whole org builds against.'},
+      {sig:'Your specs + harness are the source of truth; agents and humans both build to them.', move:'Evolve the spec language and keep the boundary library ahead of what the pipeline will demand next.'},
+    ]
+  },
+  {
+    name:'DBA / Data Engineer', rid:'DATA',
+    mandate:'Database change becomes a <b>governed, agent-triggerable workflow</b> with full audit — never a hand-run script on prod.',
+    stack:'<b>Oracle</b> schema diffing, migration generation, lineage (ODCS / ODPS / OpenLineage) · <b>Parquet / DuckDB</b> intermediaries agents can profile &amp; validate while you own the contract.',
+    levels:[
+      {sig:'DDL and migrations are manual, tribal, and unaudited.', move:'Put schema under source control + CI. One environment, one pipeline, repeatable.'},
+      {sig:'Migrations are versioned but agents are nowhere near them.', move:'Add policy gates and approvals; make rollback a first-class, tested path.'},
+      {sig:'DB DevOps is solid; you want safe AI leverage.', move:'Stand up a DBmaestro-style MCP server: expose release automation to agents with RBAC + full auditability.'},
+      {sig:'Agents draft migrations and releases; humans approve at gates.', move:'Let agents generate Oracle schema diffs and migration scripts — keep DDL-on-prod behind a human gate, always.'},
+      {sig:'Agentic DB DevOps with every action logged, scoped, reversible.', move:'Tune autonomy by blast radius: widen read/analyse autonomy, keep destructive operations gated.'},
+    ]
+  },
+  {
+    name:'DevOps / SRE', rid:'PLATFORM',
+    mandate:'<b>Autonomous diagnosis, self-healing infra.</b> The agent investigates; the human owns blast radius and the runbook.',
+    stack:'<b>Kubernetes</b> agents diagnose across the dependency graph — gate every apply · <b>Kafka / ES ops</b> agents watch consumer lag &amp; cluster health while you own the failover decision.',
+    levels:[
+      {sig:'Incidents are pager-and-grep; MTTR depends on who is awake.', move:'Centralise telemetry and turn tribal runbooks into written, callable procedures.'},
+      {sig:'Runbooks exist; response is still fully manual.', move:'Give an agent read-only access to logs / metrics / traces via MCP — let it summarise and correlate, not act.'},
+      {sig:'Agents investigate and propose; humans execute.', move:'Wire an AWS-DevOps-Agent-style flow: event → autonomous investigation → proposed remediation → human approve.'},
+      {sig:'Approved remediations run semi-autonomously; multi-agent SRE.', move:'Codify runbooks as agent-callable tools; auto-apply low-risk fixes in windows; gate the rest.'},
+      {sig:'Self-healing within strict, audited boundaries; humans own escalation.', move:'Keep shrinking MTTR; widen autonomy only where blast radius is provably bounded.'},
+    ]
+  },
+  {
+    name:'QA / Test Engineer', rid:'QUALITY',
+    mandate:'From scripted automation to <b>autonomous, self-healing test agents</b>. You own intent and the oracle; agents own selectors and maintenance.',
+    stack:'Round-trip property tests for <b>Oracle→ES</b> (FsCheck / Expecto) · <b>ASP.NET</b> API contract tests · <b>ES</b> query-result oracles · DB-state verification inside end-to-end journeys.',
+    levels:[
+      {sig:'Manual testing, or brittle scripts that break on every UI change.', move:'Move tests into git as code. Describe scenarios by intent, not by selector.'},
+      {sig:'Automated suites exist but the "maintenance tax" eats up to half your time.', move:'Adopt self-healing test agents (Playwright + MCP) so locators repair themselves.'},
+      {sig:'Agents generate and self-heal tests, but they live outside the dev loop.', move:'Pull testing into the loop: an MCP test agent (Shiplight-style) lets the coding agent verify its own work in a real browser.'},
+      {sig:'Agents map flows, generate, execute, and self-maintain tests.', move:'Own the oracle — define what "correct" means (assertions, invariants, baselines); let agents own everything mechanical.'},
+      {sig:'Continuous agentic QA closing the loop from code change to production readiness.', move:'Guard against false confidence: audit agent-written tests for real coverage, not just a green board.'},
+    ]
+  },
+  {
+    name:'Product Owner / BA', rid:'PRODUCT',
+    mandate:'Your <b>written intent is now upstream of agent execution</b>. Spec clarity is the new throughput lever.',
+    stack:'Translate <b>Oracle→ES</b> business rules into testable acceptance criteria — make "correct mapping" explicit and checkable, not implied.',
+    levels:[
+      {sig:'Requirements are conversations and vague tickets.', move:'Write acceptance criteria precise enough that an agent could implement them unambiguously.'},
+      {sig:'Stories have criteria but they are prose, not testable.', move:'Adopt spec-driven artifacts: given / when / then, explicit edge cases, a real definition of done.'},
+      {sig:'Specs drive devs; you do not yet see how agents consume them.', move:'Sit inside the spec-driven loop (requirements → plan → tasks) and learn where ambiguity costs agent rework.'},
+      {sig:'Your specs reliably drive agent execution with low rework.', move:'Co-own the eval criteria with engineering — your acceptance tests become the agent\'s target.'},
+      {sig:'Executable intent: your acceptance criteria are the spec agents build to.', move:'Keep raising clarity; treat every rework as a spec-quality defect to fix upstream.'},
+    ]
+  },
+];
+
+const grid = document.getElementById('roleGrid');
+
+ROLES.forEach((role, ri) => {
+  const card = document.createElement('div');
+  card.className = 'role';
+
+  const chips = LEVELS.map((lv,i)=>
+    `<button class="chip" data-r="${ri}" data-l="${i}" style="--ac:${lv.c}">${lv.id} ${lv.name}</button>`
+  ).join('');
+
+  card.innerHTML = `
+    <div class="role-top">
+      <div>
+        <h3>${role.name}</h3>
+        <div class="rid">${role.rid}</div>
+      </div>
+    </div>
+    <div class="mandate">${role.mandate}</div>
+    <div class="chips-label">Tap where you sit today</div>
+    <div class="chips">${chips}</div>
+    <div class="reveal" id="rev-${ri}"></div>
+    <div class="stack"><b>STACK&nbsp;HOOKS&nbsp;»</b> ${role.stack}</div>
+  `;
+  grid.appendChild(card);
+});
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const ri = +chip.dataset.r, li = +chip.dataset.l;
+    const role = ROLES[ri], lv = LEVELS[li], data = role.levels[li];
+    // toggle active state within this card
+    const card = chip.closest('.role');
+    card.querySelectorAll('.chip').forEach(c => {
+      c.classList.remove('active');
+      c.style.background = 'transparent';
+      c.style.color = 'var(--paper-dim)';
+    });
+    chip.classList.add('active');
+    chip.style.background = lv.c;
+
+    const rev = document.getElementById('rev-' + ri);
+    const atTop = li === LEVELS.length - 1;
+    const next = atTop ? null : LEVELS[li+1];
+    rev.innerHTML = `
+      <div class="at" style="color:${lv.c}">${lv.id} · ${lv.name}</div>
+      <div class="signal">“${data.sig}”</div>
+      ${ atTop
+        ? `<div class="move-h"><span class="arrow">★</span> Hold the summit</div>
+           <div class="move">${data.move}</div>
+           <div class="topped">You are at the top rung for this role. The work now is defending the standard and pulling others up.</div>`
+        : `<div class="move-h"><span class="arrow">→</span> Your move to ${next.id} ${next.name}</div>
+           <div class="move">${data.move}</div>`
+      }
+    `;
+    rev.classList.add('show');
+  });
+});
+</script>
+</body>
+</html>
