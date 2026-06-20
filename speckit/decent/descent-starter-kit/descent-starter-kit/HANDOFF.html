@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Descent — Handoff Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* M3 color roles (light) */
+    --primary:#4d5aa8; --on-primary:#ffffff; --primary-container:#dee0ff; --on-primary-container:#020865;
+    --secondary:#5a5d72; --secondary-container:#dfe1f9; --on-secondary-container:#171b2c;
+    --tertiary:#77536c; --tertiary-container:#ffd7ef; --on-tertiary-container:#2d1126;
+    --error:#ba1a1a; --error-container:#ffdad6; --on-error-container:#410002;
+    --surface:#fbf8ff; --on-surface:#1a1b21; --on-surface-variant:#454654;
+    --sc-lowest:#ffffff; --sc-low:#f4f3fb; --sc:#eeedf5; --sc-high:#e8e7f0; --sc-highest:#e3e1ea;
+    --outline:#76768a; --outline-variant:#c6c5d6;
+    /* project semantic accents */
+    --green:#3f7d54; --amber:#9a6c00; --steel:#2f6690; --violet:#6b4fa3; --crimson:#b3261e;
+    --rad-xl:28px; --rad-l:16px; --rad-m:12px; --rad-s:8px;
+    --font:"Roboto",system-ui,sans-serif; --mono:"Roboto Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--surface);color:var(--on-surface);font-family:var(--font);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .material-symbols-outlined{font-size:22px;line-height:1;vertical-align:middle}
+  a{color:var(--primary);text-decoration:none}a:hover{text-decoration:underline}
+  code,.mono{font-family:var(--mono);font-size:.86em}
+
+  /* top app bar */
+  .appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;
+    background:var(--sc);height:64px;padding:0 20px;border-bottom:1px solid var(--outline-variant)}
+  .appbar .lead{width:40px;height:40px;border-radius:50%;background:var(--primary);color:var(--on-primary);
+    display:grid;place-items:center}
+  .appbar .ttl{font-size:20px;font-weight:500;letter-spacing:.1px}
+  .appbar .ttl small{display:block;font-size:11.5px;font-weight:400;color:var(--on-surface-variant);letter-spacing:.4px}
+  .appbar .spacer{flex:1}
+  .appbar .pill{font-family:var(--mono);font-size:11px;background:var(--tertiary-container);color:var(--on-tertiary-container);
+    padding:6px 12px;border-radius:999px}
+  .menu-btn{display:none;background:none;border:none;color:var(--on-surface);cursor:pointer;padding:8px;border-radius:50%}
+
+  .layout{display:grid;grid-template-columns:248px 1fr;gap:0;max-width:1240px;margin:0 auto}
+
+  /* navigation rail/list */
+  nav.rail{position:sticky;top:64px;align-self:start;height:calc(100vh - 64px);overflow-y:auto;
+    padding:14px 10px;background:var(--surface)}
+  nav.rail .grp{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--on-surface-variant);
+    padding:12px 16px 6px;font-weight:500}
+  .navitem{display:flex;align-items:center;gap:12px;padding:9px 16px;border-radius:999px;color:var(--on-surface-variant);
+    cursor:pointer;font-size:13.5px;font-weight:500;position:relative;transition:background .15s,color .15s}
+  .navitem .material-symbols-outlined{font-size:20px}
+  .navitem:hover{background:rgba(77,90,168,.08);color:var(--on-surface)}
+  .navitem.active{background:var(--secondary-container);color:var(--on-secondary-container)}
+  .navitem .num{font-family:var(--mono);font-size:11px;opacity:.6;margin-left:auto}
+
+  main{padding:26px 30px 90px;min-width:0}
+
+  /* hero */
+  .hero{background:linear-gradient(135deg,var(--primary-container),#eef0ff 80%);border-radius:var(--rad-xl);
+    padding:34px 34px 30px;margin-bottom:22px;color:var(--on-primary-container)}
+  .hero .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.8}
+  .hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;font-weight:400;margin:8px 0 10px;letter-spacing:-.5px}
+  .hero p{margin:0;font-size:16px;max-width:62ch;color:var(--on-primary-container)}
+  .hero .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .hero .chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.55);
+    border:1px solid rgba(2,8,101,.12);border-radius:999px;padding:6px 12px;font-size:12px;font-family:var(--mono)}
+
+  /* section cards */
+  section{scroll-margin-top:80px}
+  .card{background:var(--sc-low);border-radius:var(--rad-l);padding:24px 26px;margin-bottom:18px;
+    border:1px solid var(--outline-variant)}
+  .card.tonal{background:var(--sc);}
+  .shead{display:flex;align-items:center;gap:12px;margin:0 0 6px}
+  .shead .ic{width:40px;height:40px;border-radius:var(--rad-m);background:var(--primary-container);
+    color:var(--on-primary-container);display:grid;place-items:center;flex:0 0 auto}
+  .shead h2{font-size:22px;font-weight:500;margin:0;letter-spacing:0}
+  .shead .sn{font-family:var(--mono);font-size:12px;color:var(--on-surface-variant);margin-left:auto}
+  .card h3{font-size:16px;font-weight:500;margin:20px 0 6px;color:var(--on-surface)}
+  .card p{margin:8px 0;color:var(--on-surface)}
+  .card p.muted,.muted{color:var(--on-surface-variant)}
+  strong{font-weight:500}
+
+  /* callout (filled) */
+  .callout{border-radius:var(--rad-m);padding:16px 18px;margin:14px 0;font-size:14px}
+  .callout.howto{background:var(--primary);color:var(--on-primary)}
+  .callout.howto a{color:#fff;text-decoration:underline}
+  .callout.warn{background:var(--error-container);color:var(--on-error-container)}
+  .callout.tip{background:var(--tertiary-container);color:var(--on-tertiary-container)}
+  .callout .lbl{font-weight:500;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+
+  /* invariants list */
+  ol.inv,ul.tight{margin:10px 0;padding-left:0;list-style:none;counter-reset:inv}
+  ol.inv li{counter-increment:inv;position:relative;padding:9px 0 9px 40px;border-bottom:1px solid var(--outline-variant);font-size:14px}
+  ol.inv li:last-child{border-bottom:none}
+  ol.inv li::before{content:counter(inv);position:absolute;left:0;top:9px;width:26px;height:26px;border-radius:50%;
+    background:var(--secondary-container);color:var(--on-secondary-container);display:grid;place-items:center;font-size:12px;font-weight:500;font-family:var(--mono)}
+  ul.tight li{position:relative;padding:6px 0 6px 22px;font-size:14px}
+  ul.tight li::before{content:"";position:absolute;left:4px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--primary)}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;border-radius:var(--rad-m);overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--outline-variant);vertical-align:top}
+  th{background:var(--sc-high);font-weight:500;font-size:12px;letter-spacing:.3px;color:var(--on-surface-variant)}
+  tr:last-child td{border-bottom:none}
+  td code{color:var(--primary)}
+
+  pre{background:var(--sc-highest);border-radius:var(--rad-m);padding:16px 18px;overflow-x:auto;
+    font-family:var(--mono);font-size:12px;line-height:1.6;margin:14px 0;color:var(--on-surface)}
+
+  /* chips row */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .chip-a{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--outline-variant);
+    border-radius:8px;padding:6px 11px;font-size:12px;background:var(--sc-lowest);font-family:var(--mono)}
+  .chip-a i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .tag{font-family:var(--mono);font-size:10.5px;padding:3px 9px;border-radius:999px;font-weight:500}
+  .tag.ready{background:#dbecdf;color:var(--green)} .tag.skel{background:#fdeecb;color:var(--amber)}
+  .tag.stub{background:#dfeaf3;color:var(--steel)}
+
+  footer{max-width:1240px;margin:0 auto;padding:22px 30px 60px;color:var(--on-surface-variant);
+    font-family:var(--mono);font-size:12px;border-top:1px solid var(--outline-variant)}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr}
+    nav.rail{position:fixed;left:0;top:64px;bottom:0;width:264px;background:var(--sc-low);z-index:39;
+      transform:translateX(-100%);transition:transform .25s;box-shadow:2px 0 12px rgba(0,0,0,.12)}
+    nav.rail.open{transform:none}
+    .menu-btn{display:grid;place-items:center}
+    main{padding:20px}
+  }
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <button class="menu-btn" id="menuBtn" aria-label="Sections"><span class="material-symbols-outlined">menu</span></button>
+  <div class="lead"><span class="material-symbols-outlined">south</span></div>
+  <div class="ttl">The Descent<small>HANDOFF BRIEF · for a continuing instance</small></div>
+  <div class="spacer"></div>
+  <div class="pill">Material 3</div>
+</header>
+
+<div class="layout">
+  <nav class="rail" id="rail">
+    <div class="grp">Onboarding</div>
+    <div class="navitem" data-go="s0"><span class="material-symbols-outlined">start</span>How to use<span class="num">00</span></div>
+    <div class="grp">Theory</div>
+    <div class="navitem" data-go="s1"><span class="material-symbols-outlined">report</span>Business problem<span class="num">01</span></div>
+    <div class="navitem" data-go="s2"><span class="material-symbols-outlined">lightbulb</span>Thesis<span class="num">02</span></div>
+    <div class="navitem" data-go="s3"><span class="material-symbols-outlined">schema</span>Core concepts<span class="num">03</span></div>
+    <div class="grp">Protocol</div>
+    <div class="navitem" data-go="s4"><span class="material-symbols-outlined">stairs</span>The Descent<span class="num">04</span></div>
+    <div class="navitem" data-go="s5"><span class="material-symbols-outlined">filter_alt</span>The Shrink<span class="num">05</span></div>
+    <div class="navitem" data-go="s6"><span class="material-symbols-outlined">bolt</span>Realtime trace<span class="num">06</span></div>
+    <div class="navitem" data-go="s7"><span class="material-symbols-outlined">gavel</span>How it resolves<span class="num">07</span></div>
+    <div class="grp">Engineering</div>
+    <div class="navitem" data-go="s8"><span class="material-symbols-outlined">functions</span>F# discipline<span class="num">08</span></div>
+    <div class="navitem" data-go="s9"><span class="material-symbols-outlined">smart_toy</span>Claude-native<span class="num">09</span></div>
+    <div class="navitem" data-go="s10"><span class="material-symbols-outlined">hub</span>Knowledge / OKF<span class="num">10</span></div>
+    <div class="grp">Operate</div>
+    <div class="navitem" data-go="s11"><span class="material-symbols-outlined">folder_open</span>Kit map<span class="num">11</span></div>
+    <div class="navitem" data-go="s12"><span class="material-symbols-outlined">fact_check</span>Grounded / verify<span class="num">12</span></div>
+    <div class="navitem" data-go="s13"><span class="material-symbols-outlined">alt_route</span>Open forks<span class="num">13</span></div>
+    <div class="navitem" data-go="s14"><span class="material-symbols-outlined">checklist</span>Next actions<span class="num">14</span></div>
+    <div class="navitem" data-go="s15"><span class="material-symbols-outlined">palette</span>Design &amp; voice<span class="num">15</span></div>
+    <div class="navitem" data-go="s16"><span class="material-symbols-outlined">menu_book</span>Glossary<span class="num">16</span></div>
+    <div class="navitem" data-go="s17"><span class="material-symbols-outlined">history</span>Provenance<span class="num">17</span></div>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <div class="eyebrow">Context transfer · match or exceed</div>
+      <h1>You are picking up an in-flight project.</h1>
+      <p>This brief transfers the full working context, the reasoning behind every decision, the kit map, the
+         unresolved forks, and your operating instructions. Read it, then the zip, then the source the user
+         points you at. Reach the prior instance's understanding — then exceed it by turning theory into
+         verified fact about this specific pipeline.</p>
+      <div class="meta">
+        <span class="chip"><span class="material-symbols-outlined" style="font-size:16px">folder_zip</span>descent-starter-kit.zip</span>
+        <span class="chip">F# · fsx tooling</span>
+        <span class="chip">read-only · prod &amp; non-prod</span>
+        <span class="chip">lineage ← ETL fsproj</span>
+      </div>
+    </div>
+
+    <!-- 0 -->
+    <section id="s0"><div class="card tonal">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">start</span></div><h2>How to use this handoff</h2><span class="sn">00</span></div>
+      <p><strong>What you're inheriting.</strong> A Claude-native, just-in-time (JIT) troubleshooting system for
+        an undocumented Oracle→ETL→Elasticsearch→C# API pipeline with realtime CDC, delivered as a drop-in repo
+        kit plus a field-guide HTML. The intellectual core is settled; environment-specific data and executable
+        depth are deliberately stubbed for the user (a senior F# architect) to populate.</p>
+      <h3>Read order</h3>
+      <ul class="tight">
+        <li>This brief (theory + rationale + map + forks + instructions).</li>
+        <li>The kit: <code>README.md</code> → <code>CLAUDE.md</code> → <code>.claude/skills/pipeline-descent/SKILL.md</code> → <code>rungs/</code> &amp; <code>reference/</code> → <code>fsx/</code> → <code>knowledge/</code> → <code>the-descent.html</code>.</li>
+        <li>The source: the F# ETL fsproj (authoritative lineage) and the C# Web API (read-only intelligence — the ⚠️ boundary).</li>
+      </ul>
+      <div class="callout howto">
+        <div class="lbl"><span class="material-symbols-outlined">flag</span>Your job, in order</div>
+        Internalize the theory &amp; invariants → ask the user the open forks (§13) → populate stubs from real
+        source → harden the <code>fsx/</code> skeletons against non-prod → keep the discipline (§8) and the design/voice (§15).
+      </div>
+      <div class="callout warn">
+        <div class="lbl"><span class="material-symbols-outlined">shield</span>Invariants — do not regress</div>
+        <ol class="inv">
+          <li><strong>Read-only probes everywhere</strong> (prod &amp; non-prod). Enforced twice: a <code>PreToolUse</code> hook and the F# <code>ReadOnly&lt;'conn&gt;</code> type. Fixes go plan → approval → reviewed script.</li>
+          <li><strong>F# discipline</strong> (the user's identity law): parse-don't-validate, DUs, <code>Result</code>, types-as-proofs. Flag C#-in-F# with ⚠️.</li>
+          <li><strong>Stop at the first gate that convicts.</strong> Depth-first and lazy; don't over-descend.</li>
+          <li><strong>Lineage is a lookup from the ETL fsproj</strong>, never a guess.</li>
+          <li><strong>Oracle is ground truth.</strong> Never "fix" ES to mask a source-of-record defect — escalate.</li>
+          <li><strong>No verdict without a regression property test.</strong></li>
+          <li><strong>OKF is context, not contract.</strong> Link to ODCS/ODPS; don't duplicate; it doesn't validate drift.</li>
+        </ol>
+      </div>
+      <div class="callout tip">
+        <div class="lbl"><span class="material-symbols-outlined">trending_up</span>How to exceed the prior instance</div>
+        Resolve the forks; replace <code>fsx/</code> <code>TODO</code>s with real clients; run and grow <code>evals/</code>;
+        densify the <code>knowledge/</code> OKF graph from source; verify the §12 version-drift items. Each turns
+        settled <em>theory</em> into settled <em>fact</em> — the part the prior instance couldn't do without source/env access.
+      </div>
+    </div></section>
+
+    <!-- 1 -->
+    <section id="s1"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">report</span></div><h2>The business problem</h2><span class="sn">01</span></div>
+      <pre>Oracle (~50 tables, system of record)
+  → F# ETL project (.fsproj)  — full load Oracle→ES; ALSO the lineage authority
+     → Elasticsearch target index (denormalized; ~150M docs)
+        → C# Web API (.csproj) — exposes ES as Swagger endpoints, by module
+           → consumers — abstracted from ES; believe they query Oracle
+
+Realtime arm:
+Oracle GoldenGate CDC → Kafka → temp ES index → merge/upsert → target ES index</pre>
+      <p>Defects arrive as Jira tickets across prod and non-prod. <strong>There is no reliable documentation.</strong>
+        The abstraction is the trouble: a consumer thinks they query Oracle, but reads an <em>analyzed,
+        denormalized, possibly stale</em> ES document. Every defect is a gap between the <span style="color:var(--amber)"><strong>felt
+        contract</strong></span> (Oracle-like) and the <span style="color:var(--steel)"><strong>real substrate</strong></span>
+        (the ES doc and the path that filled it). Troubleshooting re-derives the lineage the abstraction hides — per ticket, without a spec that doesn't exist.</p>
+    </div></section>
+
+    <!-- 2 -->
+    <section id="s2"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">lightbulb</span></div><h2>The thesis: descent, not spec</h2><span class="sn">02</span></div>
+      <p>Do <strong>not</strong> write a big-bang spec / SDD pass first — modeling 50 tables, an ES DSL, the API, and the CDC path before the first ticket is debt that rots on the next code change. Instead:</p>
+      <ul class="tight">
+        <li><strong>JIT, not big-bang.</strong> Each defect pulls exactly the context it needs from the codebase.</li>
+        <li><strong>The system documents itself one ticket at a time.</strong> Every resolution leaves residue: a lineage fragment, a property test, a knowledge concept.</li>
+        <li><strong>Inference is cheaper than authorship.</strong> Lineage already lives in the fsproj and the C# query builder; read it on demand.</li>
+      </ul>
+      <p class="muted">The name <strong>"The Descent"</strong> encodes it: start at the surface symptom (the API
+        response), drill <em>down</em> toward ground truth (Oracle), stop at the depth where the bug lives — the
+        opposite motion to SDD, which <em>ascends</em>, constructing a model before touching anything.</p>
+    </div></section>
+
+    <!-- 3 -->
+    <section id="s3"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">schema</span></div><h2>Core concepts</h2><span class="sn">03</span></div>
+      <ul class="tight">
+        <li><strong>System of Record (SoR) = Oracle.</strong> Ground truth. SoR wrong ⇒ a <em>data</em> defect (escalate), not a code defect.</li>
+        <li><strong>System of Reference = Elasticsearch.</strong> Derived truth the consumer reads; drifts via a batch transform bug or a realtime path that arrived late, out of order, or never.</li>
+        <li><strong>The abstraction gap.</strong> Consumers query the API as if it were Oracle; it serves ES. Most "API is wrong" tickets are this gap.</li>
+        <li><strong>Lineage = a lookup</strong> from the ETL fsproj (its compile order is the index of ETL meaning), read via a subagent — never inferred fresh.</li>
+      </ul>
+    </div></section>
+
+    <!-- 4 -->
+    <section id="s4"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">stairs</span></div><h2>The Descent — six rungs, gate-based</h2><span class="sn">04</span></div>
+      <p>Each rung is a yes/no <strong>gate</strong>. Clear it → descend (load the next layer). Fail it → <strong>convict</strong> and stop. A green gate is the only permission to load deeper context. Most tickets convict at rungs 1–3.</p>
+      <table>
+        <thead><tr><th>#</th><th>Rung</th><th>Gate</th><th>Convicts as</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Triage &amp; scope</td><td>Maps to a known endpoint + key?</td><td>(bounce if not actionable)</td></tr>
+          <tr><td>2</td><td>Reproduce &amp; validate; if zero hits, <strong>SHRINK</strong></td><td>Malformed / valid-but-empty / wrong value?</td><td><code>InvalidRequest</code> / → Shrink / descend</td></tr>
+          <tr><td>3</td><td>Lineage (ETL fsproj; reads C# ⚠️)</td><td>API field bound to the right ES field?</td><td><code>ContractDrift</code></td></tr>
+          <tr><td>4</td><td>System of record (Oracle)</td><td>Oracle value correct?</td><td><code>SorDataIssue</code> (escalate) / descend, drop Oracle</td></tr>
+          <tr><td>5</td><td>Batch reconcile</td><td>Transform output == target/expected?</td><td><code>TransformDefect</code> / descend</td></tr>
+          <tr><td>6</td><td>Realtime trace</td><td>Where did the change stop?</td><td><code>RealtimeStale</code>/<code>Drop</code>/<code>MergeReorder</code></td></tr>
+          <tr><td>7</td><td>Verdict reflection</td><td>Cause unique? Property fails-on-bug?</td><td>accept / revise</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">The stopping rule is the point: lazy, depth-first, prune-as-you-go. You never hold all layers at once. Per-rung detail: <code>.claude/skills/pipeline-descent/rungs/</code>.</p>
+    </div></section>
+
+    <!-- 5 -->
+    <section id="s5"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">filter_alt</span></div><h2>The Shrink — the centerpiece</h2><span class="sn">05</span></div>
+      <p><strong>Problem:</strong> a valid request searches the right fields/values/combination and returns <strong>zero hits</strong> when data should exist.</p>
+      <p><strong>Reframe:</strong> the empty query <em>is a failing counterexample.</em> Bisect its predicates to the <strong>1-minimal</strong> subset that still returns zero — that's the culprit. This is delta debugging (<code>ddmin</code>, Zeller &amp; Hildebrandt 2002) and is identical in spirit to <strong>FsCheck shrinking</strong>. <span class="muted">(The technique was the user's own idea; the prior instance formalized it.)</span></p>
+      <p><strong>Algorithm:</strong> <code>ddmin</code> over <code>Predicate list</code> — divide (n=2), test subsets/complements, recurse into whichever still returns zero, double granularity, finish one-by-one to guarantee minimality. Impl: <code>fsx/Descent.Shrink.fsx</code>.</p>
+      <h3>Classify why — test in this order (by base rate)</h3>
+      <table>
+        <thead><tr><th>#</th><th>Cause</th><th>Diagnostic</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Analyzer / term-vs-match</td><td><code>_analyze</code>; use <code>match</code> on <code>text</code>, <code>term</code> on <code>text.keyword</code></td></tr>
+          <tr><td>2</td><td>Case (<code>term</code> is case-sensitive)</td><td><code>case_insensitive:true</code> (≥7.10) or lowercase normalizer</td></tr>
+          <tr><td>3</td><td><code>minimum_should_match</code> flip</td><td>set explicitly; tag clauses with <code>_name</code> → <code>matched_queries</code></td></tr>
+          <tr><td>4</td><td>Nested scope</td><td>wrap in <code>nested</code>+<code>path</code>; <code>inner_hits</code></td></tr>
+          <tr><td>5</td><td>Mapping / field absence</td><td><code>_field_caps?fields=f</code>, then <code>_mappings</code></td></tr>
+          <tr><td>6</td><td>Range / TZ / alias / routing</td><td><code>_validate/query?rewrite=true</code>; check alias write-index</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Diagnostic triad:</strong> <code>_analyze</code> · <code>_validate/query?rewrite=true</code> · <code>_explain/&lt;known-good-id&gt;</code> (the id comes free from lineage). Watch <code>max_clause_count</code> (4096 on 8.x) — shrink <em>logical</em> predicates, not expanded clauses.</p>
+    </div></section>
+
+    <!-- 6 -->
+    <section id="s6"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">bolt</span></div><h2>The Realtime trace</h2><span class="sn">06</span></div>
+      <p><strong>Problem:</strong> a stale document. Don't re-check Oracle and target ES — walk the event path and find the hop where the change <em>stopped</em>: Oracle → Kafka → temp ES → target merge.</p>
+      <table>
+        <thead><tr><th>Hop</th><th>Question</th><th>Evidence</th></tr></thead>
+        <tbody>
+          <tr><td>Oracle</td><td>Row changed &amp; committed?</td><td>value + commit time</td></tr>
+          <tr><td>GoldenGate/Kafka</td><td>Message at the key, in order?</td><td>OGG envelope: <code>op_type</code>, <code>op_ts</code> (replay-stable), <code>pos</code>, <code>primary_keys</code>, <code>${csn}</code>; key by <code>${primaryKeys}</code></td></tr>
+          <tr><td>Consumer</td><td>Consumed?</td><td><code>consumer-groups --describe</code> → LAG</td></tr>
+          <tr><td>Temp ES</td><td>Landed?</td><td><code>GET temp/_doc/&lt;id&gt;</code></td></tr>
+          <tr><td>Target merge</td><td>Applied, in order?</td><td>external version / <code>_seq_no</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout tip"><div class="lbl"><span class="material-symbols-outlined">tips_and_updates</span>Bonus tip — prove arrival</div>
+        Topic keyed by business key ⇒ read one message deterministically (<code>--partition P --offset O --max-messages 1</code>), follow the <code>op_ts</code>/<code>pos</code>/<code>csn</code> trail; the hop where it goes cold dropped the change.</div>
+      <p><strong>The reorder masquerading as staleness:</strong> last-write-wins lets an out-of-order replay overwrite newer data. Fix: <code>version_type=external</code> keyed on CSN/SCN so a lower version can't overwrite a higher. Impl: <code>fsx/Descent.Realtime.fsx</code>.</p>
+    </div></section>
+
+    <!-- 7 -->
+    <section id="s7"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">gavel</span></div><h2>How issues resolve</h2><span class="sn">07</span></div>
+      <p><strong>RootCause is a closed set</strong> (a DU); every ticket resolves to exactly one: <code>InvalidRequest · AnalyzerMismatch · CaseMismatch · ShouldFlip · NestedScope · MappingIssue · ContractDrift · SorDataIssue · TransformDefect · RealtimeStale · RealtimeDrop · MergeReorder</code>. (<code>fsx/Descent.Domain.fsx</code>.)</p>
+      <p><strong>Reflection (rung 7):</strong> critique the cause vs evidence, re-probe with an <em>independent</em> signal, and require the regression property to FAIL on the bug and PASS after the fix. If it can't be made to fail on the bug, the bug isn't understood.</p>
+      <p><strong>Residue (required — "no residue, not done"):</strong> a property test in CI, a lineage fragment, and an OKF concept. Documentation becomes a workflow gate, not a deferred chore.</p>
+    </div></section>
+
+    <!-- 8 -->
+    <section id="s8"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">functions</span></div><h2>The F# discipline (identity law)</h2><span class="sn">08</span></div>
+      <p>Diagnostic tooling is F# with strict functional discipline. Non-negotiable; any C# pattern in F# is a ⚠️ to flag.</p>
+      <ul class="tight">
+        <li><strong>parse-don't-validate</strong> — boundary returns a parsed type; illegal states unrepresentable. <code>ReadOnly&lt;'conn&gt;</code> has no <code>execute</code>/<code>index</code> — a write is unrepresentable, not merely checked.</li>
+        <li><strong>DUs over classes</strong>; single-case DUs for primitives (<code>BusinessKey of string</code>).</li>
+        <li><strong><code>Result</code> over exceptions</strong> on every Oracle/ES/Kafka call.</li>
+        <li><strong>types as proofs</strong> · <strong>typed telemetry as data</strong> · <strong>pure Planner / effectful Runner</strong>.</li>
+      </ul>
+      <div class="callout warn"><div class="lbl"><span class="material-symbols-outlined">report</span>The one ⚠️ C# boundary</div>
+        <code>lineage</code> is the <em>only</em> function that reads the C# Web API. It converts controllers/DTOs/Swagger into immutable <code>LineageEdge</code> values + the known-good <code>EsId</code>. Nothing class-shaped, nullable, or exception-based escapes it.</div>
+      <p class="muted"><strong>Why F#:</strong> the user treats type discipline as a survival strategy — "a predicate is a proposition; a refined value is its proof; the pipeline is a proof-carrying dataflow graph." Honor it.</p>
+    </div></section>
+
+    <!-- 9 -->
+    <section id="s9"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">smart_toy</span></div><h2>Claude-native mechanics + 6 reliability patterns</h2><span class="sn">09</span></div>
+      <p><strong>Progressive disclosure</strong> (context per rung): T0 ticket · T1 endpoint→index · T2 lineage subgraph + EsId · T3 transform + SoR row + Kafka message. Never preload all 50 tables.</p>
+      <p><strong>Context pruning</strong> (a green gate is a forget signal): drop the contract, the other tables, Oracle, the ETL source as each is ruled out. This is what most "reliability" advice omits.</p>
+      <p><strong>Primitives:</strong> a SKILL.md skill (progressive disclosure, &lt;500-line body) · a <code>lineage-resolver</code> subagent (isolated reading) · a <code>PreToolUse</code> hook (deny writes) · plan mode · per-ticket evidence files.</p>
+      <h3>The six patterns, mapped — with the cost the generic version omits</h3>
+      <table>
+        <thead><tr><th>Pattern</th><th>Here</th><th>Cost / when-not</th></tr></thead>
+        <tbody>
+          <tr><td>Reflection</td><td>rung 7; property test is the critic</td><td>self-grading entrenches blind spots; needs an independent signal</td></tr>
+          <tr><td>Plan &amp; Execute</td><td>the rung plan + plan mode</td><td>gates allow replanning; don't over-plan a one-rung ticket</td></tr>
+          <tr><td>Layered memory</td><td>scope / codebase / OKF cache</td><td>pair with pruning — forgetting is half of memory</td></tr>
+          <tr><td>Tool design</td><td>typed, read-only fsx probes</td><td>strict schema ≠ safe; side effects are the risk</td></tr>
+          <tr><td>Human in the loop</td><td>writes/fixes gated</td><td>don't gate every step; investigation stays autonomous</td></tr>
+          <tr><td>Eval suite</td><td><code>evals/</code> + per-ticket properties</td><td>score generalisation &amp; early-stop; watch overfit</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">Beyond the six, this kit adds <strong>context pruning</strong> and a <strong>typed stopping rule</strong> — what keeps the patterns from compounding into a slow loop.</p>
+    </div></section>
+
+    <!-- 10 -->
+    <section id="s10"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">hub</span></div><h2>Knowledge capture as OKF</h2><span class="sn">10</span></div>
+      <p>OKF (Open Knowledge Format, Google Cloud, 2026-06-12) formalizes the LLM-wiki pattern: a directory of markdown <strong>concepts</strong> with YAML frontmatter, cross-linked into a graph. Only <code>type</code> is required; common set: <code>type, title, description, resource, tags, timestamp</code>. <code>index.md</code> per folder; <code>log.md</code> for history. The kit's residue is a conformant bundle in <code>knowledge/</code>.</p>
+      <p><strong>Why it changed the dynamics:</strong> knowledge stops being <em>exhaust</em> and becomes <em>substrate</em> — portable, decoupled from producer and consumer. N×M → N+M integration; model-agnostic (fits the user's multi-model habit); documentation becomes a workflow gate; the human role shifts author→curator (watch rubber-stamping); a new asset appears whose health gates agent capability.</p>
+      <div class="callout warn"><div class="lbl"><span class="material-symbols-outlined">linear_scale</span>The seam to hold</div>
+        OKF is the <strong>agent/human-readable context</strong> layer (meaning, joins, runbooks, lore). ODCS/ODPS/OpenLineage are <strong>machine-enforceable</strong> contracts. Complementary: a concept's <code>resource:</code> <em>links</em> to the ODCS artifact, never duplicates it. OKF does not validate drift.</div>
+      <p class="muted">Rule: <code>.claude/rules/knowledge-capture-okf.md</code>. Bundle: <code>knowledge/README.md</code>. Emitter: <code>fsx/Descent.Okf.fsx</code>.</p>
+    </div></section>
+
+    <!-- 11 -->
+    <section id="s11"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">folder_open</span></div><h2>The kit map</h2><span class="sn">11</span></div>
+      <div class="chips">
+        <span class="tag ready">READY = use as-is</span>
+        <span class="tag skel">SKELETON = plug in clients</span>
+        <span class="tag stub">STUB/SEED = populate from source</span>
+      </div>
+      <pre>descent-starter-kit/
+├── README.md · CLAUDE.md · MANIFEST.txt · .gitignore   [READY]
+├── the-descent.html                                    [READY]  visual field guide
+├── .claude/
+│   ├── settings.json                                   [STUB]   verify hook schema
+│   ├── rules/  (descent-protocol, fsharp-discipline,   [READY]
+│   │            csharp-api-boundary, elasticsearch-kafka,
+│   │            prod-safety, agent-reliability, knowledge-capture-okf)
+│   ├── skills/pipeline-descent/  (SKILL + rungs 01-07  [READY]
+│   │            + reference: es-zero-hit-ladder, ogg-kafka-envelope,
+│   │            ddmin-shrink, reliability-patterns)
+│   ├── skills/oracle-es-mapping/                        [STUB]   pointer to existing skill
+│   ├── agents/lineage-resolver.md                      [READY]
+│   └── hooks/ (block-writes.sh, require-ticket-id.sh)  [READY]
+├── fsx/  (Domain · Probes · Shrink · Realtime ·         [SKELETON]
+│          Engine · Okf · Eval · run-descent + connections.template)
+├── docs/ai/  (endpoint-catalog, lineage-map, known-envs,[STUB]
+│              glossary, defect-taxonomy, memory-layers)
+├── evals/  (eval-set.seed.json, score-descent.md)       [SEED]
+├── knowledge/  OKF v0.1 bundle (concepts + index/log)    [READY-SEED]
+└── tickets/  (TEMPLATE.evidence.md + example)            [READY]</pre>
+    </div></section>
+
+    <!-- 12 -->
+    <section id="s12"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">fact_check</span></div><h2>Grounded vs. to-verify</h2><span class="sn">12</span></div>
+      <h3>Research-grounded (official docs)</h3>
+      <p class="muted">ES zero-hit ladder, term/match/bool/<code>minimum_should_match</code> semantics, <code>_analyze</code>/<code>_validate</code>/<code>_explain</code>/<code>_field_caps</code>, <code>max_clause_count</code>=4096 (8.x), nested pitfalls, OCC (Elastic). OGG envelope, <code>${csn}</code>/<code>${primaryKeys}</code>, op-vs-tx, deletes (Oracle). <code>ddmin</code> + FsCheck shrinking. Claude Code primitives (Anthropic). OKF (Google Cloud).</p>
+      <h3>Verify against THIS system</h3>
+      <ul class="tight">
+        <li>ES version (esp. <code>max_clause_count</code>).</li>
+        <li>OGG <code>op</code> vs <code>tx</code> mode (tx → NULL key breaks per-key reads); <code>${csn}</code> availability; supplemental logging (else partial before-images).</li>
+        <li>Target merge uses <strong>external versioning on CSN/SCN</strong> (or <code>if_seq_no</code>/<code>if_primary_term</code>), not LWW.</li>
+        <li><code>settings.json</code> hook schema vs installed Claude Code.</li>
+        <li>FsCheck 3.x namespaces differ from 2.x; shrinking doesn't work through query-expression syntax.</li>
+      </ul>
+    </div></section>
+
+    <!-- 13 -->
+    <section id="s13"><div class="card tonal">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">alt_route</span></div><h2>Open forks — resolve with the user first</h2><span class="sn">13</span></div>
+      <ol class="inv">
+        <li><strong>Tool substrate.</strong> fsx as MCP server / CLI via bash / FSI? If a custom MCP probe can write, the hook needs a matcher.</li>
+        <li><strong>fsx clients.</strong> raw-HTTP ES (<code>FSharp.Data</code>) vs <code>Elastic.Clients</code> (C#, wrap); Oracle (<code>Oracle.ManagedDataAccess.Core</code>); Kafka (<code>Confluent.Kafka</code>).</li>
+        <li><strong><code>_id</code> construction.</strong> How is the ES <code>_id</code> built from Oracle keys, and is it <em>identical</em> for batch and realtime? If not, add a rung-3 check.</li>
+        <li><strong>Merge contract.</strong> LWW / version-gated / keyed upsert? Decides whether rung 6 distinguishes stale / dropped / reordered.</li>
+        <li><strong>Prod access.</strong> Read-only prod (user said yes) vs reproduce in non-prod. Per-rung policy?</li>
+        <li><strong>OKF producer.</strong> Optionally walk the ODCS catalog to draft OKF concepts, so <code>knowledge/</code> bootstraps from the catalog.</li>
+      </ol>
+      <p class="muted">Already answered: fsx tooling; fsx queries Oracle+ES in both prod &amp; non-prod read-only; lineage = lookup from the ETL fsproj; staleness via Oracle→Kafka→temp-ES arrival.</p>
+    </div></section>
+
+    <!-- 14 -->
+    <section id="s14"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">checklist</span></div><h2>Next actions / build stages</h2><span class="sn">14</span></div>
+      <ol class="inv">
+        <li><strong>Read-only F# substrate.</strong> <code>Probes</code> for Oracle/ES/Kafka returning <code>Result</code>, with the guard. Benchmark: reproduce a zero-hit result via fsx.</li>
+        <li><strong>The Shrink tool.</strong> <code>ddmin</code> + oracle + classify via the ES triad. Threshold: converges to the true culprit with the minimal set; test analyzer-mismatch first.</li>
+        <li><strong>The reconciler.</strong> <code>rtTrace</code> Oracle→Kafka→temp→target → <code>HopResult</code>. Benchmark: localizes an injected drop at each hop in non-prod.</li>
+        <li><strong>Wrap in the workflow.</strong> SKILL + subagent + hook + evidence convention + OKF emit-loop fire on a real end-to-end ticket with no manual ES-console steps.</li>
+        <li><strong>Populate knowledge.</strong> Emit OKF concepts as tickets resolve; densify from source.</li>
+      </ol>
+      <p class="muted">Populate stubs from source: the fsproj gives lineage + <code>_id</code> + transforms; the C# gives the API→ES mapping (⚠️); the sample requests give the endpoint catalog.</p>
+    </div></section>
+
+    <!-- 15 -->
+    <section id="s15"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">palette</span></div><h2>Design &amp; voice</h2><span class="sn">15</span></div>
+      <p>The field guide (<code>the-descent.html</code>) uses the user's established language — <strong>dark ink</strong> ground; semantics <span style="color:var(--green)">green=verified</span>, <span style="color:var(--amber)">amber=suspect/query</span>, <span style="color:var(--steel)">steel-blue=batch/lineage</span>, <span style="color:var(--violet)">violet=realtime</span>, <span style="color:var(--crimson)">crimson=convicted / ⚠️ boundary</span>. Type: Space Grotesk / Spectral / JetBrains Mono. Signature devices: the <strong>descent spine</strong> and the <strong>shrink ladder</strong>; a Thirukkural (Kural 504) frames triage. Naming is a family — <strong>The Descent</strong> (drill the layers) and <strong>The Shrink</strong> (narrow the query), both downward-and-inward.</p>
+      <p class="muted">This handoff is rendered in <strong>Material 3</strong> per the user's request; the field guide keeps the dark-ink language. Voice: precise, plain verbs, no filler; a lightly literary register is welcome; honest about tradeoffs; flag uncertainty over overclaiming.</p>
+    </div></section>
+
+    <!-- 16 -->
+    <section id="s16"><div class="card">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">menu_book</span></div><h2>Glossary</h2><span class="sn">16</span></div>
+      <ul class="tight">
+        <li><strong>Descent</strong> — the six-rung gate-based triage; stop at the first failing gate.</li>
+        <li><strong>Shrink</strong> — query bisection (<code>ddmin</code> = FsCheck shrinking) isolating the field/value that empties a search.</li>
+        <li><strong>SoR / SoReference</strong> — Oracle (ground truth) / Elasticsearch (derived, served).</li>
+        <li><strong>Lineage edge</strong> — API field → ES field → Oracle table.column, with freshness path.</li>
+        <li><strong>Residue</strong> — what a resolved ticket leaves: a property test + a lineage fragment + an OKF concept.</li>
+        <li><strong>OKF</strong> — Open Knowledge Format; the markdown-concept bundle in <code>knowledge/</code>.</li>
+        <li><strong>op_ts / pos / csn</strong> — OGG CDC ordering markers.</li>
+        <li><strong>⚠️ boundary</strong> — the single function (<code>lineage</code>) allowed to read the C# Web API.</li>
+      </ul>
+    </div></section>
+
+    <!-- 17 -->
+    <section id="s17"><div class="card tonal">
+      <div class="shead"><div class="ic"><span class="material-symbols-outlined">history</span></div><h2>Provenance</h2><span class="sn">17</span></div>
+      <ul class="tight">
+        <li>The descent protocol, F# discipline, architecture, and OKF integration were built by the prior instance with the user; <strong>the Shrink was the user's own idea</strong>, formalized here.</li>
+        <li>The ES/OGG/Kafka/Claude-Code/ddmin/OKF specifics are research-grounded against official docs (§12), with version-drift caveats to verify.</li>
+        <li>A competing GPT runbook was used only as a cross-check for the operational scaffold; the intellectual core is independent and the Shrink is absent from it.</li>
+        <li>Everything env-specific is <strong>deliberately stubbed</strong> for the user — the surface where you exceed the prior instance, because you'll have source/env access it lacked.</li>
+      </ul>
+      <div class="callout howto"><div class="lbl"><span class="material-symbols-outlined">rocket_launch</span>Your first move</div>
+        Confirm the §13 forks with the user, then start §14 stage 1 against non-prod. Keep the §0 invariants. Match the level here, then push past it by turning theory into verified fact about this specific pipeline.</div>
+    </div></section>
+  </main>
+</div>
+
+<footer>THE DESCENT · handoff brief · Material 3 · canonical source: HANDOFF.md · kit: descent-starter-kit.zip</footer>
+
+<script>
+  const items=[...document.querySelectorAll('.navitem')];
+  const sections=items.map(i=>document.getElementById(i.dataset.go));
+  const rail=document.getElementById('rail');
+  items.forEach(i=>i.addEventListener('click',()=>{
+    document.getElementById(i.dataset.go).scrollIntoView({behavior:'smooth',block:'start'});
+    rail.classList.remove('open');
+  }));
+  document.getElementById('menuBtn').addEventListener('click',()=>rail.classList.toggle('open'));
+  const spy=new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){
+      const id=e.target.id;
+      items.forEach(i=>i.classList.toggle('active', i.dataset.go===id));
+    }});
+  },{rootMargin:'-20% 0px -70% 0px',threshold:0});
+  sections.forEach(s=>s&&spy.observe(s));
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "_comment": "STUB / TEMPLATE — verify the hooks schema against YOUR Claude Code version before relying on it.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-writes.sh" }
+        ]
+      }
+    ]
+  },
+  "_notes": [
+    "Add a matcher for any custom MCP probe tools that can write (e.g. an Elasticsearch or Oracle MCP).",
+    "Consider enabling require-ticket-id.sh on SessionStart if you want one-ticket-per-session enforced.",
+    "Read-only is also enforced in F# via the ReadOnly<'conn> type — this hook is the second line of defence."
+  ]
+}

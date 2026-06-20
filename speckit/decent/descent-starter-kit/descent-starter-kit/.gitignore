@@ -1,0 +1,4 @@
+# never commit live creds or per-run artifacts
+fsx/connections.json
+*.local.json
+.env

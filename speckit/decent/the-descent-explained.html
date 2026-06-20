@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Descent — A Plain-Language Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#faf8f4; --paper-2:#fffdf9; --ink:#2b2a28; --soft:#6a675f; --faint:#9a958a;
+    --line:#e7e2d8; --teal:#1f8a78; --teal-d:#156355; --teal-bg:#e6f3ef;
+    --amber:#c47f1f; --amber-bg:#fbf0dc; --rose:#b5503f; --rose-bg:#fae9e4;
+    --blue:#2f6aa8; --blue-bg:#e7f0fa;
+    --head:"Fraunces",Georgia,serif; --body:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  ::selection{background:#cfe9e2}
+  .wrap{max-width:820px;margin:0 auto;padding:0 24px}
+  h1,h2,h3{font-family:var(--head);font-weight:500;letter-spacing:-.01em;line-height:1.15}
+  p{margin:14px 0}
+  strong{font-weight:600}
+  em{font-style:italic}
+
+  header.hero{background:
+    radial-gradient(120% 100% at 90% -20%, #e6f3ef, transparent 60%),
+    radial-gradient(90% 80% at -10% 0%, #fbf0dc, transparent 55%);
+    border-bottom:1px solid var(--line)}
+  .hero-in{padding:64px 0 48px}
+  .eyebrow{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal-d);font-weight:600}
+  h1{font-size:clamp(36px,6.5vw,58px);font-weight:600;margin:.3em 0 .25em}
+  .tagline{font-family:var(--head);font-weight:400;font-size:clamp(19px,3vw,24px);color:var(--soft);max-width:30ch;line-height:1.35}
+  .who{margin-top:24px;font-size:15px;color:var(--soft);max-width:60ch}
+  .who b{color:var(--ink);font-weight:600}
+
+  section{padding:40px 0;border-bottom:1px solid var(--line)}
+  .num{font-family:var(--head);font-size:14px;color:var(--teal);font-weight:600;letter-spacing:.1em}
+  h2{font-size:clamp(26px,4vw,34px);margin:6px 0 14px}
+  h3{font-size:21px;margin:28px 0 6px}
+  .lead{font-size:20px;color:var(--soft);font-family:var(--head);font-weight:400;line-height:1.4;max-width:60ch}
+
+  /* pipeline diagram */
+  .pipe{background:var(--paper-2);border:1px solid var(--line);border-radius:18px;padding:26px 24px;margin:22px 0}
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+  .stage{flex:1 1 150px;min-width:140px;text-align:center;padding:6px 8px}
+  .stage .ico{width:46px;height:46px;border-radius:13px;margin:0 auto 10px;display:grid;place-items:center;
+    background:var(--teal-bg);color:var(--teal-d);font-family:var(--head);font-weight:600;font-size:20px}
+  .stage .nm{font-family:var(--head);font-weight:600;font-size:16px}
+  .stage .tech{font-size:12px;color:var(--faint)}
+  .stage .ds{font-size:13px;color:var(--soft);margin-top:4px;line-height:1.4}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:22px;padding:0 2px;align-self:center}
+  .courier{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--soft);text-align:center}
+  .courier b{color:var(--teal-d)}
+
+  /* analogy / callout cards */
+  .card{background:var(--paper-2);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin:18px 0}
+  .card.teal{background:var(--teal-bg);border-color:#cfe6df}
+  .card.amber{background:var(--amber-bg);border-color:#f0e0c0}
+  .card.rose{background:var(--rose-bg);border-color:#f0d6cf}
+  .card.blue{background:var(--blue-bg);border-color:#d4e4f4}
+  .card .k{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--teal-d);margin-bottom:6px}
+  .card.amber .k{color:var(--amber)} .card.rose .k{color:var(--rose)} .card.blue .k{color:var(--blue)}
+  .card p:first-of-type{margin-top:0} .card p:last-child{margin-bottom:0}
+
+  /* numbered steps */
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:18px 0}
+  ol.steps li{counter-increment:s;position:relative;padding:12px 0 12px 50px;border-bottom:1px solid var(--line)}
+  ol.steps li:last-child{border-bottom:none}
+  ol.steps li::before{content:counter(s);position:absolute;left:0;top:12px;width:32px;height:32px;border-radius:50%;
+    background:var(--teal);color:#fff;display:grid;place-items:center;font-weight:600;font-size:15px;font-family:var(--head)}
+  ol.steps b{font-weight:600}
+
+  /* role table */
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:15.5px}
+  th,td{text-align:left;padding:14px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--head);font-weight:600;font-size:14px;color:var(--teal-d);background:var(--teal-bg)}
+  td:first-child{font-weight:600;white-space:nowrap;color:var(--ink)}
+  tr:last-child td{border-bottom:none}
+
+  /* significance band */
+  .band{background:var(--ink);color:#f3f0ea;border-radius:20px;padding:30px 30px;margin:22px 0}
+  .band h3{color:#fff;margin-top:0}
+  .band ul{list-style:none;padding:0;margin:10px 0 0}
+  .band li{padding:9px 0 9px 26px;position:relative;border-bottom:1px solid #3a3935;font-size:16px}
+  .band li:last-child{border-bottom:none}
+  .band li::before{content:"";position:absolute;left:2px;top:17px;width:9px;height:9px;border-radius:50%;background:var(--teal)}
+  .band li b{color:#fff}
+
+  /* is/isnt */
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+  @media(max-width:640px){.twocol{grid-template-columns:1fr}}
+
+  ul.plain{margin:14px 0;padding-left:0;list-style:none}
+  ul.plain li{position:relative;padding:7px 0 7px 24px}
+  ul.plain li::before{content:"";position:absolute;left:4px;top:16px;width:7px;height:7px;border-radius:2px;background:var(--teal)}
+
+  dl{margin:16px 0}
+  dl dt{font-weight:600;margin-top:14px;font-family:var(--head)}
+  dl dd{margin:2px 0 0;color:var(--soft);font-size:15.5px}
+  dl dd .tech{color:var(--faint);font-size:13.5px}
+
+  footer{padding:34px 0 70px;color:var(--faint);font-size:13.5px;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-in">
+    <div class="eyebrow">A plain-language guide</div>
+    <h1>The Descent</h1>
+    <div class="tagline">Turning "something's broken and nobody wrote it down" into a fast, safe, self-improving process.</div>
+    <p class="who">For <b>everyone</b> — managers, analysts, business owners, support teams, and engineers. This explains <b>what</b> the approach is and <b>why it matters</b>, not the machinery underneath. No code. No jargon you won't be handed plainly.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="num">01</div>
+    <h2>The setup, in one picture</h2>
+    <p class="lead">A big company system, built in three parts — plus a delivery service keeping them in sync.</p>
+    <div class="pipe">
+      <div class="flow">
+        <div class="stage">
+          <div class="ico">L</div>
+          <div class="nm">The Ledger</div>
+          <div class="tech">(the source database)</div>
+          <div class="ds">The official record. Where the real data lives.</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage">
+          <div class="ico">C</div>
+          <div class="nm">The Catalog</div>
+          <div class="tech">(the search system)</div>
+          <div class="ds">A fast, searchable <em>copy</em> of the data, reshaped for speed.</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage">
+          <div class="ico">F</div>
+          <div class="nm">The Front Desk</div>
+          <div class="tech">(the app/API)</div>
+          <div class="ds">Answers users' questions — reading from the Catalog.</div>
+        </div>
+      </div>
+      <div class="courier"><b>The Couriers</b> continuously carry changes from the Ledger to the Catalog, so the copy stays current.</div>
+    </div>
+    <p>Like a library: <strong>the Catalog</strong> is the search terminal you use, the <strong>Ledger</strong> is the actual warehouse of shelves, and <strong>the Front Desk</strong> is the clerk who answers you. Here's the twist that causes trouble: <strong>users think they're querying the Ledger, but the Front Desk is really reading the copy.</strong> They never see the copy underneath. It's a sensible design — the copy makes things fast — but it creates a specific kind of problem.</p>
+  </section>
+
+  <section>
+    <div class="num">02</div>
+    <h2>The problem</h2>
+    <p>Things go wrong, and people report them: <em>"I searched and got nothing, but I know that record exists."</em> Or: <em>"This number is out of date — I changed it a minute ago."</em></p>
+    <p>Now the hard part. <strong>There is no reliable documentation.</strong> Nobody wrote down exactly how the Ledger becomes the Catalog, which search the Front Desk really runs, or where a particular number comes from. So when a complaint arrives, finding the cause has meant a few senior experts digging through the system from memory — slow, inconsistent, and risky if those people are busy or leave.</p>
+    <div class="card amber">
+      <div class="k">The question this method answers</div>
+      <p>How do you find the real cause of a problem, <strong>fast</strong>, without a map — and <strong>leave behind a map</strong> for next time?</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">03</div>
+    <h2>The big idea: descend to the problem</h2>
+    <p class="lead">Don't map the whole system first. Diagnose, like a doctor — and stop the moment you find the cause.</p>
+    <p>The common instinct is to document everything, then troubleshoot. That's expensive, and the documentation is stale the moment the system changes. This method does the opposite. It treats each problem like a <strong>diagnosis</strong>.</p>
+    <p>A good doctor doesn't re-examine your whole body for a sore wrist — they follow a focused sequence of checks and stop the moment they find the cause. An electrician tracing a dead outlet checks the outlet, then the wiring, then the breaker — and stops at the first thing that's broken.</p>
+    <p>That's <strong>the descent</strong>: a sensible, fixed order of checks that goes <strong>from the symptom the user sees, down through the layers, to the root cause — stopping at the first thing that's wrong.</strong> Most problems are caught in the first few checks and never need a deep dive.</p>
+    <ol class="steps">
+      <li><b>Understand the complaint.</b> Which feature, which record, live or test? What did they expect versus get?</li>
+      <li><b>Reproduce it.</b> Run the user's exact request and see the bad result yourself. (If the request itself was malformed, the problem is on the asking side — done.)</li>
+      <li><b>Trace where the answer comes from.</b> Follow the thread from the question back to the right piece of the Catalog and the right column in the Ledger.</li>
+      <li><b>Check the Ledger.</b> Is the official source itself correct? If so, this is a <em>data</em> problem to escalate — not a software bug.</li>
+      <li><b>Check the copy process.</b> Did the step that builds the Catalog produce the right value?</li>
+      <li><b>Check the live-update path.</b> If the data is just <em>stale</em>, follow the couriers to find where the update got stuck.</li>
+    </ol>
+    <p>Each step is a simple yes/no gate. Pass it, go one layer deeper. Fail it — <strong>you've found your answer. Stop.</strong></p>
+  </section>
+
+  <section>
+    <div class="num">04</div>
+    <h2>The two signature moves</h2>
+    <p class="lead">Two techniques do most of the work — and both are things you already do instinctively.</p>
+
+    <div class="card teal">
+      <div class="k">The Shrink — "remove filters until the answer comes back"</div>
+      <p>The everyday case: someone runs a perfectly valid search — right name, right status, right dates — and gets <strong>nothing</strong>, when the record clearly exists.</p>
+      <p>Anyone who's used a spreadsheet filter knows the feeling: add one filter too many and suddenly every row vanishes. The fix is obvious — <strong>remove conditions one at a time until the rows come back.</strong> The one you removed last was too strict, or quietly mismatched.</p>
+      <p>That's the Shrink. Instead of guessing, the method peels the search apart until the data reappears, pinpointing the exact field that was silently killing the result — then explains <em>why</em>. Usually something tiny, like searching for "ACTIVE" when the stored value is "Active." Invisible cause, found in seconds instead of an afternoon.</p>
+    </div>
+
+    <div class="card blue">
+      <div class="k">The Trace — "track the package to where it got stuck"</div>
+      <p>The <em>stale data</em> case: the Ledger is right, but the Front Desk shows an old value.</p>
+      <p>Think of tracking a parcel: <strong>ordered → shipped → in transit → out for delivery → delivered.</strong> When it's late, you don't re-check the warehouse — you look at the tracking to see <em>where it stopped</em>. The Trace does exactly this with a data change: it follows the update from the Ledger, to the courier, to the staging area, to the Catalog, and finds the one hop where it got stuck — delayed, dropped, or delivered out of order.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">05</div>
+    <h2>Why this is different — and significant</h2>
+    <p><strong>It replaces a big, doomed documentation project with learning just-in-time.</strong> You don't write a 200-page manual upfront — it would be wrong within weeks. You learn exactly what each problem requires, exactly when you need it.</p>
+    <p><strong>Every fix makes the system smarter.</strong> This is the heart of it. Each time a problem is solved, the method <em>writes down what it learned</em> — what that field means, where it comes from, what went wrong, how to catch it next time — into a shared, reusable knowledge library. The system <strong>documents itself, one ticket at a time.</strong> Repeated problems start triaging themselves; the knowledge compounds instead of evaporating.</p>
+    <p><strong>Knowledge stops living only in a few people's heads.</strong> The join paths, the gotchas, the lore become a navigable, shared asset. The practical effect: less dependence on any one expert, easier onboarding, lower key-person risk.</p>
+  </section>
+
+  <section>
+    <div class="num">06</div>
+    <h2>Where AI fits — and how it stays safe</h2>
+    <p>An AI assistant runs this method: it does the patient, tedious tracing a person would find draining, following the same disciplined descent every time. But the design keeps humans firmly in control through deliberate guardrails.</p>
+    <ul class="plain">
+      <li><strong>Look, never touch.</strong> The AI's investigation is strictly <em>read-only</em> — in both live and test systems. It can inspect everything but is structurally prevented from changing anything. (Enforced two independent ways, so a slip is caught.)</li>
+      <li><strong>Humans approve every fix.</strong> The AI proposes; a person reviews and authorizes any actual change, repair, or backfill. Risky or irreversible actions always pass through a human.</li>
+      <li><strong>It checks its own work.</strong> Before declaring a cause, it tries to <em>disprove</em> its own conclusion and must produce a small automated test that fails on the bug — so "I think it's this" becomes "here's proof it's this."</li>
+      <li><strong>It plans before acting, remembers what it learned, uses small focused tools, and is tested against known-hard cases.</strong> Standard reliability practices that keep an AI dependable rather than improvisational.</li>
+    </ul>
+    <div class="card">
+      <p style="margin:0">The net effect: the AI brings <strong>speed and consistency</strong>; the humans keep <strong>judgment and control</strong>; and everything leaves a recorded trail.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">07</div>
+    <h2>The captured knowledge is portable, not locked in</h2>
+    <p>The knowledge the method captures isn't trapped in one tool or vendor. It's written in a simple, open, shareable format — plain documents anyone can read and any tool or future AI can consume.</p>
+    <ul class="plain">
+      <li>Readable by a person, a search tool, a dashboard, or a different AI — without translation.</li>
+      <li>Travels with the code, in version control, so it stays close to what it describes.</li>
+      <li>Complements — rather than replaces — the formal data definitions a data team already runs. It's the <strong>plain-English layer</strong> on top of the technical ones, linking to them rather than duplicating them.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="num">08</div>
+    <h2>What this means for your role</h2>
+    <table>
+      <thead><tr><th>If you are…</th><th>What you get from this</th></tr></thead>
+      <tbody>
+        <tr><td>A manager / leader</td><td>Faster resolution, less reliance on a few irreplaceable experts, no costly upfront documentation project, and a consistent, auditable trail for every issue. Risk down; speed up.</td></tr>
+        <tr><td>A business owner</td><td>The system's knowledge becomes a compounding asset instead of decaying tribal memory. Each problem solved makes the next one cheaper, and onboarding faster.</td></tr>
+        <tr><td>An analyst</td><td>When a query "returns nothing" or "looks wrong," a repeatable way to find exactly which field or filter caused it — your spreadsheet-filter instinct, made systematic. And you can trust the lineage: every served value traces back to its real source.</td></tr>
+        <tr><td>Support / ops</td><td>A clear, step-by-step triage path for tickets, routed and explained consistently — plus a growing knowledge base, so the same question isn't re-investigated from scratch.</td></tr>
+        <tr><td>A programmer</td><td>A disciplined, read-only investigation workflow with reusable tooling, a strict line between investigating and changing, and an automatic regression test for every fix — so bugs found once stay fixed.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="num">09</div>
+    <h2>The bottom line</h2>
+    <div class="band">
+      <h3>Significance in one breath</h3>
+      <ul>
+        <li><b>Faster:</b> stop at the first thing that's wrong, instead of studying the whole system.</li>
+        <li><b>Safer:</b> investigation can't change anything; humans approve every fix; everything is recorded.</li>
+        <li><b>Self-improving:</b> every fix leaves behind reusable knowledge, so repeated problems triage themselves.</li>
+        <li><b>Less fragile:</b> knowledge moves out of a few experts' heads into a shared, portable asset.</li>
+        <li><b>Cheaper over time:</b> no big documentation project — the map draws itself, and stays current because it's built from real fixes.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">10</div>
+    <h2>What it is — and what it isn't</h2>
+    <div class="twocol">
+      <div class="card teal">
+        <div class="k">What it is</div>
+        <p>A disciplined, repeatable method for diagnosing problems in a complex, undocumented system — run with AI assistance and human oversight — that captures reusable knowledge as a byproduct of every fix.</p>
+      </div>
+      <div class="card rose">
+        <div class="k">What it isn't</div>
+        <p>Magic, or an AI that fixes things on its own. It doesn't replace your experts — it <em>amplifies</em> them, handling the tedious tracing and record-keeping. It never bypasses review; humans control every change.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="border-bottom:none">
+    <div class="num">—</div>
+    <h2>Glossary</h2>
+    <dl>
+      <dt>The Ledger</dt><dd>The official source of truth where the real data lives. <span class="tech">(technically: an Oracle database)</span></dd>
+      <dt>The Catalog</dt><dd>The fast, searchable copy the app actually reads. <span class="tech">(technically: Elasticsearch)</span></dd>
+      <dt>The Front Desk</dt><dd>The service that answers users' questions, reading from the Catalog. <span class="tech">(technically: a web API)</span></dd>
+      <dt>The Couriers</dt><dd>The system that carries live changes from the Ledger to the Catalog. <span class="tech">(technically: change-data-capture via GoldenGate and Kafka)</span></dd>
+      <dt>The Descent</dt><dd>The step-by-step diagnosis from symptom to cause, stopping at the first thing that's wrong.</dd>
+      <dt>The Shrink</dt><dd>Removing search conditions one at a time until results reappear, to find the field that was killing them.</dd>
+      <dt>The Trace</dt><dd>Following a data change hop by hop, like tracking a parcel, to find where it got stuck.</dd>
+      <dt>Stale data</dt><dd>The official record changed, but the copy the user sees hasn't caught up yet.</dd>
+      <dt>Lineage</dt><dd>The documented path of where a value comes from: app field → copy field → source column.</dd>
+    </dl>
+  </section>
+
+</main>
+
+<footer class="wrap">The Descent · a plain-language guide · what &amp; why, for every audience</footer>
+</body>
+</html>

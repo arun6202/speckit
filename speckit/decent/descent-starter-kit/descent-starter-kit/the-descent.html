@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Descent — Claude-Native JIT Troubleshooting · Oracle → F# ETL → ES → C# API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0d1218; --ink-2:#121a22; --ink-3:#0a0f14; --line:#25323d;
+    --text:#e7e3d6; --dim:#94a0a8; --faint:#5f6e78;
+    --green:#5cc08a; --amber:#e0a23c; --steel:#6aa6cf; --violet:#a98cdb; --crimson:#d6624f;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --serif:"Spectral",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--serif);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  ::selection{background:rgba(106,166,207,.3)}
+  a{color:var(--steel);text-decoration:none}a:hover{text-decoration:underline}
+  code,.mono{font-family:var(--mono)}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px}
+
+  header.top{border-bottom:1px solid var(--line);background:
+    radial-gradient(120% 90% at 85% -10%, rgba(169,140,219,.10), transparent 55%),
+    radial-gradient(100% 80% at 0% -20%, rgba(106,166,207,.10), transparent 50%)}
+  .masthead{padding:46px 0 30px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--faint)}
+  .eyebrow .b{color:var(--steel)}
+  h1{font-family:var(--disp);font-weight:600;font-size:clamp(34px,6vw,62px);line-height:1.02;letter-spacing:-.02em;margin:.28em 0 .15em}
+  h1 .thin{font-weight:400;color:var(--dim)}
+  .sub{font-size:19px;color:var(--dim);max-width:70ch;margin:0}
+  .sub em{color:var(--text);font-style:italic}
+  .givens{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .given{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);background:var(--ink-3);border-radius:20px;padding:5px 12px;color:var(--dim)}
+  .given b{color:var(--green);font-weight:600}
+
+  nav.tabs{position:sticky;top:0;z-index:30;background:rgba(13,18,24,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .tabrow{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+  .tabrow::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;background:none;border:none;color:var(--dim);font-family:var(--mono);font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;padding:16px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s}
+  .tab .n{color:var(--faint);margin-right:8px}
+  .tab:hover{color:var(--text)}
+  .tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--steel)}
+  .tab[aria-selected="true"] .n{color:var(--steel)}
+
+  .panel{display:none;padding:54px 0 96px;animation:fade .4s ease}
+  .panel.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.panel{animation:none}}
+
+  h2{font-family:var(--disp);font-weight:600;font-size:30px;letter-spacing:-.01em;margin:0 0 6px}
+  h3{font-family:var(--disp);font-weight:500;font-size:20px;letter-spacing:-.005em;margin:38px 0 10px}
+  .lede{font-size:20px;color:var(--dim);max-width:68ch;margin:0 0 8px}
+  p{max-width:72ch}
+  .small{font-size:14.5px;color:var(--dim)}
+  strong{color:var(--text);font-weight:600}
+  .kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--faint);margin-bottom:18px}
+  .t-green{color:var(--green)}.t-amber{color:var(--amber)}.t-steel{color:var(--steel)}.t-violet{color:var(--violet)}.t-crimson{color:var(--crimson)}
+
+  .kural{border-left:2px solid var(--violet);padding:6px 0 6px 22px;margin:30px 0 6px;font-style:italic;color:var(--text)}
+  .kural .ta{font-style:normal;font-size:19px;line-height:1.5;color:#efe9da}
+  .kural .gl{display:block;margin-top:9px;color:var(--dim);font-size:15.5px}
+  .kural .src{display:block;margin-top:8px;font-family:var(--mono);font-style:normal;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+
+  .note{border:1px solid var(--line);border-left-width:3px;border-radius:6px;padding:14px 18px;margin:20px 0;background:var(--ink-2);font-size:15.5px}
+  .note .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:5px}
+  .note.warn{border-left-color:var(--amber)}.note.warn .lbl{color:var(--amber)}
+  .note.law{border-left-color:var(--crimson)}.note.law .lbl{color:var(--crimson)}
+  .note.tip{border-left-color:var(--green)}.note.tip .lbl{color:var(--green)}
+  .note.rt{border-left-color:var(--violet)}.note.rt .lbl{color:var(--violet)}
+
+  pre{background:var(--ink-3);border:1px solid var(--line);border-radius:8px;padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;margin:18px 0}
+  pre .c{color:var(--faint)} pre .k{color:var(--violet)} pre .ty{color:var(--steel)}
+  pre .s{color:var(--green)} pre .d{color:var(--amber)} pre .w{color:var(--crimson);font-weight:600}
+  .filetag{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.12em;margin:24px 0 -8px}
+
+  /* descent spine */
+  .spine{display:grid;grid-template-columns:34px 1fr;gap:0;margin:30px 0 8px}
+  .rail{position:relative}
+  .rail::before{content:"";position:absolute;left:16px;top:14px;bottom:14px;width:2px;background:linear-gradient(var(--amber),var(--steel) 45%,var(--violet))}
+  .rung{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:0 0 4px}
+  .rung .dot{position:relative;width:34px}
+  .rung .dot i{position:absolute;left:9px;top:18px;width:18px;height:18px;border-radius:50%;background:var(--ink);border:2px solid var(--steel);box-shadow:0 0 0 4px var(--ink)}
+  .rung .card{border:1px solid var(--line);border-radius:9px;background:var(--ink-2);padding:15px 18px;margin:8px 0}
+  .rung .card .h{font-family:var(--disp);font-weight:600;font-size:16px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .rung .card .layer{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .rung .card p{margin:7px 0 0;font-size:14.5px;color:var(--dim);max-width:none}
+  .rung .card .gate{font-family:var(--mono);font-size:12.5px;margin-top:9px}
+  .rung .card .gate b{color:var(--text);font-weight:600}
+  .rung[data-c="green"] .dot i{border-color:var(--green)}
+  .rung[data-c="amber"] .dot i{border-color:var(--amber)}
+  .rung[data-c="steel"] .dot i{border-color:var(--steel)}
+  .rung[data-c="violet"] .dot i{border-color:var(--violet)}
+  .rung[data-c="crimson"] .dot i{border-color:var(--crimson)}
+
+  /* shrink ladder */
+  .shrink{margin:26px 0 8px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .srow{display:grid;grid-template-columns:90px 1fr 96px;gap:0;border-bottom:1px solid var(--line);align-items:center}
+  .srow:last-child{border-bottom:none}
+  .srow .rnd{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;padding:14px 8px;letter-spacing:.1em;border-right:1px solid var(--line)}
+  .srow .chips{display:flex;flex-wrap:wrap;gap:7px;padding:13px 16px}
+  .srow .res{font-family:var(--mono);font-size:12px;font-weight:600;text-align:center;padding:14px 8px;border-left:1px solid var(--line)}
+  .chip{font-family:var(--mono);font-size:12px;border-radius:7px;padding:5px 10px;border:1px solid var(--line);background:var(--ink-3);color:var(--dim)}
+  .chip.live{color:var(--text);border-color:rgba(106,166,207,.5)}
+  .chip.gone{opacity:.32;text-decoration:line-through}
+  .chip.culprit{color:var(--ink);background:var(--amber);border-color:var(--amber);font-weight:600}
+  .res.found{color:var(--green)} .res.empty{color:var(--crimson)}
+  .srow.hit{background:rgba(92,192,138,.05)}
+
+  /* generic tables */
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:10px 13px;text-align:left;vertical-align:top}
+  th{background:var(--ink-3);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:500}
+  td{background:rgba(10,15,20,.4);color:var(--dim)}
+  td b{color:var(--text)}
+  td code{font-size:12.5px;color:var(--steel)}
+
+  /* tiers */
+  .tiers{display:flex;flex-direction:column;gap:10px;margin:22px 0}
+  .tier{display:grid;grid-template-columns:64px 1fr;gap:16px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:13px 16px;background:var(--ink-2)}
+  .tier .tg{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--steel);text-align:center}
+  .tier .tg small{display:block;font-weight:400;font-size:9.5px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase}
+  .tier .body{font-size:14.5px;color:var(--dim)} .tier .body b{color:var(--text)}
+
+  /* tools */
+  .tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px;margin:22px 0}
+  .tool{border:1px solid var(--line);border-radius:9px;padding:15px 17px;background:var(--ink-2)}
+  .tool .nm{font-family:var(--mono);font-weight:600;font-size:14px;color:var(--text)}
+  .tool .sig{font-family:var(--mono);font-size:11.5px;color:var(--steel);margin:6px 0 8px;word-break:break-word}
+  .tool .ds{font-size:13.5px;color:var(--dim);margin:0}
+  .tool .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);display:inline-block;margin-top:9px;border:1px solid var(--line);border-radius:20px;padding:2px 9px}
+  .tool.pure .tag{color:var(--green);border-color:rgba(92,192,138,.4)}
+  .tool.shell .tag{color:var(--amber);border-color:rgba(224,162,60,.4)}
+  .tool.cs .tag{color:var(--crimson);border-color:rgba(214,98,79,.4)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin:24px 0 4px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;margin:14px 0;color:var(--dim)}
+  .flow .b{border:1px solid var(--line);border-radius:6px;padding:5px 10px;background:var(--ink-2);color:var(--text)}
+  .flow .ar{color:var(--faint)}
+  .flow .v{border-color:rgba(169,140,219,.45);color:var(--violet)}
+  .flow .s{border-color:rgba(106,166,207,.45);color:var(--steel)}
+  .flow .g{border-color:rgba(92,192,138,.45);color:var(--green)}
+  .flow .x{border-color:rgba(214,98,79,.55);color:var(--crimson)}
+
+  ul.clean{list-style:none;padding:0;margin:14px 0}
+  ul.clean li{position:relative;padding-left:22px;margin:9px 0;max-width:72ch;font-size:15.5px}
+  ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--steel)}
+
+  hr.sep{border:none;border-top:1px solid var(--line);margin:42px 0}
+  footer{border-top:1px solid var(--line);padding:28px 0 60px;color:var(--faint);font-family:var(--mono);font-size:12px}
+  footer a{color:var(--faint)} footer .src{margin-top:10px;line-height:1.9}
+  @media (max-width:720px){.srow{grid-template-columns:64px 1fr 70px}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap masthead">
+    <div class="eyebrow">Field guide · <span class="b">Claude-native JIT troubleshooting</span> · Oracle → F# ETL → ES → C# API + CDC</div>
+    <h1>The Descent<span class="thin">.</span></h1>
+    <p class="sub">A per-ticket protocol for an <em>undocumented</em> pipeline. Infer context just-in-time from the codebase, drill the lineage only as far as the bug lives — and when a valid search returns nothing, <em>shrink the query</em> until the culprit field confesses.</p>
+    <div class="givens">
+      <span class="given">tooling · <b>F# .fsx</b></span>
+      <span class="given">access · <b>Oracle + ES, prod &amp; non-prod, read</b></span>
+      <span class="given">lineage · <b>lookup from ETL fsproj</b></span>
+      <span class="given">stale · <b>Oracle→Kafka→temp ES arrival</b></span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap">
+    <div class="tabrow" role="tablist">
+      <button class="tab" role="tab" aria-selected="true"  data-p="doctrine"><span class="n">00</span>Doctrine</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="descent"><span class="n">01</span>The Descent</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="shrink"><span class="n">02</span>The Shrink</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="kit"><span class="n">03</span>F# kit (.fsx)</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="realtime"><span class="n">04</span>Realtime trace</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="native"><span class="n">05</span>Claude-native</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="worked"><span class="n">06</span>Worked tickets</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ DOCTRINE ============ -->
+<section class="panel on" id="doctrine" role="tabpanel">
+  <div class="kicker">00 — Doctrine</div>
+  <h2>Don't design a spec. Run a descent.</h2>
+  <p class="lede">There is no reliable documentation, and you won't write one up front. Each defect <em>pulls</em> exactly the context it needs out of the codebase, and resolving it <em>leaves behind</em> a durable fragment — a lineage edge, a property test, a rule. The system documents itself, one ticket at a time.</p>
+
+  <div class="kural">
+    <span class="ta">குணம்நாடிக் குற்றமும் நாடி அவற்றுள்<br>மிகைநாடி மிக்க கொளல்.</span>
+    <span class="gl">Weigh the merits, weigh the faults too; among them see which is greater, and take that as your verdict. <span class="t-violet">(Valluvar wrote it of judging people — but it is triage, eight centuries early: separate real defect from consumer error, and rule by whichever dominates.)</span></span>
+    <span class="src">Thirukkural 504 · அதிகாரம் தெரிந்து தெளிதல்</span>
+  </div>
+
+  <h3>Two truths the protocol turns on</h3>
+  <ul class="clean">
+    <li><strong class="t-green">System of Record (Oracle).</strong> Ground truth. If the SoR is wrong, the pipeline was faithful and the ticket is a <em>data</em> defect, not a <em>code</em> defect — the descent escalates, it doesn't patch ES.</li>
+    <li><strong class="t-violet">System of Reference (Elasticsearch).</strong> Derived truth the consumer actually reads. It drifts from the SoR through a batch transform bug or a realtime path that arrived late, out of order, or never.</li>
+  </ul>
+
+  <h3>The abstraction that generates your tickets</h3>
+  <p>The consumer queries the C# Web API and <em>believes they are querying Oracle</em>. They aren't — they read an ES index shaped to feel relational. Every defect is a gap between that <span class="t-amber">felt contract</span> (Oracle-like) and the <span class="t-steel">real substrate</span> (an analyzed ES document, possibly stale). Troubleshooting re-derives the lineage the abstraction hides.</p>
+  <div class="flow">
+    <span class="b">Consumer request</span><span class="ar">→</span>
+    <span class="b">C# Web API</span><span class="ar">→</span>
+    <span class="b s">ES target index</span><span class="ar">↑ merge</span>
+    <span class="b v">temp index</span><span class="ar">←</span>
+    <span class="b v">Kafka</span><span class="ar">←</span>
+    <span class="b">GoldenGate CDC</span><span class="ar">←</span>
+    <span class="b g">Oracle (SoR)</span>
+  </div>
+
+  <h3>The givens — decisions are settled, so wire to them</h3>
+  <ul class="clean">
+    <li><strong>Tooling is F# <code>.fsx</code>.</strong> Scripts can query Oracle and ES directly, in <em>both</em> prod and non-prod, read-only. That means reproduction and reconciliation happen in-tool — no console detours.</li>
+    <li><strong>Lineage is a lookup, not an inference.</strong> The ETL fsproj that manages the full Oracle→ES load is the authoritative lineage source. The descent <em>reads</em> it; it doesn't guess.</li>
+    <li><strong>Staleness is proven by arrival.</strong> A stale doc is diagnosed by walking Oracle → Kafka message → temp ES — checking at each hop whether the change actually arrived.</li>
+  </ul>
+
+  <div class="note law">
+    <span class="lbl">F# identity law — in force this session</span>
+    The descent tooling is F#: parse-don't-validate at every boundary, types as proofs, DUs over classes, <code>Result</code> over exceptions, typed telemetry as data. The C# Web API is survival-income territory; its controllers, DTO classes and exception filters are an <span class="t-crimson">⚠️ un-disciplined zone</span>. We don't import its patterns — we <em>re-parse</em> its OpenAPI + query builder back into F# proof types at the boundary, and that boundary is always marked.
+  </div>
+</section>
+
+<!-- ============ DESCENT ============ -->
+<section class="panel" id="descent" role="tabpanel">
+  <div class="kicker">01 — The Descent</div>
+  <h2>Six rungs. Stop at the first that convicts.</h2>
+  <p class="lede">Each rung is a <strong>gate</strong>: one yes/no probe that clears the layer (descend) or convicts it (stop, found). You never load a lower rung's context until the gate above is green. Most tickets convict at rung 1–3 and never touch Oracle, ETL, or Kafka.</p>
+
+  <div class="legend">
+    <span><i style="background:var(--green)"></i>verified / ground truth</span>
+    <span><i style="background:var(--amber)"></i>contract / consumer / query</span>
+    <span><i style="background:var(--steel)"></i>batch / structural lineage</span>
+    <span><i style="background:var(--violet)"></i>realtime / CDC path</span>
+    <span><i style="background:var(--crimson)"></i>convicted defect</span>
+  </div>
+
+  <div class="spine">
+    <div class="rail"></div>
+    <div>
+      <div class="rung" data-c="amber"><div class="dot"><i></i></div><div class="card">
+        <div class="h">Triage &amp; scope <span class="layer">layer · intake</span></div>
+        <p>Parse the Jira ticket into a typed <code>Scope</code>: <b>env</b> (prod / which non-prod slot), <b>endpoint &amp; module</b>, <b>record key</b>, the consumer's <b>request</b>, observed-vs-expected. Pruning starts here — endpoint → module → one ES index → its lineage subgraph (looked up from the ETL fsproj).</p>
+        <div class="gate"><b>Gate:</b> ticket maps to a known endpoint &amp; key? <span class="t-amber">no →</span> bounce as unactionable.</div>
+      </div></div>
+
+      <div class="rung" data-c="amber"><div class="dot"><i></i></div><div class="card">
+        <div class="h">Reproduce, validate — and if empty, <span class="t-amber">shrink</span> <span class="layer">layer · consumer / query</span></div>
+        <p>Replay the consumer's exact request against the scoped env. Parse it against OpenAPI (<em>parse, don't validate</em>). If it returns the wrong value → continue down. <strong>If it's a valid request that returns <span class="t-crimson">not&nbsp;found</span> when data should exist → enter <a href="#" data-go="shrink">The Shrink</a></strong>: bisect the predicates until the culprit field/value confesses.</p>
+        <div class="gate"><b>Gate:</b> malformed request → <span class="t-crimson">InvalidRequest.</span> valid-but-empty → <span class="t-amber">shrink → classify.</span> wrong value → descend.</div>
+      </div></div>
+
+      <div class="rung" data-c="steel"><div class="dot"><i></i></div><div class="card">
+        <div class="h">Re-derive lineage from the ETL fsproj <span class="layer">layer · lineage · ⚠️ reads C#</span></div>
+        <p>Look up: API param → ES query → ES field (from the C# query builder <span class="t-crimson">⚠️</span>), then ES field → Oracle <code>table.column</code> (from the ETL fsproj). Confirm the felt Oracle-contract still binds the right ES field. Output is re-parsed into typed <code>LineageEdge</code>s; nothing C#-shaped escapes.</p>
+        <div class="gate"><b>Gate:</b> binding correct? <span class="t-crimson">no → ContractDrift.</span> yes → descend.</div>
+      </div></div>
+
+      <div class="rung" data-c="green"><div class="dot"><i></i></div><div class="card">
+        <div class="h">Check the System of Record <span class="layer">layer · oracle SoR</span></div>
+        <p>Query Oracle directly (the <code>.fsx</code> can) for the keyed record along the lineage edge.</p>
+        <div class="gate"><b>Gate:</b> SoR correct? <span class="t-crimson">no → SorDataIssue</span> (escalate to data owner). yes → SoR fine, API wrong ⇒ drift is below the API, above Oracle. Descend, and <em>drop Oracle from context.</em></div>
+      </div></div>
+
+      <div class="rung" data-c="steel"><div class="dot"><i></i></div><div class="card">
+        <div class="h">Reconcile the batch transform <span class="layer">layer · fsproj ETL</span></div>
+        <p>Re-run the transform for this one record; diff produced ES doc vs live target. A mismatch is a deterministic, testable transform defect.</p>
+        <div class="gate"><b>Gate:</b> output matches target &amp; expected? <span class="t-crimson">no → TransformDefect.</span> yes → batch innocent; drift entered via realtime. Descend.</div>
+      </div></div>
+
+      <div class="rung" data-c="violet"><div class="dot"><i></i></div><div class="card">
+        <div class="h">Trace the realtime CDC path <span class="layer">layer · GG · kafka · temp · merge</span></div>
+        <p>Follow the key: Oracle → Kafka message → temp ES → target merge. The failure is one of <b>arrived late</b>, <b>arrived out of order</b>, or <b>never arrived</b>. → <a href="#" data-go="realtime">Realtime trace</a>.</p>
+        <div class="gate"><b>Gate:</b> <span class="t-crimson">RealtimeStale · RealtimeDrop · MergeReorder.</span></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="note tip"><span class="lbl">The stopping rule is the whole point</span>A green gate is permission to load the next layer's context, nothing more. You're never holding all six layers — in your head or the model's window — at once. Lazy, depth-first, and it prunes as it goes.</div>
+</section>
+
+<!-- ============ SHRINK ============ -->
+<section class="panel" id="shrink" role="tabpanel">
+  <div class="kicker">02 — The Shrink · the centerpiece</div>
+  <h2>When a valid search finds nothing, shrink it.</h2>
+  <p class="lede">A request from the sample list, right fields, right values, right combination — and zero hits. Don't give up and don't eyeball it. <strong>Bisect the query predicate-by-predicate until the data reappears</strong>, isolating the exact field/value/combination that kills the match. This is delta debugging, and it's the same instinct as FsCheck <em>shrinking</em> a failing case to its minimal reproducer.</p>
+
+  <div class="note"><span class="lbl" style="color:var(--steel)">The reframe</span>The empty query <strong>is the failing counterexample.</strong> The shrink reduces the predicate set to the <em>1-minimal</em> subset that still returns nothing — the culprit. Then three ES diagnostic APIs name <em>why</em>.</div>
+
+  <h3>The algorithm — <code>ddmin</code>, not linear poking</h3>
+  <p>The manual instinct ("peel down to ID, add fields back one at a time") is linear — O(n) probes. The tool runs <strong>Zeller's <code>ddmin</code></strong>: divide the predicate set, test subsets and complements, recurse into whichever still returns empty, doubling granularity until it reaches a 1-minimal culprit set. Binary-search fast in the common case; final pass deletes one-by-one to <em>guarantee</em> minimality.</p>
+
+  <div class="shrink" aria-label="Shrink trace example">
+    <div class="srow">
+      <div class="rnd">round 0</div>
+      <div class="chips"><span class="chip live">customerId=AC-88231</span><span class="chip live">status=ACTIVE</span><span class="chip live">name~"acme corp"</span><span class="chip live">openedAfter=2020</span></div>
+      <div class="res empty">0 hits</div>
+    </div>
+    <div class="srow">
+      <div class="rnd">÷ 2</div>
+      <div class="chips"><span class="chip live">customerId=AC-88231</span><span class="chip live">status=ACTIVE</span><span class="chip gone">name~"acme corp"</span><span class="chip gone">openedAfter=2020</span></div>
+      <div class="res empty">0 hits</div>
+    </div>
+    <div class="srow hit">
+      <div class="rnd">÷ 2</div>
+      <div class="chips"><span class="chip live">customerId=AC-88231</span><span class="chip gone">status=ACTIVE</span><span class="chip gone">name~"acme corp"</span><span class="chip gone">openedAfter=2020</span></div>
+      <div class="res found">1 hit ✓</div>
+    </div>
+    <div class="srow">
+      <div class="rnd">isolate</div>
+      <div class="chips"><span class="chip gone">customerId=AC-88231</span><span class="chip culprit">status=ACTIVE</span></div>
+      <div class="res empty">0 hits</div>
+    </div>
+  </div>
+  <p class="small">1-minimal culprit: <code class="t-amber">status=ACTIVE</code>. ID alone finds the doc; adding <code>status</code> empties it. The other two predicates are innocent. Now classify <em>why</em> <code>status</code> kills it.</p>
+
+  <h3>The ES zero-hit root-cause ladder — test in this order (by base rate)</h3>
+  <table>
+    <thead><tr><th>#</th><th>Root cause</th><th>Tell</th><th>Diagnostic</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>Analyzer / term-vs-match mismatch</b></td><td><code>term</code> on a <code>text</code> field (stored as analyzed tokens <code>[quick,brown,fox]</code>, never the raw phrase) — or <code>match</code> on a <code>keyword</code> stored verbatim. Silent zero.</td><td><code>_analyze</code>: compare index-time vs query-time tokens. Use <code>match</code> on <code>text</code>, <code>term</code> on <code>text.keyword</code>.</td></tr>
+      <tr><td>2</td><td><b>Case sensitivity on keyword</b></td><td><code>term "ACTIVE"</code> vs stored <code>"Active"</code>. <code>term</code> is case-sensitive by default.</td><td><code>case_insensitive:true</code> (≥7.10, keyword/constant_keyword) or a lowercase <b>normalizer</b> on the field.</td></tr>
+      <tr><td>3</td><td><b><code>minimum_should_match</code> flip</b></td><td>A <code>should</code> set defaults to "≥1 required" <em>only</em> with no <code>must</code>/<code>filter</code>. Add a <code>must</code> and <code>should</code> silently becomes optional (default 0) — over-broad or empty.</td><td>Set <code>minimum_should_match</code> explicitly; tag clauses with <code>_name</code> → read <code>matched_queries</code>.</td></tr>
+      <tr><td>4</td><td><b>Nested scope</b></td><td>Querying a <code>nested</code> field without a <code>nested</code>+<code>path</code> wrapper → nothing. Or an <code>object</code> array flattened, losing per-object correlation → false matches.</td><td>Wrap in <code>nested</code> query; use <code>inner_hits</code> to see which sub-doc matched.</td></tr>
+      <tr><td>5</td><td><b>Mapping / field absence</b></td><td>Field not searchable, wrong type, or dynamic-mapped unexpectedly.</td><td><code>_field_caps?fields=f</code> → <code>type</code>, <code>searchable</code>; then <code>_mappings</code>.</td></tr>
+      <tr><td>6</td><td><b>Range / timezone / alias</b></td><td>Date range off by TZ; alias points at a stale or wrong write-index; routing hides the doc.</td><td><code>_validate/query?rewrite=true</code> to see the real Lucene; check alias &amp; <code>index.query.default_field</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note warn"><span class="lbl">⚠️ Too many clauses</span>Bisecting a huge <code>terms</code> list as separate clauses can trip <code>indices.query.bool.max_clause_count</code> (4096 on 8.x) → <code>too_many_clauses</code>. Shrink the <em>logical</em> predicates (one <code>terms</code> = one predicate), not the expanded clauses.</div>
+
+  <h3>The three APIs that name the cause</h3>
+  <div class="flow">
+    <span class="b s">_analyze</span><span class="ar">tokens in vs out</span>
+    <span class="b s">_validate/query?rewrite=true</span><span class="ar">the real Lucene</span>
+    <span class="b s">_explain/&lt;id&gt;</span><span class="ar">why this known-good doc didn't match</span>
+  </div>
+  <p class="small">The known-good document <code>_id</code> comes free from the lineage lookup (ETL fsproj → ES <code>_id</code> construction). <code>_explain</code> against it turns "no hits" into a precise per-clause yes/no.</p>
+</section>
+
+<!-- ============ KIT ============ -->
+<section class="panel" id="kit" role="tabpanel">
+  <div class="kicker">03 — F# kit · <code>.fsx</code></div>
+  <h2>Small, typed, read-only probes.</h2>
+  <p class="lede">Every probe returns a <code>Result</code> or a DU, threads typed telemetry, and never writes. Pure planner decides the next probe; effectful shell runs it. The shrink is <code>ddmin</code> over a predicate set; the reconciler walks the realtime hops.</p>
+
+  <h3>Domain — the world parsed into closed sets</h3>
+  <div class="filetag">Descent.Domain.fsx</div>
+<pre><span class="c">// Single-case DUs kill primitive obsession; Env is a proof, not a string</span>
+<span class="k">type</span> <span class="ty">Env</span> = <span class="d">Prod</span> | <span class="d">NonProd</span> <span class="k">of</span> slot:<span class="ty">string</span>
+<span class="k">type</span> <span class="ty">BusinessKey</span> = <span class="ty">BusinessKey</span> <span class="k">of</span> <span class="ty">string</span>
+<span class="k">type</span> <span class="ty">EsId</span> = <span class="ty">EsId</span> <span class="k">of</span> <span class="ty">string</span>
+
+<span class="c">// A query predicate is a closed set — each one a "delta" the shrink can drop</span>
+<span class="k">type</span> <span class="ty">MatchKind</span> = <span class="d">Term</span> | <span class="d">Match</span> | <span class="d">Phrase</span> | <span class="d">Range</span> | <span class="d">Nested</span> <span class="k">of</span> path:<span class="ty">string</span>
+<span class="k">type</span> <span class="ty">Predicate</span> =
+    { Field:<span class="ty">string</span>;  Value:<span class="ty">string</span>;  Kind:<span class="ty">MatchKind</span>;  Name:<span class="ty">string</span> }   <span class="c">// Name → _name → matched_queries</span>
+
+<span class="c">// The shrink oracle. Three-valued: Unresolved keeps us honest about flaky probes</span>
+<span class="k">type</span> <span class="ty">Probe3</span> = <span class="d">Found</span> | <span class="d">NotFound</span> | <span class="d">Unresolved</span>
+
+<span class="c">// One closed set of causes. classify : evidence -> exactly one of these</span>
+<span class="k">type</span> <span class="ty">RootCause</span> =
+    | <span class="d">InvalidRequest</span>   <span class="k">of</span> field:<span class="ty">string</span> * rule:<span class="ty">string</span>
+    | <span class="d">AnalyzerMismatch</span> <span class="k">of</span> field:<span class="ty">string</span> * indexTokens:<span class="ty">string</span> list * queryTokens:<span class="ty">string</span> list
+    | <span class="d">CaseMismatch</span>     <span class="k">of</span> field:<span class="ty">string</span> * sent:<span class="ty">string</span> * stored:<span class="ty">string</span>
+    | <span class="d">ShouldFlip</span>       <span class="k">of</span> clause:<span class="ty">string</span>
+    | <span class="d">NestedScope</span>      <span class="k">of</span> path:<span class="ty">string</span>
+    | <span class="d">ContractDrift</span>    <span class="k">of</span> apiField:<span class="ty">string</span> * esField:<span class="ty">string</span>
+    | <span class="d">SorDataIssue</span>     <span class="k">of</span> table:<span class="ty">string</span> * key:<span class="ty">BusinessKey</span>
+    | <span class="d">TransformDefect</span>  <span class="k">of</span> field:<span class="ty">string</span>
+    | <span class="d">RealtimeStale</span>    <span class="k">of</span> topic:<span class="ty">string</span> * lagMs:<span class="ty">int</span>
+    | <span class="d">RealtimeDrop</span>     <span class="k">of</span> stage:<span class="ty">Stage</span> * key:<span class="ty">BusinessKey</span>
+    | <span class="d">MergeReorder</span>     <span class="k">of</span> key:<span class="ty">BusinessKey</span></pre>
+
+  <h3>Read-only shell — the only I/O, guarded</h3>
+  <div class="filetag">Descent.Probes.fsx</div>
+<pre><span class="c">// parse-don't-validate the connection: a ReadOnly handle CANNOT express a write.</span>
+<span class="c">// Illegal states unrepresentable &gt; runtime "if (write) throw".</span>
+<span class="k">type</span> <span class="ty">ReadOnly&lt;'conn&gt;</span> = <span class="k">private</span> <span class="ty">ReadOnly</span> <span class="k">of</span> 'conn
+<span class="k">module</span> <span class="ty">ReadOnly</span> =
+    <span class="k">let</span> <span class="d">ofOracle</span> cs = <span class="ty">ReadOnly</span> (<span class="d">Oracle.openReadOnly</span> cs)   <span class="c">// SET TRANSACTION READ ONLY</span>
+    <span class="k">let</span> <span class="d">query</span> sql (<span class="ty">ReadOnly</span> c) : <span class="ty">Async</span>&lt;<span class="ty">Result</span>&lt;<span class="ty">Row</span> list, <span class="ty">ProbeError</span>&gt;&gt; = <span class="d">Oracle.read</span> c sql
+<span class="c">// A PreToolUse hook also denies any non-GET ES verb &amp; any SQL DML — belt and braces.</span>
+
+<span class="k">module</span> <span class="ty">Es</span> =
+    <span class="k">let</span> <span class="d">search</span> env idx (q:<span class="ty">Json</span>) : <span class="ty">Async</span>&lt;<span class="ty">Result</span>&lt;<span class="ty">Hits</span>, <span class="ty">ProbeError</span>&gt;&gt; = <span class="d">Http.get</span> env $"/{idx}/_search" q
+    <span class="k">let</span> <span class="d">analyze</span> env idx field text = <span class="d">Http.get</span> env $"/{idx}/_analyze" {| field=field; text=text; explain=<span class="k">true</span> |}
+    <span class="k">let</span> <span class="d">validate</span> env idx q = <span class="d">Http.get</span> env $"/{idx}/_validate/query?rewrite=true" q
+    <span class="k">let</span> <span class="d">explain</span> env idx (<span class="ty">EsId</span> id) q = <span class="d">Http.get</span> env $"/{idx}/_explain/{id}" q
+    <span class="k">let</span> <span class="d">fieldCaps</span> env idx field = <span class="d">Http.get</span> env $"/{idx}/_field_caps?fields={field}" null</pre>
+
+  <h3>The shrink — <code>ddmin</code> over predicates</h3>
+  <div class="filetag">Descent.Shrink.fsx</div>
+<pre><span class="c">// Minimise the failing (empty) predicate set to a 1-minimal culprit set.</span>
+<span class="c">// `probe ps = NotFound` means "this subset still returns zero hits".</span>
+<span class="k">let</span> <span class="d">ddmin</span> (probe: <span class="ty">Predicate</span> list -&gt; <span class="ty">Probe3</span>) (failing: <span class="ty">Predicate</span> list) =
+    <span class="k">let</span> stillEmpty xs = (<span class="d">not</span> (<span class="d">List.isEmpty</span> xs)) &amp;&amp; probe xs = <span class="d">NotFound</span>
+    <span class="k">let</span> <span class="k">rec</span> loop preds n =
+        <span class="k">if</span> <span class="d">List.length</span> preds &lt; 2 <span class="k">then</span> preds
+        <span class="k">else</span>
+            <span class="k">let</span> size  = <span class="d">max</span> 1 (<span class="d">List.length</span> preds / n)
+            <span class="k">let</span> parts = preds |&gt; <span class="d">List.chunkBySize</span> size
+            <span class="c">// keep the smallest complement that still reproduces the empty result</span>
+            <span class="k">let</span> reduced =
+                parts |&gt; <span class="d">List.tryPick</span> (<span class="k">fun</span> part -&gt;
+                    <span class="k">let</span> comp = preds |&gt; <span class="d">List.filter</span> (<span class="k">fun</span> p -&gt; <span class="d">not</span> (<span class="d">List.contains</span> p part))
+                    <span class="k">if</span> stillEmpty comp <span class="k">then</span> <span class="d">Some</span> comp <span class="k">else</span> <span class="d">None</span>)
+            <span class="k">match</span> reduced <span class="k">with</span>
+            | <span class="d">Some</span> smaller                       -&gt; loop smaller 2                <span class="c">// recurse, reset granularity</span>
+            | <span class="d">None</span> <span class="k">when</span> n &lt; <span class="d">List.length</span> preds -&gt; loop preds (<span class="d">min</span> (<span class="d">List.length</span> preds) (n*2))
+            | <span class="d">None</span>                              -&gt; preds                       <span class="c">// 1-minimal: the culprit set</span>
+    loop failing 2
+
+<span class="c">// Then classify WHY the minimal culprit empties the result.</span>
+<span class="k">let</span> <span class="d">classify</span> env idx goodId (culprit: <span class="ty">Predicate</span>) : <span class="ty">Async</span>&lt;<span class="ty">RootCause</span>&gt; = async {
+    <span class="k">match</span> culprit.Kind <span class="k">with</span>
+    | <span class="d">Term</span> -&gt;
+        <span class="k">let!</span> caps = <span class="ty">Es.fieldCaps</span> env idx culprit.Field
+        <span class="k">let!</span> toks = <span class="ty">Es.analyze</span>   env idx culprit.Field culprit.Value
+        <span class="k">return</span> <span class="ty">Diagnose.termOnField</span> caps toks culprit       <span class="c">// → AnalyzerMismatch | CaseMismatch</span>
+    | _ -&gt;
+        <span class="k">let!</span> ex = <span class="ty">Es.explain</span> env idx goodId (<span class="ty">Query.ofPredicate</span> culprit)
+        <span class="k">return</span> <span class="ty">Diagnose.fromExplain</span> ex culprit }</pre>
+
+  <h3>The probe registry</h3>
+  <div class="tools">
+    <div class="tool shell"><div class="nm">triage</div><div class="sig">Ticket → Result&lt;Scope, Reject&gt;</div><p class="ds">Jira ticket → env, endpoint, module, key, request, expected/actual. Prunes to one lineage subgraph.</p><span class="tag">shell</span></div>
+    <div class="tool shell"><div class="nm">replay</div><div class="sig">Scope → Async&lt;Response&gt;</div><p class="ds">Fire the consumer's exact request at the env; structured diff vs expected.</p><span class="tag">shell · http</span></div>
+    <div class="tool pure"><div class="nm">shrink</div><div class="sig">Predicate list → Predicate list</div><p class="ds"><code>ddmin</code> to the 1-minimal culprit set. Pure; the probe oracle is injected.</p><span class="tag">pure</span></div>
+    <div class="tool shell"><div class="nm">classify</div><div class="sig">Predicate → Async&lt;RootCause&gt;</div><p class="ds">_analyze / _validate / _explain / _field_caps → names the ES zero-hit cause.</p><span class="tag">shell · es</span></div>
+    <div class="tool cs"><div class="nm">lineage</div><div class="sig">Endpoint → Result&lt;LineageEdge list,_&gt;</div><p class="ds">Lookup from the ETL fsproj + C# query builder → typed edges + the known-good EsId. ⚠️ C# boundary.</p><span class="tag">⚠️ c# zone</span></div>
+    <div class="tool shell"><div class="nm">sor</div><div class="sig">BusinessKey → Async&lt;OraRow option&gt;</div><p class="ds">Read Oracle along the edge. Ground truth. Read-only handle.</p><span class="tag">shell · oracle</span></div>
+    <div class="tool shell"><div class="nm">reconcile</div><div class="sig">BusinessKey → Async&lt;Diff&gt;</div><p class="ds">Re-run the fsproj transform for one record; diff vs live target.</p><span class="tag">shell · etl</span></div>
+    <div class="tool shell"><div class="nm">rtTrace</div><div class="sig">BusinessKey → Async&lt;HopResult&gt;</div><p class="ds">Oracle → Kafka(partition+offset) → temp ES → target merge. Locates the stage that dropped it.</p><span class="tag">shell · kafka/es</span></div>
+    <div class="tool pure"><div class="nm">emit</div><div class="sig">Verdict → KnowledgeFragment</div><p class="ds">Lineage fragment + FsCheck property + CLAUDE.md note. A verdict isn't done without it.</p><span class="tag">pure</span></div>
+  </div>
+
+  <div class="note warn"><span class="lbl">⚠️ The one C# boundary</span><code>lineage</code> reads the survival-income zone — controllers, DTO classes, the ES query builder, Swagger. Its sole job is to convert that into immutable <code>LineageEdge</code> values and the known-good <code>EsId</code>. Nothing class-shaped escapes the function.</div>
+</section>
+
+<!-- ============ REALTIME ============ -->
+<section class="panel" id="realtime" role="tabpanel">
+  <div class="kicker">04 — Realtime trace</div>
+  <h2>Prove arrival, hop by hop.</h2>
+  <p class="lede">A stale doc isn't diagnosed by re-checking Oracle and target ES. You walk the event path and find the hop where the change <em>stopped</em>: Oracle → Kafka message → temp ES → target merge.</p>
+
+  <div class="flow">
+    <span class="b g">Oracle row</span><span class="ar">→</span>
+    <span class="b">GoldenGate CDC</span><span class="ar">→</span>
+    <span class="b v">Kafka (keyed by PK)</span><span class="ar">→</span>
+    <span class="b v">temp ES doc</span><span class="ar">→ merge</span>
+    <span class="b s">target ES doc</span>
+  </div>
+
+  <h3>What each hop proves, and how</h3>
+  <table>
+    <thead><tr><th>Hop</th><th>Question</th><th>Evidence to read</th></tr></thead>
+    <tbody>
+      <tr><td><b>Oracle</b></td><td>Did the row actually change &amp; commit?</td><td>row value + commit time; the reporter may have expected an uncommitted value.</td></tr>
+      <tr><td><b>GoldenGate</b></td><td>Was the change captured to Kafka?</td><td>OGG envelope: <code>op_type</code> (I/U/D/T), <code>op_ts</code> (source trail, replay-stable), <code>pos</code> (seqno+RBA), <code>primary_keys</code>.</td></tr>
+      <tr><td><b>Kafka</b></td><td>Arrived with the right key &amp; order?</td><td>key = <code>${primaryKeys}</code> → same partition in commit order; read by <code>partition+offset</code>; compare <code>after</code>-image.</td></tr>
+      <tr><td><b>Consumer</b></td><td>Was it consumed?</td><td><code>consumer-groups --describe</code>: <code>CURRENT-OFFSET</code>, <code>LOG-END-OFFSET</code>, <code>LAG</code> per partition.</td></tr>
+      <tr><td><b>Temp ES</b></td><td>Did it land?</td><td><code>GET temp/_doc/&lt;id&gt;</code> or by-key search; deserialization/schema errors stop it here.</td></tr>
+      <tr><td><b>Target merge</b></td><td>Did the upsert apply, in order?</td><td>target <code>_version</code> / external version / <code>_seq_no</code>; an older CDC event must be rejected, not win.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The ordering defect that masquerades as staleness</h3>
+  <p>If the target merge is <strong>last-write-wins</strong>, an out-of-order CDC replay overwrites a newer value with an older one — a "stale" doc that's really a <em>reorder</em>. The fix is <strong>external versioning keyed on the source CSN/SCN</strong>: index with <code>version_type=external</code> so a lower external version can never overwrite a higher one. Elastic's optimistic-concurrency primitives (<code>if_seq_no</code> &amp; <code>if_primary_term</code>) cover the in-cluster case; external versioning covers "Oracle is the version authority."</p>
+
+  <div class="filetag">expose the CSN deterministically (OGG metacolumn template)</div>
+<pre><span class="c"># There is no default csn field. Emit one explicitly:</span>
+gg.handler.NAME.format.metaColumnsTemplate=${objectname[table]},${optype[op_type]},${csn[csn]},${position[pos]}
+<span class="c"># key every change to a row onto one partition, in commit order:</span>
+gg.handler.kafkahandler.keyMappingTemplate=${primaryKeys}</pre>
+
+  <div class="note rt"><span class="lbl">★ Bonus tip — prove arrival between Oracle, the Kafka message, and temp ES</span>
+  Because the topic is keyed by the business key, you can read the <em>one</em> CDC message deterministically and compare its image + <code>op_ts</code>/<code>pos</code>/<code>csn</code> to the Oracle row — then check the same id in temp ES. The hop where the <code>op_ts</code>/<code>pos</code>/<code>csn</code> trail goes cold is the stage that dropped it.</div>
+<pre><span class="c"># 1. read exactly one message at the business key's partition+offset</span>
+kafka-console-consumer.sh --bootstrap-server $B --topic $T \
+  --partition $P --offset $O --max-messages 1 \
+  --property print.key=<span class="s">true</span> --property print.timestamp=<span class="s">true</span>
+
+<span class="c"># 2. is the consumer keeping up?  LAG should be ~0 if the merge is healthy</span>
+kafka-consumer-groups.sh --bootstrap-server $B --describe --group $G
+
+<span class="c"># 3. did the same id reach temp ES?  (op_ts here should match the Kafka op_ts)</span>
+GET temp_idx/_doc/&lt;esId&gt;?_source=op_ts,csn,after</pre>
+  <p class="small"><b>Version caveat:</b> envelope field names are stable across OGG 12.3→19.1→26, but confirm <code>${csn}</code> availability and whether your handler runs in <code>op</code> mode (one message per operation, key = PK) vs <code>tx</code> mode (concatenated, <span class="t-amber">NULL key</span> — which breaks per-key reads). Also confirm full supplemental logging, or update/delete <code>before</code>-images may be partial.</p>
+</section>
+
+<!-- ============ NATIVE ============ -->
+<section class="panel" id="native" role="tabpanel">
+  <div class="kicker">05 — Claude-native mechanics</div>
+  <h2>Hold just enough, and no more.</h2>
+  <p class="lede">The descent is also how you drive the model. Progressive disclosure loads context per rung, pruning drops what a green gate ruled out, and skills/subagents/hooks encode the discipline so it isn't re-explained each session.</p>
+
+  <h3>Progressive disclosure — context arrives per rung</h3>
+  <div class="tiers">
+    <div class="tier"><div class="tg">T0<small>intake</small></div><div class="body"><b>The ticket only.</b> Env, endpoint, key, request, expected/actual.</div></div>
+    <div class="tier"><div class="tg">T1<small>map</small></div><div class="body"><b>Endpoint → module → ES index.</b> One row of the routing table.</div></div>
+    <div class="tier"><div class="tg">T2<small>edge</small></div><div class="body"><b>The lineage subgraph + known-good EsId.</b> A few edges, looked up from the ETL fsproj — not the whole catalog.</div></div>
+    <div class="tier"><div class="tg">T3<small>source</small></div><div class="body"><b>Transform code + the SoR row + the Kafka message.</b> The deepest tier — only for genuine pipeline defects.</div></div>
+  </div>
+
+  <h3>Context pruning — a green gate is a forget signal</h3>
+  <ul class="clean">
+    <li>Request validated → drop the OpenAPI contract. Shrink converged → drop the innocent predicates.</li>
+    <li>Lineage edge confirmed → drop the other 49 tables and the rest of the routing table.</li>
+    <li>SoR confirmed correct → drop Oracle entirely; the bug is strictly downstream.</li>
+    <li>Batch transform clean → drop the ETL source; the surface is now only the realtime path.</li>
+  </ul>
+
+  <h3>The primitives — encode the discipline once</h3>
+  <table>
+    <thead><tr><th>Primitive</th><th>Carries</th><th>Why it fits the descent</th></tr></thead>
+    <tbody>
+      <tr><td><b>SKILL.md</b> <code>pipeline-descent</code></td><td>The six rungs + the zero-hit ladder; one file per branch.</td><td>Progressive disclosure: only the description loads at start; the body &amp; <code>probes/*.md</code> load when a rung is reached. Keep the body <b>&lt; 500 lines</b>.</td></tr>
+      <tr><td><b>Subagent</b> <code>lineage-resolver</code></td><td>Reads the ETL fsproj in an isolated window.</td><td>Heavy reading happens off to the side; only the resolved <code>LineageEdge</code> list returns, keeping main context clean.</td></tr>
+      <tr><td><b>Hook</b> <code>PreToolUse</code></td><td>Deterministic guard.</td><td>Exit 2 to <b>deny</b> any ES write verb or SQL DML — read-only enforced in code, in both prod and non-prod. Costs no context.</td></tr>
+      <tr><td><b>Plan mode</b></td><td>Explore-first investigation.</td><td>Maps the relevant module + lineage before acting — exactly "infer JIT from the codebase."</td></tr>
+      <tr><td><b>Evidence file</b> <code>tickets/&lt;ID&gt;/NOTES.md</code></td><td>Per-ticket structured notes.</td><td>State the agent can rediscover after a fresh window — beats compaction for long descents.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="filetag">CLAUDE.md · always loaded · lean</div>
+<pre><span class="c"># Troubleshooting discipline</span>
+- Run THE DESCENT. Stop at the first gate that convicts. Don't load a lower
+  tier until the gate above is green.
+- Valid request, zero hits → run THE SHRINK (ddmin) before anything else.
+  Test analyzer/term-vs-match FIRST, then case, then minimum_should_match.
+- F# only for tooling. parse-don't-validate; DUs over classes; Result over
+  exceptions. Flag any C# idiom with <span class="w">⚠️</span>. Probes are READ-ONLY.
+- Lineage is a LOOKUP from the ETL fsproj, never a guess.
+- Oracle is ground truth. Never "fix" ES to mask an SoR defect — escalate.
+- A verdict is incomplete without a regression PropertyTest.</pre>
+
+  <div class="note warn"><span class="lbl">Anti-pattern</span>Re-pasting the architecture into chat every session. If you're explaining the topology, it belongs in <code>CLAUDE.md</code> or a skill index. The prompt carries the <em>ticket</em>, not the <em>system</em>.</div>
+</section>
+
+<!-- ============ WORKED ============ -->
+<section class="panel" id="worked" role="tabpanel">
+  <div class="kicker">06 — Worked tickets</div>
+  <h2>Two defects, end to end.</h2>
+
+  <div class="note"><span class="lbl" style="color:var(--amber)">JIRA-5102 · UAT · the shrink</span><strong>"GET /customers/search returns nothing for an account that clearly exists."</strong> Request: <code>{customerId:"AC-88231", status:"ACTIVE", name:"acme corp", openedAfter:2020}</code>. Reporter insists the customer is active. Zero hits.</div>
+
+  <ul class="clean">
+    <li><strong>① triage →</strong> <code>NonProd "uat"</code>, module <b>Customers</b>, index <b>cust_target</b>, key <code>AC-88231</code>. <span class="t-green">Actionable.</span></li>
+    <li><strong>② replay →</strong> request is valid against OpenAPI, reproducibly returns <code>0 hits</code>. Valid-but-empty → <span class="t-amber">enter the shrink.</span></li>
+    <li><strong>shrink →</strong> <code>ddmin</code> converges (see trace in <a href="#" data-go="shrink">The Shrink</a>): ID alone finds the doc; adding <code>status=ACTIVE</code> empties it. <strong class="t-amber">Culprit: status.</strong></li>
+    <li><strong>classify →</strong> <code>_field_caps</code>: <code>status</code> is a <code>keyword</code>. <code>_analyze</code> + a direct read: the stored value is <code>"Active"</code>, the query sends <code>term "ACTIVE"</code>. <code>term</code> is case-sensitive. <strong class="t-crimson">CaseMismatch(status, "ACTIVE", "Active").</strong></li>
+  </ul>
+  <div class="filetag">verdict &amp; residue</div>
+<pre><span class="c">// Cause: CaseMismatch — the C# query builder emits term(status, raw) without lowercasing.</span>
+<span class="c">// Fix (pick one, at the contract boundary):</span>
+<span class="c">//   a) normalizer (lowercase) on cust_target.status, reindex affected; or</span>
+<span class="c">//   b) case_insensitive:true on the term; or  c) builder lowercases keyword terms.</span>
+
+<span class="k">let</span> ``<span class="d">status term matches regardless of case</span>`` () =
+    <span class="ty">Prop.forAll</span> (<span class="d">Gen.casings</span> <span class="s">"active"</span>) (<span class="k">fun</span> sent -&gt;
+        <span class="ty">Es.search</span> uat <span class="s">"cust_target"</span> (<span class="d">termStatus</span> sent) |&gt; <span class="d">hits</span> = 1)   <span class="c">// FsCheck — now in CI</span></pre>
+
+  <hr class="sep">
+
+  <div class="note rt"><span class="lbl" style="color:var(--violet)">JIRA-4127 · UAT · the realtime trace</span><strong>"GET /accounts/{id}/balance returns a stale balance."</strong> <code>AC-88231</code> shows ₹0 forty seconds after a posting. Expected the new balance.</div>
+  <ul class="clean">
+    <li><strong>①–③ green:</strong> valid request; API <code>balance</code> binds correctly to <code>acct_target.bal_minor</code> ← Oracle <code>ACCT_BAL.BAL_MINOR</code> (lineage lookup).</li>
+    <li><strong>④ sor →</strong> Oracle <code>BAL_MINOR = 540000</code>. <span class="t-green">Ground truth correct.</span> Drift is below the API. Drop Oracle.</li>
+    <li><strong>⑤ reconcile →</strong> batch transform reproduces <code>540000</code>; batch hasn't run since the posting. <span class="t-green">Batch innocent → realtime.</span></li>
+    <li><strong>⑥ rtTrace →</strong></li>
+  </ul>
+  <div class="flow">
+    <span class="b">GG CDC ✓</span><span class="ar">→</span>
+    <span class="b v">kafka p3 · offset 91024 ✓</span><span class="ar">→</span>
+    <span class="b v">temp ES ✓ landed</span><span class="ar">→ merge</span>
+    <span class="b x">target ✗ lag 34s</span>
+  </div>
+  <p class="small">The new balance sits in temp ES; the merge consumer's group lag is <b>34,000 ms</b> and climbing. <strong class="t-crimson">RealtimeStale("acct.cdc", 34000).</strong> The balance was never wrong — only late. Residue: an FsCheck property asserting <code>target.mergedAt − temp.indexedAt ≤ mergeSla</code>, now in CI.</p>
+
+  <div class="note tip"><span class="lbl">What both share</span>Neither needed the whole system. The shrink converged on one field; the trace stopped at one hop. Each emitted a property test that turns a one-off into permanent coverage — and the next ticket of its kind nearly triages itself.</div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  THE DESCENT · Claude-native JIT troubleshooting · F# discipline in force · read-only probes · stop at the first gate that convicts
+  <div class="src">Grounding (verify against your versions): Elastic — Troubleshoot searches, <code>term</code>/<code>bool</code> query refs, <code>_analyze</code> / <code>_validate</code> / <code>_explain</code> / <code>_field_caps</code>, nested &amp; optimistic-concurrency docs · Oracle GoldenGate for Big Data — Kafka Handler &amp; Pluggable Formatters · Apache Kafka — console consumer &amp; consumer-groups · Anthropic / Claude Code — Skills, subagents, hooks, plan mode, context engineering · Zeller &amp; Hildebrandt, "Simplifying and Isolating Failure-Inducing Input" (ddmin) · FsCheck shrinking.</div>
+</footer>
+
+<script>
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+  const panels = Array.from(document.querySelectorAll('.panel'));
+  function select(id){
+    tabs.forEach(t=>t.setAttribute('aria-selected', String(t.dataset.p===id)));
+    panels.forEach(p=>p.classList.toggle('on', p.id===id));
+    window.scrollTo({top:0,behavior:'auto'});
+  }
+  tabs.forEach((t,i)=>{
+    t.addEventListener('click',()=>select(t.dataset.p));
+    t.addEventListener('keydown',e=>{
+      if(e.key==='ArrowRight'){e.preventDefault();tabs[(i+1)%tabs.length].focus();}
+      if(e.key==='ArrowLeft'){e.preventDefault();tabs[(i-1+tabs.length)%tabs.length].focus();}
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();select(t.dataset.p);}
+    });
+  });
+  document.querySelectorAll('[data-go]').forEach(a=>{
+    a.addEventListener('click',e=>{e.preventDefault();select(a.dataset.go);});
+  });
+</script>
+</body>
+</html>

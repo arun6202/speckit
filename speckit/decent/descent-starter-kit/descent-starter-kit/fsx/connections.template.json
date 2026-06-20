@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy to connections.json (gitignored). READ-ONLY credentials only.",
+  "environments": {
+    "prod":  { "es": "https://ES_PROD_HOST:9200", "oracle": "READONLY_TNS_OR_CONNSTR", "kafka": "PROD_BROKER:9092" },
+    "uat":   { "es": "https://ES_UAT_HOST:9200",  "oracle": "READONLY_TNS_OR_CONNSTR", "kafka": "UAT_BROKER:9092"  },
+    "sit":   { "es": "https://ES_SIT_HOST:9200",  "oracle": "READONLY_TNS_OR_CONNSTR", "kafka": "SIT_BROKER:9092"  }
+  },
+  "indices": { "target": "TODO_target_index_or_alias", "temp": "TODO_temp_index" },
+  "kafka":   { "cdcTopicPrefix": "TODO_e.g_ogg.", "consumerGroup": "TODO_merge_consumer_group" }
+}

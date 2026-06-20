@@ -1,0 +1,61 @@
+{
+  "_comment": "Hard-ticket eval set for the descent. Fill 10-20. expected_* are the ground truth to score against.",
+  "cases": [
+    {
+      "id": "JIRA-5102",
+      "env": "uat",
+      "endpoint": "GET /customers/search",
+      "request": { "customerId": "AC-88231", "status": "ACTIVE", "name": "acme corp", "openedAfter": 2020 },
+      "symptom": "valid request, zero hits, customer is active",
+      "expected_rung_stop": 2,
+      "expected_root_cause": "CaseMismatch",
+      "expected_culprit": "status (term ACTIVE vs stored Active)",
+      "expected_shrink_min_predicates": 1,
+      "notes": "term on keyword is case-sensitive; classify via _field_caps + _analyze"
+    },
+    {
+      "id": "JIRA-4127",
+      "env": "uat",
+      "endpoint": "GET /accounts/{id}/balance",
+      "request": { "accountId": "AC-88231" },
+      "symptom": "stale balance 40s after posting; expected new balance",
+      "expected_rung_stop": 6,
+      "expected_root_cause": "RealtimeStale",
+      "expected_culprit": "hop: target merge (consumer lag ~34s)",
+      "notes": "Oracle + batch correct; change sits in temp ES, merge lagging"
+    },
+    {
+      "id": "TODO-add-a-ContractDrift-case",
+      "env": "sit",
+      "endpoint": "TODO",
+      "request": {},
+      "symptom": "API value wrong, direct ES correct",
+      "expected_rung_stop": 3,
+      "expected_root_cause": "ContractDrift",
+      "expected_culprit": "TODO api field -> wrong es field",
+      "notes": "stub"
+    },
+    {
+      "id": "TODO-add-a-TransformDefect-case",
+      "env": "sit",
+      "endpoint": "TODO",
+      "request": {},
+      "symptom": "ES doc wrong, Oracle correct",
+      "expected_rung_stop": 5,
+      "expected_root_cause": "TransformDefect",
+      "expected_culprit": "TODO field",
+      "notes": "stub"
+    },
+    {
+      "id": "TODO-add-a-RealtimeDrop-case",
+      "env": "sit",
+      "endpoint": "TODO",
+      "request": {},
+      "symptom": "change never appears",
+      "expected_rung_stop": 6,
+      "expected_root_cause": "RealtimeDrop",
+      "expected_culprit": "TODO hop (kafka msg / temp es)",
+      "notes": "stub"
+    }
+  ]
+}
