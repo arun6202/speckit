@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windsurf · Context Flow Blueprint</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#0b0e11; --panel:#11161b; --panel2:#0e1318;
+    --ink:#e6edf3; --muted:#7d8b99; --line:#1d2730;
+    --read:#38bdf8;      /* cyan  = READ / context-in */
+    --eph:#f5a524;       /* amber = ephemeral write (memory, local) */
+    --dur:#34d399;       /* green = durable write (rule, committed) */
+    --warn:#fb7185;
+    --mono:ui-monospace,"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--mono); line-height:1.5;
+    font-size:15px; padding:28px 18px 80px;
+    background-image:
+      linear-gradient(rgba(56,189,248,.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(56,189,248,.03) 1px,transparent 1px);
+    background-size:26px 26px;
+  }
+  .wrap{max-width:980px;margin:0 auto}
+  header{border:1px solid var(--line);background:var(--panel);padding:18px 20px;margin-bottom:26px}
+  .eyebrow{color:var(--read);font-size:11px;letter-spacing:.22em;text-transform:uppercase;margin:0 0 8px}
+  h1{font-size:21px;margin:0;font-weight:600;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:12.5px;margin-top:8px}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-size:11.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;display:inline-block;border-radius:2px}
+
+  section{margin:34px 0}
+  .label{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:14px}
+  .num{color:var(--read);font-size:12px;letter-spacing:.18em}
+  .label h2{font-size:15px;margin:0;font-weight:600;letter-spacing:.01em}
+  .label .note{color:var(--muted);font-size:11.5px;margin-left:auto;text-align:right}
+
+  .diagram{background:var(--panel2);border:1px solid var(--line);padding:18px 10px;overflow-x:auto}
+  .mermaid{display:flex;justify-content:center;min-width:540px}
+
+  .gotcha{border-left:2px solid var(--warn);background:rgba(251,113,133,.05);padding:11px 14px;margin-top:14px;font-size:12.5px;color:#f1c6cc}
+  .gotcha b{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{color:var(--muted);font-weight:500;background:var(--panel);text-transform:uppercase;letter-spacing:.08em;font-size:10.5px}
+  td code{color:var(--read);font-size:11.5px}
+  .tag{font-size:10px;padding:1px 6px;border:1px solid currentColor;border-radius:2px;white-space:nowrap}
+  .t-read{color:var(--read)} .t-eph{color:var(--eph)} .t-dur{color:var(--dur)}
+  footer{color:var(--muted);font-size:11px;margin-top:40px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Windsurf 2 · Cascade · Opus-class agent</p>
+    <h1>Context Flow Blueprint — rules · workflows · skills · memories</h1>
+    <p class="sub">How global &amp; repo artifacts are READ into the context window each turn, and the two kinds of WRITE that close the loop. First-class primitives: <b>Rules / Workflows / Memories</b>. Skills = on-demand SKILL.md layer on top.</p>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--read)"></i>READ — context assembled in</span>
+      <span><i class="dot" style="background:var(--eph)"></i>WRITE · ephemeral — memory, local, free</span>
+      <span><i class="dot" style="background:var(--dur)"></i>WRITE · durable — rule/AGENTS.md, committed</span>
+    </div>
+  </header>
+
+  <!-- ===================== DIAGRAM 1 ===================== -->
+  <section>
+    <div class="label">
+      <span class="num">01</span>
+      <h2>Scope map — where each artifact lives</h2>
+      <span class="note">global · repo(committed) · local(uncommitted)</span>
+    </div>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TB
+  classDef g    fill:#0e1722,stroke:#244b63,color:#cfe9fb;
+  classDef repo fill:#0e1f16,stroke:#1f6b48,color:#cdf3e0;
+  classDef loc  fill:#231807,stroke:#7a4f12,color:#fbe2b9;
+  classDef ctx  fill:#11161b,stroke:#38bdf8,color:#e6edf3,stroke-width:1.5px;
+
+  subgraph GLOBAL["GLOBAL — every workspace · per machine"]
+    direction TB
+    GR["global_rules.md<br/>~/.codeium/.../  ·  ≤6k chars"]:::g
+    GS["global skills (SKILL.md ref)<br/>on-demand load"]:::g
+  end
+
+  subgraph REPO["REPO / WORKSPACE — committed · team-shared"]
+    direction TB
+    RR[".windsurf/rules/*.md<br/>≤12k each · activation mode"]:::repo
+    RW[".windsurf/workflows/*.md<br/>/slash invoke"]:::repo
+    RS["repo skills SKILL.md<br/>progressive disclosure"]:::repo
+    AG["AGENTS.md<br/>repo-root standing context"]:::repo
+  end
+
+  subgraph LOCAL["WORKSPACE-LOCAL — NOT committed · per machine"]
+    direction TB
+    MEM["Memories<br/>~/.codeium/windsurf/memories/<br/>auto + manual · relevance-retrieved"]:::loc
+  end
+
+  GLOBAL -.->|merged| CTX
+  REPO   -.->|merged| CTX
+  LOCAL  -.->|merged| CTX
+  CTX["CASCADE CONTEXT WINDOW"]:::ctx
+      </pre>
+    </div>
+    <div class="gotcha"><b>Gotcha:</b> Memories are workspace-scoped <i>and</i> machine-local — never committed, never auto-synced to teammates. Anything that must travel with the team goes in a <b>Rule</b> or <b>AGENTS.md</b>, not a memory.</div>
+  </section>
+
+  <!-- ===================== DIAGRAM 2 ===================== -->
+  <section>
+    <div class="label">
+      <span class="num">02</span>
+      <h2>Read → Write cycle (the "write-write" = dual write)</h2>
+      <span class="note">every turn can emit two distinct writes</span>
+    </div>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+  classDef read fill:#0e1722,stroke:#38bdf8,color:#cfe9fb;
+  classDef exec fill:#11161b,stroke:#7d8b99,color:#e6edf3;
+  classDef eph  fill:#231807,stroke:#f5a524,color:#fbe2b9;
+  classDef dur  fill:#0e1f16,stroke:#34d399,color:#cdf3e0;
+  classDef node fill:#0b0e11,stroke:#1d2730,color:#aebccb;
+
+  P(["PROMPT (turn N)"]):::exec --> R
+
+  subgraph R["① READ — assemble context"]
+    direction TB
+    R1["global rules — always"]:::read
+    R2["repo rules — per activation mode"]:::read
+    R3["memories — relevance retrieval"]:::read
+    R4["skills — model-decision load"]:::read
+    R5["workflow steps — only if /invoked"]:::read
+  end
+
+  R --> X["② EXEC<br/>plan → tool calls → diff-staged edits"]:::exec
+
+  X --> W
+
+  subgraph W["③ WRITE-BACK — two channels"]
+    direction TB
+    WA["EPHEMERAL · local · free<br/>auto-memory  +  'create a memory of…'"]:::eph
+    WD["DURABLE · committed<br/>edit rule / workflow / AGENTS.md"]:::dur
+  end
+
+  WA -.->|feeds retrieval| R3
+  WD -.->|feeds next assembly| R2
+  W  ==>|turn N+1| P
+      </pre>
+    </div>
+    <div class="gotcha"><b>The two writes:</b> <span class="t-eph">ephemeral</span> closes the loop automatically (memory → next-turn retrieval, zero credits, dies with the machine). <span class="t-dur">durable</span> is the promotion path — you graduate a learned memory into a committed rule so it survives, shares, and applies deterministically.</div>
+  </section>
+
+  <!-- ===================== DIAGRAM 3 ===================== -->
+  <section>
+    <div class="label">
+      <span class="num">03</span>
+      <h2>Prompt → what gets invoked</h2>
+      <span class="note">dispatch by prompt shape</span>
+    </div>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TB
+  classDef q    fill:#11161b,stroke:#38bdf8,color:#e6edf3;
+  classDef base fill:#0e1722,stroke:#244b63,color:#cfe9fb;
+  classDef act  fill:#0e1f16,stroke:#1f6b48,color:#cdf3e0;
+  classDef wr   fill:#231807,stroke:#f5a524,color:#fbe2b9;
+
+  S(["incoming prompt"]):::q --> Q{prompt shape?}:::q
+
+  Q -->|plain chat| PL["BASELINE<br/>global rules + always-on repo rules<br/>+ model-decision rules<br/>+ relevant memories<br/>+ model-picked skills"]:::base
+
+  Q -->|/workflow-name| WF["workflow recipe steps<br/>＋ BASELINE"]:::act
+  Q -->|edit file matching glob| GL["glob rule fires<br/>＋ BASELINE"]:::act
+  Q -->|@rule  /  manual pull| MN["named manual rule injected<br/>＋ BASELINE"]:::act
+  Q -->|"create a memory of…"| CM["WRITE memory (local)<br/>no read needed"]:::wr
+
+  PL --> EX["Cascade exec"]:::q
+  WF --> EX
+  GL --> EX
+  MN --> EX
+      </pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Artifact</th><th>Scope</th><th>Location</th><th>Invoked by</th><th>Direction</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Rules (global)</td><td>all workspaces</td>
+          <td><code>~/.codeium/.../global_rules.md</code></td>
+          <td>always — every turn</td>
+          <td><span class="tag t-read">READ</span></td>
+        </tr>
+        <tr>
+          <td>Rules (repo)</td><td>workspace · committed</td>
+          <td><code>.windsurf/rules/*.md</code></td>
+          <td>activation mode: always / glob / model&nbsp;decision / manual</td>
+          <td><span class="tag t-read">READ</span> <span class="tag t-dur">DUR&nbsp;WRITE</span></td>
+        </tr>
+        <tr>
+          <td>Workflows</td><td>workspace · committed</td>
+          <td><code>.windsurf/workflows/*.md</code></td>
+          <td><code>/workflow-name</code> slash command</td>
+          <td><span class="tag t-read">READ</span></td>
+        </tr>
+        <tr>
+          <td>Skills</td><td>global or repo</td>
+          <td><code>SKILL.md</code> (referenced)</td>
+          <td>model-decision · on-demand progressive load</td>
+          <td><span class="tag t-read">READ</span></td>
+        </tr>
+        <tr>
+          <td>Memories</td><td>workspace · <b>local</b></td>
+          <td><code>~/.codeium/windsurf/memories/</code></td>
+          <td>auto-capture + "create a memory of…" · retrieved by relevance</td>
+          <td><span class="tag t-read">READ</span> <span class="tag t-eph">EPH&nbsp;WRITE</span></td>
+        </tr>
+        <tr>
+          <td>AGENTS.md</td><td>repo-root · committed</td>
+          <td><code>AGENTS.md</code></td>
+          <td>standing context, read with rules</td>
+          <td><span class="tag t-read">READ</span> <span class="tag t-dur">DUR&nbsp;WRITE</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Primitives per Windsurf 2 docs (Cascade): Rules · Workflows · Memories. Skills = Agent-Skills SKILL.md layer, model-loaded on demand. Char limits: global rules ≤6k, repo rule ≤12k. Memories: local, uncommitted, no credit cost. Verify exact paths against your install — <code>.devin/</code> takes precedence over legacy <code>.windsurf/</code> in current builds.
+  </footer>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad:true,
+    theme:'base',
+    securityLevel:'loose',
+    flowchart:{ curve:'basis', nodeSpacing:32, rankSpacing:42, padding:8 },
+    themeVariables:{
+      fontFamily:'ui-monospace, "JetBrains Mono", Menlo, monospace',
+      fontSize:'13px',
+      lineColor:'#3a4a59',
+      primaryColor:'#11161b',
+      primaryTextColor:'#e6edf3',
+      primaryBorderColor:'#1d2730',
+      clusterBkg:'#0b0e11',
+      clusterBorder:'#2a3947',
+      tertiaryColor:'#0b0e11',
+      edgeLabelBackground:'#0b0e11'
+    }
+  });
+</script>
+</body>
+</html>
